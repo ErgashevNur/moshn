@@ -1,0 +1,58 @@
+# ============ Secrets / credentials (HECH QACHON commit qilinmasin) ============
+**/.env
+**/.env.*
+!**/.env.example
+**/key.properties
+*.jks
+*.keystore
+*.p12
+**/google-services.json
+**/GoogleService-Info.plist
+
+# ============ Backend (Go) ============
+Backend/backend/server
+Backend/backend/createadmin
+Backend/backend/seed
+*.exe
+
+# ============ Uploads / runtime data ============
+Backend/uploads/*
+!Backend/uploads/.gitkeep
+Backend/media/*.apk
+Backend/certbot/
+
+# ============ Admin (Next.js) ============
+**/node_modules/
+**/.next/
+**/out/
+**/.turbo/
+npm-debug.log*
+yarn-error.log*
+
+# ============ Flutter / Dart ============
+Flutter/.dart_tool/
+Flutter/.flutter-plugins
+Flutter/.flutter-plugins-dependencies
+Flutter/build/
+Flutter/.pub-cache/
+Flutter/.pub/
+Flutter/android/.gradle/
+Flutter/android/app/debug/
+Flutter/android/app/profile/
+Flutter/android/app/release/
+Flutter/android/local.properties
+Flutter/ios/Pods/
+Flutter/ios/.symlinks/
+Flutter/**/Flutter/Flutter.framework
+*.iml
+
+# ============ IDE / OS ============
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ============ Claude / local ============
+.claude/
+prompt.md

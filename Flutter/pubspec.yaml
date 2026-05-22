@@ -1,0 +1,64 @@
+name: moshn
+description: "Moshn — VIN-based car service history platform"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.3
+
+  # i18n
+  easy_localization: ^3.0.7
+  intl: ^0.20.1
+
+  # Voice + media
+  record: ^6.2.0
+  permission_handler: ^11.3.1
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+  path_provider: ^2.1.5
+
+  # Firebase
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+
+  # UI helpers
+  google_fonts: ^6.2.1
+
+  # Location + map (SOS)
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/translations/
+    - assets/images/
