@@ -1,149 +1,114 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/colors.dart';
+import '../../theme/typography.dart';
+import '../../widgets/m_moshn_icon.dart';
 import 'home_screen.dart';
-import 'find_mechanic_screen.dart';
-import '../shared/notifications_screen.dart';
+import 'my_bookings_screen.dart';
+import 'my_vehicles_screen.dart';
 import '../shared/profile_screen.dart';
 
-class OwnerRoot extends StatefulWidget {
-  const OwnerRoot({super.key});
+class OwnerRoot extends ConsumerStatefulWidget {
+  final int initialTab;
+  const OwnerRoot({super.key, this.initialTab = 0});
 
   @override
-  State<OwnerRoot> createState() => _OwnerRootState();
+  ConsumerState<OwnerRoot> createState() => _OwnerRootState();
 }
 
-class _OwnerRootState extends State<OwnerRoot> {
-  final _controller = CupertinoTabController(initialIndex: 0);
+class _OwnerRootState extends ConsumerState<OwnerRoot> {
+  late int _index = widget.initialTab;
 
-  // O'rtadagi (index 2) slot SOS tugmasi uchun — u tab sifatida tanlanmaydi.
-  int _lastIndex = 0;
+  static const _pages = <Widget>[
+    OwnerHomeScreen(),
+    MyBookingsScreen(),
+    MyVehiclesScreen(),
+    ProfileScreen(),
+  ];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onTap(int index) {
-    if (index == 2) {
-      // SOS sloti: tabni almashtirmaymiz, favqulodda ekranni ochamiz.
-      _controller.index = _lastIndex;
-      context.push('/owner/sos');
-    } else {
-      _lastIndex = index;
-    }
+  void _onTabTap(int i) {
+    if (i == 1) ref.invalidate(allBookingsProvider);
+    setState(() => _index = i);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CupertinoTabScaffold(
-          controller: _controller,
-          tabBar: CupertinoTabBar(
-            activeColor: AppColors.primaryOf(context),
-            onTap: _onTap,
-            items: [
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.house),
-                activeIcon: const Icon(CupertinoIcons.house_fill),
-                label: 'tabs.home'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.wrench),
-                activeIcon: const Icon(CupertinoIcons.wrench_fill),
-                label: 'tabs.repair'.tr(),
-              ),
-              // SOS tugmasi ustiga qo'yiladigan bo'sh slot.
-              const BottomNavigationBarItem(
-                icon: SizedBox(height: 24),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.bell),
-                activeIcon: const Icon(CupertinoIcons.bell_fill),
-                label: 'tabs.notifications'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.person),
-                activeIcon: const Icon(CupertinoIcons.person_fill),
-                label: 'tabs.profile'.tr(),
-              ),
-            ],
-          ),
-          tabBuilder: (context, index) {
-            switch (index) {
-              case 0:
-                return const OwnerHomeScreen();
-              case 1:
-                return const FindMechanicScreen();
-              case 2:
-                return const SizedBox.shrink(); // hech qachon ko'rsatilmaydi
-              case 3:
-                return const NotificationsScreen();
-              case 4:
-                return const ProfileScreen();
-            }
-            return const OwnerHomeScreen();
-          },
-        ),
-        // Bo'rtib turadigan markaziy SOS tugmasi.
-        Positioned.fill(
-          child: SafeArea(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: _SosButton(onPressed: () => context.push('/owner/sos')),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: IndexedStack(index: _index, children: _pages),
+      bottomNavigationBar: _BottomBar(
+        index: _index,
+        onTap: _onTabTap,
+      ),
     );
   }
 }
 
-class _SosButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _SosButton({required this.onPressed});
+class _BottomBar extends StatelessWidget {
+  final int index;
+  final ValueChanged<int> onTap;
+  const _BottomBar({required this.index, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 62,
-        height: 62,
-        decoration: BoxDecoration(
-          color: AppColors.destructive,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            width: 4,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bg(context),
+        border: Border(
+          top: BorderSide(color: AppColors.hairline(context), width: 1),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: [
+              _NavItem(icon: 'home',     label: 'tabs.home'.tr(),     active: index == 0, onTap: () => onTap(0)),
+              _NavItem(icon: 'calendar', label: 'tabs.bookings'.tr(), active: index == 1, onTap: () => onTap(1)),
+              _NavItem(icon: 'car',      label: 'tabs.garage'.tr(),   active: index == 2, onTap: () => onTap(2)),
+              _NavItem(icon: 'user',     label: 'tabs.profile'.tr(),  active: index == 3, onTap: () => onTap(3)),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.destructive.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final String icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? AppColors.text(context) : AppColors.text3(context);
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            MoshnIcon(name: icon, size: 22, color: color),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: AppTypography.soraSize(10, weight: FontWeight.w500)
+                  .copyWith(color: color),
             ),
           ],
-        ),
-        child: Center(
-          child: Text(
-            'sos.button'.tr(),
-            style: const TextStyle(
-              color: CupertinoColors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1,
-            ),
-          ),
         ),
       ),
     );

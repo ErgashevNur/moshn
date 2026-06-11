@@ -36,8 +36,8 @@ class AppTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.brightnessOf(context);
     final fillColor = brightness == Brightness.dark
-        ? AppColors.surfaceElevatedDark
-        : AppColors.fillPrimary;
+        ? AppColors.surface2(context)
+        : AppColors.surface(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,12 +59,12 @@ class AppTextField extends StatelessWidget {
           prefix: icon != null
               ? Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.lg),
-                  child: Icon(icon, size: 20, color: AppColors.labelTertiary),
+                  child: Icon(icon, size: 20, color: AppColors.text3(context)),
                 )
               : null,
           style: AppTypography.body,
           placeholderStyle: AppTypography.body.copyWith(
-            color: AppColors.labelTertiary,
+            color: AppColors.text3(context),
           ),
           decoration: BoxDecoration(
             color: fillColor,
@@ -76,8 +76,8 @@ class AppTextField extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, left: 4),
             child: Text(
               errorText!,
-              style: AppTypography.footnote.copyWith(
-                color: AppColors.destructive,
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.danger,
               ),
             ),
           ),

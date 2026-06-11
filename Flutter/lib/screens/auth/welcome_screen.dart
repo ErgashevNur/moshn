@@ -1,5 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/colors.dart';
@@ -13,8 +13,9 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: SafeArea(
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: SafeArea(
         child: ResponsiveContent(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -30,23 +31,27 @@ class WelcomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(height: tight ? AppSpacing.xl : AppSpacing.huge),
+                        SizedBox(
+                            height: tight ? AppSpacing.xl : AppSpacing.huge),
                         const _Logo(),
                         const SizedBox(height: AppSpacing.xxl),
                         Text(
                           'auth.welcome_title'.tr(),
                           textAlign: TextAlign.center,
-                          style: AppTypography.largeTitle,
+                          style: AppTypography.displayLarge,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           'auth.welcome_subtitle'.tr(),
                           textAlign: TextAlign.center,
                           style: AppTypography.body.copyWith(
-                            color: AppColors.labelTertiary,
+                            color: AppColors.text3(context),
                           ),
                         ),
-                        SizedBox(height: tight ? AppSpacing.xxl : AppSpacing.huge * 1.5),
+                        SizedBox(
+                            height: tight
+                                ? AppSpacing.xxl
+                                : AppSpacing.huge * 1.5),
                         PrimaryButton(
                           label: 'auth.login'.tr(),
                           onPressed: () => context.push('/login'),
@@ -75,18 +80,16 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Logo is pure black-on-transparent. On dark backgrounds it would vanish,
-    // so wrap it in a white rounded plate that doubles as a visual emblem.
     return Center(
       child: Container(
         width: 160,
         height: 160,
         decoration: BoxDecoration(
-          color: CupertinoColors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl + 8),
           boxShadow: [
             BoxShadow(
-              color: CupertinoColors.black.withValues(alpha: 0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),

@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/notification.dart';
 import '../../services/notification_service.dart';
@@ -22,61 +24,74 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(_notificationsProvider);
-    return CupertinoPageScaffold(
-      child: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            CupertinoSliverNavigationBar(
-              border: null,
-              largeTitle: Text('notifications.title'.tr()),
+
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusMd),
+                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: AppColors.text(context), size: 17),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text('notifications.title'.tr(),
+                        style: AppTypography.titleLarge),
+                  ),
+                ],
+              ),
             ),
-            CupertinoSliverRefreshControl(
-              onRefresh: () async {
-                ref.invalidate(_notificationsProvider);
-                await ref.read(_notificationsProvider.future);
-              },
-            ),
-            state.when(
+          ),
+          Expanded(
+            child: state.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      icon: CupertinoIcons.bell,
-                      title: 'notifications.empty'.tr(),
-                    ),
+                  return EmptyState(
+                    icon: CupertinoIcons.bell,
+                    title: 'notifications.empty'.tr(),
                   );
                 }
-                return SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.sm,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) => Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: _NotificationCard(item: items[i]),
-                      ),
-                      childCount: items.length,
-                    ),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(_notificationsProvider);
+                    await ref.read(_notificationsProvider.future);
+                  },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (ctx, i) =>
+                        _NotificationCard(item: items[i]),
                   ),
                 );
               },
-              loading: () => const SliverFillRemaining(
-                child: Center(child: CupertinoActivityIndicator()),
-              ),
-              error: (_, _) => SliverFillRemaining(
-                child: EmptyState(
-                  icon: CupertinoIcons.exclamationmark_triangle,
-                  title: 'common.error'.tr(),
-                ),
+              loading: () => const Center(
+                  child: CircularProgressIndicator.adaptive()),
+              error: (_, _) => EmptyState(
+                icon: CupertinoIcons.exclamationmark_triangle,
+                title: 'common.error'.tr(),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -93,14 +108,13 @@ class _NotificationCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 8, height: 8,
             margin: const EdgeInsets.only(top: 6),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: item.read
-                  ? CupertinoColors.systemGrey4
-                  : AppColors.primaryOf(context),
+                  ? const Color(0xFFC7C7CC)
+                  : AppColors.inverseBg(context),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -108,19 +122,19 @@ class _NotificationCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: AppTypography.headline),
+                Text(item.title, style: AppTypography.titleSmall),
                 const SizedBox(height: 2),
                 Text(
                   item.body,
-                  style: AppTypography.subhead.copyWith(
-                    color: AppColors.labelSecondary,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.text2(context),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   formatDateTime(item.createdAt),
-                  style: AppTypography.caption1.copyWith(
-                    color: AppColors.labelTertiary,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.text3(context),
                   ),
                 ),
               ],

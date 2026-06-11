@@ -8,43 +8,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // moshn.uz brand — coral accent
-        primary: '#ff5230',
-        accent: '#ff5230',
-        'accent-deep': '#e83c1f',
-        'accent-soft': '#ff6b4d',
-        // moshn.uz dark ("Qorong'u rejim") surfaces — navy
-        'dark-bg': '#0e1620',
-        'dark-card': '#1a2535',
-        'dark-input': '#131d2b',
-        'dark-border': '#283449',
-        // semantic ink (light text on navy)
-        ink: '#f2ece2',
-        'ink-mute': '#9aa3af',
-        'ink-soft': '#6b7580',
-        danger: '#ff5252',
-        warning: '#ffd600',
+        bg:       '#09090A',
+        elevated: '#131316',
+        surface:  '#1A1A1E',
+        surface2: '#242429',
+        surface3: '#2E2E34',
+
+        text:  '#F4F4F2',
+        text2: 'rgba(244,244,242,0.60)',
+        text3: 'rgba(244,244,242,0.36)',
+
+        gold:         '#D4A843',
+        'gold-dim':   'rgba(212,168,67,0.16)',
+        danger:       '#E5382B',
+        'danger-dim': 'rgba(229,56,43,0.16)',
+        success:      '#30D158',
+        'success-dim':'rgba(48,209,88,0.16)',
+        info:         '#38BDF8',
+        'info-dim':   'rgba(56,189,248,0.16)',
+        warning:      '#FFB800',
+        'warning-dim':'rgba(255,184,0,0.16)',
+
+        border:  'rgba(255,255,255,0.085)',
+        border2: 'rgba(255,255,255,0.14)',
       },
       fontFamily: {
-        // moshn.uz typography
-        display: ['"Clash Display"', '"Cabinet Grotesk"', 'system-ui', 'sans-serif'],
-        sans: ['"Switzer"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
-        // moshn.uz editorial style — sharp corners
-        none: '0',
-        sm: '0',
-        DEFAULT: '2px',
-        md: '2px',
-        lg: '2px',
-        xl: '3px',
-        '2xl': '4px',
-        '3xl': '4px',
-        full: '9999px',
+        sm:    '8px',
+        DEFAULT:'12px',
+        md:    '12px',
+        lg:    '16px',
+        xl:    '20px',
+        '2xl': '24px',
+        full:  '9999px',
       },
       maxWidth: {
-        content: '1200px',
+        content: '1280px',
       },
     },
   },

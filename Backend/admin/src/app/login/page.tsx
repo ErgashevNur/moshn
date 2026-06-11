@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -15,7 +15,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await api.post('/auth/login', { phone, password })
+      const res = await api.post('/auth/login', { email: identifier, password })
       const { access_token, refresh_token } = res.data.data
       localStorage.setItem('access_token', access_token)
       localStorage.setItem('refresh_token', refresh_token)
@@ -28,54 +28,57 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-cream.png" alt="Moshn" className="h-28 w-auto" />
-          <p className="mono-label text-ink-soft mt-4">§ Admin boshqaruv paneli</p>
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <p className="text-text font-bold text-2xl tracking-tight">Shina24</p>
+          <p className="text-text3 text-xs font-mono mt-1 uppercase tracking-widest">Admin panel</p>
         </div>
 
-        <div className="bg-dark-card p-8 border border-dark-border">
-          <h2 className="font-display text-xl font-semibold mb-6 text-ink">Kirish</h2>
+        {/* Form */}
+        <div className="card p-6 space-y-5">
+          <h2 className="text-text font-semibold text-base">Kirish</h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block mono-label text-ink-soft mb-2">Telefon raqam</label>
+              <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1.5">
+                Telefon yoki email
+              </label>
               <input
                 type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="+998901234567"
-                className="w-full bg-dark-input border border-dark-border px-4 py-3 text-ink placeholder-ink-soft focus:outline-none focus:border-accent transition-colors"
+                className="inp"
                 required
+                autoComplete="username"
               />
             </div>
 
             <div>
-              <label className="block mono-label text-ink-soft mb-2">Parol</label>
+              <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1.5">
+                Parol
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-dark-input border border-dark-border px-4 py-3 text-ink placeholder-ink-soft focus:outline-none focus:border-accent transition-colors"
+                className="inp"
                 required
+                autoComplete="current-password"
               />
             </div>
 
             {error && (
-              <div className="bg-danger/10 border border-danger/20 px-4 py-3 text-danger text-sm">
+              <div className="bg-danger-dim border border-danger/20 rounded-md px-4 py-3 text-danger text-sm">
                 {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-accent hover:bg-accent-deep disabled:opacity-50 text-white font-semibold py-3 transition-colors"
-            >
-              {loading ? 'Kirilmoqda...' : 'Kirish →'}
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+              {loading ? 'Kirilmoqda...' : 'Kirish'}
             </button>
           </form>
         </div>

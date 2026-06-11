@@ -80,36 +80,39 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	utils.Success(c, tokens)
 }
 
-// SendOTP requests a (re)send of the email verification code.
+// SendOTP sends a one-time code to the given phone number.
+// MVP: code is also returned in the response for dev testing.
 func (h *AuthHandler) SendOTP(c *gin.Context) {
 	var input struct {
-		Email string `json:"email" binding:"required,email"`
+		Phone string `json:"phone" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.svc.SendOTP(input.Email); err != nil {
-		utils.BadRequest(c, err.Error())
-		return
-	}
-	utils.Success(c, gin.H{"message": "Kod yuborildi"})
-}
-
-// VerifyOTP confirms the email and returns auth tokens.
-func (h *AuthHandler) VerifyOTP(c *gin.Context) {
-	var input struct {
-		Email string `json:"email" binding:"required,email"`
-		Code  string `json:"code" binding:"required,len=6"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.BadRequest(c, err.Error())
-		return
-	}
-	tokens, err := h.svc.VerifyOTP(input.Email, input.Code)
+	code, err := h.svc.SendOTPByPhone(input.Phone)
 	if err != nil {
 		utils.BadRequest(c, err.Error())
 		return
 	}
-	utils.Success(c, tokens)
+	// dev_code is included so testers can verify without real SMS
+	utils.Success(c, gin.H{"message": "Kod yuborildi", "dev_code": code})
+}
+
+// VerifyOTP checks the one-time code and returns auth tokens.
+func (h *AuthHandler) VerifyOTP(c *gin.Context) {
+	var input struct {
+		Phone string `json:"phone" binding:"required"`
+		Code  string `json:"code" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.BadRequest(c, err.Error())
+		return
+	}
+	result, err := h.svc.VerifyOTPByPhone(input.Phone, input.Code)
+	if err != nil {
+		utils.BadRequest(c, err.Error())
+		return
+	}
+	utils.Success(c, result)
 }

@@ -1,26 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/AdminLayout'
-import Icon from '@/components/Icon'
 import api from '@/lib/api'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 interface Stats {
   users: number
   vehicles: number
-  services: number
-  mechanics: number
+  bookings: number
+  shops: number
+  active_shops: number
 }
 
-const mockChartData = [
-  { day: 'Dush', services: 4 },
-  { day: 'Sesh', services: 7 },
-  { day: 'Chor', services: 5 },
-  { day: 'Pay', services: 12 },
-  { day: 'Jum', services: 9 },
-  { day: 'Shan', services: 6 },
-  { day: 'Yak', services: 3 },
-]
+function StatCard({ label, value, sub, color }: { label: string; value: number; sub?: string; color: string }) {
+  return (
+    <div className="card p-5">
+      <p className={`text-3xl font-bold tabular-nums ${color}`}>{value.toLocaleString()}</p>
+      <p className="text-text text-sm font-medium mt-1">{label}</p>
+      {sub && <p className="text-text3 text-xs mt-0.5">{sub}</p>}
+    </div>
+  )
+}
+
+function CardSkeleton() {
+  return (
+    <div className="card p-5 animate-pulse space-y-2">
+      <div className="h-8 w-14 bg-surface2 rounded" />
+      <div className="h-4 w-24 bg-surface2 rounded" />
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -28,65 +36,47 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.get('/admin/stats')
-      .then((res) => setStats(res.data.data))
+      .then((r) => setStats(r.data.data))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
-  const cards = [
-    { label: 'Foydalanuvchilar', value: stats?.users ?? 0, icon: 'users' as const },
-    { label: 'Mashinalar', value: stats?.vehicles ?? 0, icon: 'car' as const },
-    { label: 'Servis yozuvlari', value: stats?.services ?? 0, icon: 'clipboard' as const },
-    { label: 'Tasdiqlangan ustalar', value: stats?.mechanics ?? 0, icon: 'wrench' as const },
-  ]
-
   return (
     <AdminLayout title="Dashboard">
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-6">
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {loading || !stats ? (
+            Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
+          ) : (
+            <>
+              <StatCard label="Mijozlar"       value={stats.users}        color="text-info"    />
+              <StatCard label="Avtomobillar"   value={stats.vehicles}      color="text-text2"   />
+              <StatCard label="Jami bronlar"   value={stats.bookings}      color="text-gold"    />
+              <StatCard label="Shinomontajlar" value={stats.shops}         color="text-text2"   />
+              <StatCard label="Tasdiqlangan"   value={stats.active_shops}  color="text-success" sub="servislar" />
+            </>
+          )}
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {cards.map((card) => (
-              <div
-                key={card.label}
-                className="group relative bg-dark-card p-6 border border-dark-border hover:border-accent/40 transition-colors"
-              >
-                <span className="absolute top-0 left-0 h-0.5 w-10 bg-accent/70" />
-                <div className="flex items-center justify-between mb-4">
-                  <span className="flex items-center justify-center w-10 h-10 bg-accent/10 text-accent">
-                    <Icon name={card.icon} className="w-5 h-5" />
-                  </span>
-                </div>
-                <p className="font-display text-4xl font-bold tabular-nums text-ink leading-none">{card.value}</p>
-                <p className="mono-label text-ink-soft mt-2">{card.label}</p>
-              </div>
+
+        {/* Quick actions */}
+        <div>
+          <p className="text-text3 text-xs font-mono uppercase tracking-widest mb-3">Tez harakatlar</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { href: '/shops',         label: 'Shinomontajlar',        desc: 'Ro\'yxat, tasdiqlash'       },
+              { href: '/bookings',      label: 'Bronlar',               desc: 'Barcha bronlarni ko\'rish'   },
+              { href: '/seasonal',      label: 'Mavsum bildirshnomasi', desc: 'Qoida yaratish, yuborish'   },
+            ].map((q) => (
+              <a key={q.href} href={q.href}
+                className="card p-4 hover:bg-surface2 transition-colors group">
+                <p className="text-text font-semibold text-sm group-hover:text-gold transition-colors">{q.label}</p>
+                <p className="text-text3 text-xs mt-0.5">{q.desc}</p>
+              </a>
             ))}
           </div>
-
-          <div className="bg-dark-card p-6 border border-dark-border">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg font-semibold text-ink">Oxirgi 7 kundagi servislar</h3>
-              <span className="mono-label text-ink-soft">§ Haftalik</span>
-            </div>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={mockChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#283449" />
-                <XAxis dataKey="day" stroke="#6b7580" />
-                <YAxis stroke="#6b7580" />
-                <Tooltip
-                  contentStyle={{ background: '#1a2535', border: '1px solid #283449', borderRadius: 0 }}
-                  labelStyle={{ color: '#f2ece2' }}
-                  cursor={{ fill: '#ff52301a' }}
-                />
-                <Bar dataKey="services" fill="#ff5230" radius={[0, 0, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
         </div>
-      )}
+      </div>
     </AdminLayout>
   )
 }

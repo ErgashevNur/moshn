@@ -43,3 +43,35 @@ func (h *ReviewHandler) GetReview(c *gin.Context) {
 	}
 	utils.Success(c, review)
 }
+
+func (h *ReviewHandler) GetShopReviews(c *gin.Context) {
+	shopID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.BadRequest(c, "Noto'g'ri ID")
+		return
+	}
+	p := utils.GetPagination(c)
+
+	reviews, total, err := h.svc.GetShopReviews(shopID, p.Limit, p.Offset)
+	if err != nil {
+		utils.InternalError(c, err.Error())
+		return
+	}
+	utils.Success(c, gin.H{"reviews": reviews, "total": total})
+}
+
+func (h *ReviewHandler) GetCustomerReviews(c *gin.Context) {
+	customerID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.BadRequest(c, "Noto'g'ri ID")
+		return
+	}
+	p := utils.GetPagination(c)
+
+	reviews, total, err := h.svc.GetCustomerReviews(customerID, p.Limit, p.Offset)
+	if err != nil {
+		utils.InternalError(c, err.Error())
+		return
+	}
+	utils.Success(c, gin.H{"reviews": reviews, "total": total})
+}

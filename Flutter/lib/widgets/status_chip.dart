@@ -1,26 +1,24 @@
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
-import '../models/service_record.dart';
+import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 
 class StatusChip extends StatelessWidget {
-  final ServiceStatus status;
+  final String status;
   const StatusChip({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final (color, key) = _styleFor(status);
+    final (color, label) = _style(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        borderRadius: BorderRadius.circular(AppSpacing.r_full),
       ),
       child: Text(
-        key.tr(),
-        style: AppTypography.caption1.copyWith(
+        label,
+        style: AppTypography.labelMedium.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
         ),
@@ -28,18 +26,15 @@ class StatusChip extends StatelessWidget {
     );
   }
 
-  (Color, String) _styleFor(ServiceStatus s) {
+  static (Color, String) _style(String s) {
     switch (s) {
-      case ServiceStatus.confirmed:
-        return (AppColors.statusConfirmed, 'owner.service_confirmed');
-      case ServiceStatus.rejected:
-        return (AppColors.statusRejected, 'owner.service_rejected');
-      case ServiceStatus.autoConfirmed:
-        return (AppColors.statusAuto, 'owner.service_auto');
-      case ServiceStatus.draft:
-        return (AppColors.statusAuto, 'common.loading');
-      case ServiceStatus.created:
-        return (AppColors.statusPending, 'owner.service_pending');
+      case 'pending':   return (AppColors.gold, 'Kutilmoqda');
+      case 'confirmed': return (AppColors.success, 'Tasdiqlandi');
+      case 'in_progress': return (const Color(0xFF0A84FF), 'Jarayonda');
+      case 'completed': return (AppColors.success, 'Bajarildi');
+      case 'cancelled': return (AppColors.danger, 'Bekor');
+      case 'verified':  return (AppColors.success, 'Tasdiqlangan');
+      default:          return (const Color(0xFF8E8E93), s);
     }
   }
 }

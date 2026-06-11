@@ -1,67 +1,84 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
-/// Cupertino-style minimalist colour palette for Moshn.
-/// Derived from the black-on-white logo: monochrome brand with iOS-system
-/// accents for status states.
 class AppColors {
   AppColors._();
 
-  // Brand — pulled from the Moshn logo (pure black on white).
-  // [primary] resolves automatically inside Cupertino widgets via
-  // CupertinoDynamicColor: black in light mode, white in dark mode. For sites
-  // that do not auto-resolve (Container.color, Icon, Text), use
-  // [primaryOf(context)] / [onPrimaryOf(context)].
-  static const CupertinoDynamicColor primary = CupertinoDynamicColor.withBrightness(
-    color: Color(0xFF111111),
-    darkColor: Color(0xFFFFFFFF),
-  );
-  static const Color primaryDark = Color(0xFF000000);
+  // --- Dark theme raw values ---
+  static const Color _darkBg = Color(0xFF09090A);
+  static const Color _darkBgElevated = Color(0xFF131316);
+  static const Color _darkSurface = Color(0xFF1A1A1E);
+  static const Color _darkSurface2 = Color(0xFF242429);
+  static const Color _darkSurface3 = Color(0xFF2E2E34);
+  static const Color _darkHairline = Color(0x16FFFFFF); // rgba(255,255,255,0.085)
+  static const Color _darkHairline2 = Color(0x24FFFFFF); // rgba(255,255,255,0.14)
+  static const Color _darkText = Color(0xFFF4F4F2);
+  static const Color _darkText2 = Color(0x99F4F4F2); // 0.60 opacity
+  static const Color _darkText3 = Color(0x5CF4F4F2); // 0.36 opacity
+  static const Color _darkInverseBg = Color(0xFFF4F4F2);
+  static const Color _darkInverseText = Color(0xFF0A0A0B);
 
-  /// Brightness-aware primary brand color. Use whenever the dynamic [primary]
-  /// would not auto-resolve (e.g. `Container(color: ...)`, `Icon(color: ...)`).
-  static Color primaryOf(BuildContext context) =>
-      CupertinoDynamicColor.resolve(primary, context);
+  // --- Light theme raw values ---
+  static const Color _lightBg = Color(0xFFF4F3F0);
+  static const Color _lightBgElevated = Color(0xFFFFFFFF);
+  static const Color _lightSurface = Color(0xFFFFFFFF);
+  static const Color _lightSurface2 = Color(0xFFECEBE7);
+  static const Color _lightSurface3 = Color(0xFFE3E2DD);
+  static const Color _lightHairline = Color(0x1714140F); // rgba(20,20,16,0.09)
+  static const Color _lightHairline2 = Color(0x2614140F); // rgba(20,20,16,0.15)
+  static const Color _lightText = Color(0xFF14140F);
+  static const Color _lightText2 = Color(0x9414140F); // 0.58 opacity
+  static const Color _lightText3 = Color(0x6614140F); // 0.40 opacity
+  static const Color _lightInverseBg = Color(0xFF14140F);
+  static const Color _lightInverseText = Color(0xFFF6F5F2);
 
-  /// Foreground that sits on top of [primaryOf] — white on black, black on white.
-  static Color onPrimaryOf(BuildContext context) =>
-      CupertinoTheme.brightnessOf(context) == Brightness.dark
-          ? const Color(0xFF111111)
-          : const Color(0xFFFFFFFF);
+  // --- Semantic / shared ---
+  static const Color gold = Color(0xFFD4A843);
+  static const Color goldDim = Color(0x29D4A843); // rgba(212,168,67,0.16)
+  static const Color danger = Color(0xFFE5382B);
+  static const Color dangerDim = Color(0x29E5382B); // rgba(229,56,43,0.16)
+  static const Color success = Color(0xFF30D158);
+  static const Color successDim = Color(0x2930D158); // rgba(48,209,88,0.16)
 
-  // Backgrounds (light)
-  static const Color background = Color(0xFFF2F2F7); // iOS systemGroupedBackground
-  static const Color surface = CupertinoColors.white;
-  static const Color surfaceElevated = Color(0xFFFFFFFF);
+  static bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
 
-  // Backgrounds (dark)
-  static const Color backgroundDark = Color(0xFF000000);
-  static const Color surfaceDark = Color(0xFF1C1C1E);
-  static const Color surfaceElevatedDark = Color(0xFF2C2C2E);
+  static Color bg(BuildContext context) =>
+      _isDark(context) ? _darkBg : _lightBg;
 
-  // Text
-  static const Color label = Color(0xFF000000);
-  static const Color labelSecondary = Color(0xFF3C3C43);
-  static const Color labelTertiary = Color(0xFF8E8E93);
-  static const Color labelDark = Color(0xFFFFFFFF);
-  static const Color labelSecondaryDark = Color(0xFFEBEBF5);
+  static Color bgElevated(BuildContext context) =>
+      _isDark(context) ? _darkBgElevated : _lightBgElevated;
 
-  // Separators
-  static const Color separator = Color(0x33545458);
-  static const Color separatorDark = Color(0x59545458);
+  static Color surface(BuildContext context) =>
+      _isDark(context) ? _darkSurface : _lightSurface;
 
-  // Status
-  static const Color success = Color(0xFF34C759);
-  static const Color warning = Color(0xFFFF9500);
-  static const Color destructive = Color(0xFFFF3B30);
-  static const Color info = Color(0xFF5AC8FA);
+  static Color surface2(BuildContext context) =>
+      _isDark(context) ? _darkSurface2 : _lightSurface2;
 
-  // Service status colors
-  static const Color statusPending = Color(0xFFFF9500);
-  static const Color statusConfirmed = Color(0xFF34C759);
-  static const Color statusRejected = Color(0xFFFF3B30);
-  static const Color statusAuto = Color(0xFF8E8E93);
+  static Color surface3(BuildContext context) =>
+      _isDark(context) ? _darkSurface3 : _lightSurface3;
 
-  // Fill (for cards, chips)
-  static const Color fillPrimary = Color(0x14787880);
-  static const Color fillSecondary = Color(0x0F787880);
+  static Color hairline(BuildContext context) =>
+      _isDark(context) ? _darkHairline : _lightHairline;
+
+  static Color hairline2(BuildContext context) =>
+      _isDark(context) ? _darkHairline2 : _lightHairline2;
+
+  static Color text(BuildContext context) =>
+      _isDark(context) ? _darkText : _lightText;
+
+  static Color text2(BuildContext context) =>
+      _isDark(context) ? _darkText2 : _lightText2;
+
+  static Color text3(BuildContext context) =>
+      _isDark(context) ? _darkText3 : _lightText3;
+
+  static Color inverseBg(BuildContext context) =>
+      _isDark(context) ? _darkInverseBg : _lightInverseBg;
+
+  static Color inverseText(BuildContext context) =>
+      _isDark(context) ? _darkInverseText : _lightInverseText;
+
+  static Color scrim(BuildContext context) => _isDark(context)
+      ? const Color(0x99000000)
+      : const Color(0x73140E0E); // rgba(20,18,14,0.45)
 }

@@ -36,11 +36,11 @@ func AuthRequired() gin.HandlerFunc {
 	}
 }
 
-func MechanicOnly() gin.HandlerFunc {
+func ServiceOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, _ := c.Get("role")
-		if role != "mechanic" {
-			utils.Forbidden(c, "Mechanic role required")
+		if role != "service" {
+			utils.Forbidden(c, "Service role required")
 			c.Abort()
 			return
 		}

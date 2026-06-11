@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"moshn/backend/models"
+	"net/http"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -38,12 +38,12 @@ func (s *NotificationService) SendToUser(userID uuid.UUID, title, body, notifTyp
 	}
 }
 
-func (s *NotificationService) SendToMechanic(mechanicID uuid.UUID, title, body, notifType, referenceID string) {
-	var mechanic models.Mechanic
-	if err := s.db.First(&mechanic, "id = ?", mechanicID).Error; err != nil {
+func (s *NotificationService) SendToShop(shopID uuid.UUID, title, body, notifType, referenceID string) {
+	var shop models.ShopProfile
+	if err := s.db.First(&shop, "id = ?", shopID).Error; err != nil {
 		return
 	}
-	s.SendToUser(mechanic.UserID, title, body, notifType, referenceID)
+	s.SendToUser(shop.UserID, title, body, notifType, referenceID)
 }
 
 func (s *NotificationService) sendFCM(token, title, body string) {
@@ -94,12 +94,16 @@ func (s *NotificationService) BroadcastToAll(title, body string) {
 	}
 }
 
-func (s *NotificationService) BroadcastToPhone(phone, title, body string) {
-	var user models.User
-	if err := s.db.Where("phone = ?", phone).First(&user).Error; err != nil {
-		return
+func (s *NotificationService) BroadcastSeasonal(rule *models.SeasonalRule) {
+	var users []models.User
+	s.db.Where("role = 'owner'").Find(&users)
+	for _, u := range users {
+		msg := rule.MessageUz
+		if u.Language == "ru" {
+			msg = rule.MessageRu
+		}
+		s.SendToUser(u.ID, rule.Name, msg, "seasonal", rule.ID.String())
 	}
-	s.SendToUser(user.ID, title, body, "broadcast", "")
 }
 
 func (s *NotificationService) SaveFCMToken(userID uuid.UUID, token, platform string) {

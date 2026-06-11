@@ -6,7 +6,7 @@ import (
 )
 
 // WSHub — ulangan WebSocket mijozlarini boshqaradi va eventlarni tarqatadi.
-// SOS so'rovlari real-time, refreshsiz admin panelga yetkaziladi.
+// Bron bildirshnomalari real-time servis planshetiga yetkaziladi.
 type WSHub struct {
 	mu      sync.RWMutex
 	clients map[*WSClient]bool
@@ -37,6 +37,28 @@ func (h *WSHub) Unregister(c *WSClient) {
 	h.mu.Unlock()
 }
 
+// BroadcastToUser — aniq user_id ga tegishli barcha ulanishlarga event yuboradi.
+func (h *WSHub) BroadcastToUser(userID string, eventType string, payload interface{}) {
+	msg, err := json.Marshal(map[string]interface{}{
+		"type": eventType,
+		"data": payload,
+	})
+	if err != nil {
+		return
+	}
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for c := range h.clients {
+		if c.UserID != userID {
+			continue
+		}
+		select {
+		case c.Send <- msg:
+		default:
+		}
+	}
+}
+
 // BroadcastToAdmins — admin rolidagi barcha ulanishlarga event yuboradi.
 func (h *WSHub) BroadcastToAdmins(eventType string, payload interface{}) {
 	msg, err := json.Marshal(map[string]interface{}{
@@ -54,7 +76,7 @@ func (h *WSHub) BroadcastToAdmins(eventType string, payload interface{}) {
 		}
 		select {
 		case c.Send <- msg:
-		default: // bufer to'la — bu mijozni o'tkazib yuboramiz
+		default:
 		}
 	}
 }

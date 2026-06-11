@@ -40,7 +40,8 @@ class ApiClient {
       return 'http://$_hostOverride:$_portOverride/v1';
     }
     if (kIsWeb) return 'http://localhost:8080/v1';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/v1';
+    // Android: adb reverse tcp:8080 tcp:8080 bilan localhost ishlaydi
+    if (Platform.isAndroid) return 'http://localhost:8080/v1';
     return 'http://localhost:8080/v1';
   }
 

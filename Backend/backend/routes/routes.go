@@ -14,16 +14,12 @@ type Handlers struct {
 	Auth         *handlers.AuthHandler
 	Profile      *handlers.ProfileHandler
 	Vehicle      *handlers.VehicleHandler
-	Service      *handlers.ServiceHandler
-	Mechanic     *handlers.MechanicHandler
+	Shop         *handlers.ShopHandler
+	Booking      *handlers.BookingHandler
+	Payment      *handlers.PaymentHandler
 	Review       *handlers.ReviewHandler
-	Warranty     *handlers.WarrantyHandler
 	Notification *handlers.NotificationHandler
-	Search       *handlers.SearchHandler
 	Admin        *handlers.AdminHandler
-	Sos          *handlers.SosHandler
-	Repair       *handlers.RepairHandler
-	Assignment   *handlers.AssignmentHandler
 	WS           *handlers.WSHandler
 }
 
@@ -40,14 +36,12 @@ func Setup(r *gin.Engine, h Handlers, opts Options) {
 		MaxAge:           12 * time.Hour,
 	}
 	if len(opts.AllowedOrigins) == 0 {
-		// Safe default: only localhost dev. Set ALLOWED_ORIGINS env var in prod.
 		corsCfg.AllowOrigins = []string{"http://localhost:3000", "http://localhost:8080"}
 	} else {
 		corsCfg.AllowOrigins = opts.AllowedOrigins
 	}
 	r.Use(cors.New(corsCfg))
 
-	// Rate limit: 120 req/min per IP globally
 	globalLimiter := middleware.NewRateLimiter(120)
 	r.Use(globalLimiter.Middleware())
 
@@ -56,8 +50,8 @@ func Setup(r *gin.Engine, h Handlers, opts Options) {
 
 	v1 := r.Group("/v1")
 
-	// Auth (public) — stricter rate limit on login/register to slow brute force
-	authLimiter := middleware.NewRateLimiter(10) // 10 req/min/IP
+	// Auth (public)
+	authLimiter := middleware.NewRateLimiter(10)
 	auth := v1.Group("/auth")
 	auth.Use(authLimiter.Middleware())
 	{
@@ -68,99 +62,110 @@ func Setup(r *gin.Engine, h Handlers, opts Options) {
 		auth.POST("/verify-otp", h.Auth.VerifyOTP)
 	}
 
-	// Protected routes
+	// Shinomontajlar ommaviy qidiruvi (autentifikatsiyasiz)
+	v1.GET("/shops", h.Shop.GetShops)
+	v1.GET("/shops/:id", h.Shop.GetShop)
+	v1.GET("/shops/:id/reviews", h.Shop.GetShopReviews)
+
+	// Xizmat turlari katalogi (ommaviy)
+	v1.GET("/service-types", h.Admin.ListServiceTypes)
+
+	// Plaka bo'yicha qidiruv (autentifikatsiyasiz — autosignal)
+	v1.GET("/vehicles/lookup/:plate", h.Vehicle.LookupByPlate)
+
+	// WebSocket — servis planshetiga real-vaqt bronlar
+	v1.GET("/ws", h.WS.Connect)
+
+	// Himoyalangan marshrutlar
 	protected := v1.Group("/")
 	protected.Use(middleware.AuthRequired())
 	{
-		// Profile
+		// Profil
 		protected.GET("/profile", h.Profile.GetProfile)
 		protected.PUT("/profile", h.Profile.UpdateProfile)
+		protected.PUT("/profile/role", h.Profile.SetRole)
 		protected.PUT("/profile/language", h.Profile.UpdateLanguage)
 		protected.PUT("/profile/avatar", h.Profile.UploadAvatar)
 
-		// Vehicles
+		// Avtomobillar (owner)
 		protected.POST("/vehicles", h.Vehicle.CreateVehicle)
 		protected.GET("/vehicles", h.Vehicle.GetVehicles)
 		protected.GET("/vehicles/:id", h.Vehicle.GetVehicle)
 		protected.PUT("/vehicles/:id", h.Vehicle.UpdateVehicle)
 		protected.DELETE("/vehicles/:id", h.Vehicle.DeleteVehicle)
-		protected.POST("/vehicles/ocr", h.Vehicle.OCRVehicle)
-		protected.GET("/vehicles/:id/history", h.Vehicle.GetHistory)
-		protected.POST("/vehicles/:id/transfer", h.Vehicle.TransferOwnership)
 
-		// Service records
-		protected.POST("/services", middleware.MechanicOnly(), h.Service.CreateService)
-		protected.GET("/services/:id", h.Service.GetService)
-		protected.PUT("/services/:id/confirm", h.Service.ConfirmService)
-		protected.PUT("/services/:id/reject", h.Service.RejectService)
-		protected.GET("/services/pending", h.Service.GetPendingServices)
-		protected.POST("/services/voice", middleware.MechanicOnly(), h.Service.ProcessVoiceService)
-		protected.POST("/services/:id/photos", h.Service.UploadPhotos)
+		// Bronlar — mijoz tomonidan
+		protected.POST("/bookings", h.Booking.CreateBooking)
+		protected.GET("/bookings", h.Booking.GetMyBookings)
+		protected.GET("/bookings/:id", h.Booking.GetBooking)
+		protected.PUT("/bookings/:id/cancel", h.Booking.CancelBooking)
 
-		// Mechanics (public-ish, no auth required for read)
-		protected.GET("/mechanics/:id", h.Mechanic.GetMechanic)
-		protected.GET("/mechanics/:id/reviews", h.Mechanic.GetMechanicReviews)
-		protected.PUT("/mechanics/profile", middleware.MechanicOnly(), h.Mechanic.UpdateMechanicProfile)
-		protected.GET("/mechanics/my-services", middleware.MechanicOnly(), h.Mechanic.GetMyServices)
+		// To'lov
+		protected.GET("/payments/:booking_id", h.Payment.GetPayment)
+		protected.POST("/payments/:booking_id/qr", h.Payment.GenerateQR)
+		protected.POST("/payments/:booking_id/pay", h.Payment.MarkPaid)
+		protected.POST("/payments/:booking_id/tip", h.Payment.AddTip)
 
-		// Reviews
+		// Baholash
 		protected.POST("/reviews", h.Review.CreateReview)
 		protected.GET("/reviews/:id", h.Review.GetReview)
+		protected.GET("/reviews/customer/:id", h.Review.GetCustomerReviews)
 
-		// Warranty
-		protected.POST("/warranty", h.Warranty.CreateClaim)
-		protected.GET("/warranty", h.Warranty.GetClaims)
-		protected.GET("/warranty/:id", h.Warranty.GetClaim)
-
-		// Search
-		protected.GET("/search", h.Search.Search)
-
-		// Notifications
+		// Bildirishnomalar
 		protected.GET("/notifications", h.Notification.GetNotifications)
 		protected.PUT("/notifications/:id/read", h.Notification.MarkAsRead)
 		protected.POST("/notifications/fcm-token", h.Notification.RegisterFCMToken)
 
-		// SOS — favqulodda yordam so'rovi
-		protected.POST("/sos", h.Sos.CreateRequest)
-		protected.GET("/sos", h.Sos.ListMine)
-
-		// Tamirlash so'rovlari — mijoz usta tanlab so'rov yuboradi
-		protected.POST("/repair-requests", h.Repair.Create)
-		protected.GET("/repair-requests", h.Repair.ListMine)
-
-		// Ustaga yo'naltirilgan so'rovlar (mijoz ma'lumotlari bilan)
-		protected.GET("/mechanic/assignments", middleware.MechanicOnly(), h.Assignment.MyAssignments)
+		// Servis tomonidagi marshrutlar (service roli)
+		service := protected.Group("/service")
+		service.Use(middleware.ServiceOnly())
+		{
+			service.GET("/profile", h.Shop.GetMyShop)
+			service.PUT("/profile", h.Shop.UpdateProfile)
+			service.GET("/bookings", h.Booking.GetShopBookings)
+			service.PUT("/bookings/:id/confirm", h.Booking.ConfirmBooking)
+			service.PUT("/bookings/:id/start", h.Booking.StartBooking)
+			service.PUT("/bookings/:id/complete", h.Booking.CompleteBooking)
+			service.PUT("/bookings/:id/cancel", h.Booking.ShopCancelBooking)
+			service.GET("/customers", h.Shop.GetCustomers)
+			service.GET("/customers/:customer_id", h.Shop.GetCustomerCard)
+			service.PUT("/customers/:customer_id", h.Shop.UpdateCustomerCard)
+		}
 	}
 
-	// Mechanics search (public)
-	v1.GET("/mechanics", h.Mechanic.GetMechanics)
-
-	// WebSocket — real-time SOS eventlari (token query orqali auth)
-	v1.GET("/ws", h.WS.Connect)
-
-	// Admin routes
+	// Admin marshrutlari
 	admin := v1.Group("/admin")
 	admin.Use(middleware.AuthRequired(), middleware.AdminOnly())
 	{
 		admin.GET("/stats", h.Admin.GetStats)
-		admin.GET("/mechanics", h.Admin.ListMechanics)
-		admin.POST("/mechanics", h.Admin.CreateMechanic)
-		admin.PUT("/mechanics/:id/verify", h.Admin.VerifyMechanic)
-		admin.GET("/services", h.Admin.ListServices)
+
+		// Shinomontajlar boshqaruvi
+		admin.GET("/shops", h.Admin.ListShops)
+		admin.POST("/shops", h.Admin.CreateShop)
+		admin.PUT("/shops/:id/verify", h.Admin.VerifyShop)
+
+		// Bronlar
+		admin.GET("/bookings", h.Admin.ListBookings)
+
+		// Foydalanuvchilar va avtomobillar
 		admin.GET("/users", h.Admin.ListUsers)
 		admin.GET("/vehicles", h.Admin.ListVehicles)
+
+		// Sharhlar
 		admin.GET("/reviews", h.Admin.ListReviews)
 		admin.PUT("/reviews/:id/moderate", h.Admin.ModerateReview)
-		admin.GET("/warranty", h.Admin.ListWarrantyClaims)
-		admin.PUT("/warranty/:id/resolve", h.Admin.ResolveWarrantyClaim)
-		admin.POST("/notifications/broadcast", h.Admin.SendBroadcastNotification)
-		admin.GET("/sos", h.Sos.AdminList)
-		admin.PUT("/sos/:id/status", h.Sos.AdminUpdateStatus)
-		admin.PUT("/sos/:id/assign", h.Sos.AdminAssign)
 
-		// Tamirlash so'rovlari — operator boshqaruvi
-		admin.GET("/repair-requests", h.Repair.AdminList)
-		admin.PUT("/repair-requests/:id/assign", h.Repair.AdminAssign)
-		admin.PUT("/repair-requests/:id/status", h.Repair.AdminUpdateStatus)
+		// Xizmat turlari katalogi
+		admin.GET("/service-types", h.Admin.ListServiceTypes)
+		admin.POST("/service-types", h.Admin.CreateServiceType)
+
+		// Mavsum bildirshnoma qoidalari
+		admin.GET("/seasonal-rules", h.Admin.ListSeasonalRules)
+		admin.POST("/seasonal-rules", h.Admin.CreateSeasonalRule)
+		admin.PUT("/seasonal-rules/:id", h.Admin.UpdateSeasonalRule)
+		admin.POST("/seasonal-rules/:id/send", h.Admin.SendSeasonalNow)
+
+		// Broadcast bildirshnoma
+		admin.POST("/notifications/broadcast", h.Admin.SendBroadcastNotification)
 	}
 }

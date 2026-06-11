@@ -1,4 +1,4 @@
-enum UserRole { owner, mechanic, admin }
+enum UserRole { none, owner, service, admin }
 
 class User {
   final String id;
@@ -31,22 +31,10 @@ class User {
 
   static UserRole _parseRole(String? r) {
     switch (r) {
-      case 'mechanic':
-        return UserRole.mechanic;
-      case 'admin':
-        return UserRole.admin;
-      default:
-        return UserRole.owner;
+      case 'owner':  return UserRole.owner;
+      case 'service': return UserRole.service;
+      case 'admin':  return UserRole.admin;
+      default:       return UserRole.none;
     }
   }
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'phone': phone,
-        'name': name,
-        'role': role.name,
-        'email': email,
-        'avatar_url': avatarUrl,
-        'created_at': createdAt.toIso8601String(),
-      };
 }

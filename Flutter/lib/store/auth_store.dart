@@ -56,7 +56,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login({required String email, required String password}) async {
     state = state.copyWith(loading: true, error: null);
     try {
-      final result = await _service.login(email: email, password: password);
+      final result = await _service.login(identifier: email, password: password);
       await ApiClient.instance.saveTokens(
         access: result.access,
         refresh: result.refresh,
@@ -90,6 +90,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         name: name,
         role: role,
       );
+
       await ApiClient.instance.saveTokens(
         access: result.access,
         refresh: result.refresh,
@@ -104,6 +105,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(loading: false, error: _errMsg(e));
       return false;
     }
+  }
+
+  /// Called after OTP verification — marks user as authenticated.
+  void setAuthenticated(User user) {
+    state = AuthState(
+      status: AuthStatus.authenticated,
+      user: user,
+    );
   }
 
   Future<void> logout() async {

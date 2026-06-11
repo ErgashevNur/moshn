@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/spacing.dart';
 
@@ -16,16 +16,13 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.brightnessOf(context);
-    final bg = brightness == Brightness.dark
-        ? AppColors.surfaceDark
-        : AppColors.surface;
     final card = Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_lg),
+        border: Border.all(color: AppColors.hairline(context), width: 1),
       ),
       child: child,
     );

@@ -1,6 +1,5 @@
 class Vehicle {
   final String id;
-  final String vin;
   final String plate;
   final String make;
   final String model;
@@ -12,7 +11,6 @@ class Vehicle {
 
   Vehicle({
     required this.id,
-    required this.vin,
     required this.plate,
     required this.make,
     required this.model,
@@ -23,13 +21,14 @@ class Vehicle {
     required this.createdAt,
   });
 
-  String get fullName => '$make $model';
+  String get displayName {
+    final parts = [if (make.isNotEmpty) make, if (model.isNotEmpty) model];
+    return parts.isNotEmpty ? '${parts.join(' ')} · $plate' : plate;
+  }
 
   factory Vehicle.fromJson(Map<String, dynamic> json) => Vehicle(
         id: json['id'] as String,
-        vin: json['vin'] as String? ?? '',
-        // Backend field is `current_plate`; accept `plate` as a fallback.
-        plate: (json['current_plate'] ?? json['plate'] ?? '') as String,
+        plate: (json['plate'] ?? json['current_plate'] ?? '') as String,
         make: json['make'] as String? ?? '',
         model: json['model'] as String? ?? '',
         year: (json['year'] as num?)?.toInt() ?? 0,

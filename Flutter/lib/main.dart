@@ -1,5 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,17 +47,19 @@ class _MoshnAppState extends ConsumerState<MoshnApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
-    final platformBrightness = MediaQuery.platformBrightnessOf(context);
-    final brightness = switch (themeMode) {
-      AppThemeMode.light => Brightness.light,
-      AppThemeMode.dark => Brightness.dark,
-      AppThemeMode.system => platformBrightness,
+
+    final materialThemeMode = switch (themeMode) {
+      AppThemeMode.light => ThemeMode.light,
+      AppThemeMode.dark => ThemeMode.dark,
+      AppThemeMode.system => ThemeMode.system,
     };
 
-    return CupertinoApp.router(
-      title: 'Moshn',
+    return MaterialApp.router(
+      title: 'Shina24',
       debugShowCheckedModeBanner: false,
-      theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: materialThemeMode,
       routerConfig: router,
       localizationsDelegates: [
         ...context.localizationDelegates,
@@ -68,9 +70,6 @@ class _MoshnAppState extends ConsumerState<MoshnApp> {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       builder: (context, child) {
-        // Clamp accessibility text scaling so large-font users don't break our
-        // fixed-height inputs/buttons. 0.9× protects mechanic dashboards with
-        // many columns; 1.25× still honours user preference within reason.
         final mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(

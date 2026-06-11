@@ -1,52 +1,113 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/user.dart';
+import '../../services/api.dart';
+import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/responsive.dart';
-import '../../widgets/section_card.dart';
+import '../../widgets/m_button.dart';
 
-class RoleSelectScreen extends StatelessWidget {
+class RoleSelectScreen extends ConsumerStatefulWidget {
   const RoleSelectScreen({super.key});
 
   @override
+  ConsumerState<RoleSelectScreen> createState() => _RoleSelectScreenState();
+}
+
+class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
+  UserRole? _selected;
+  bool _loading = false;
+  String _error = '';
+
+  Future<void> _confirm() async {
+    if (_selected == null || _loading) return;
+    setState(() { _loading = true; _error = ''; });
+
+    try {
+      final resp = await ApiClient.instance.dio.put('/profile/role', data: {
+        'role': _selected == UserRole.service ? 'service' : 'owner',
+      });
+      final userData = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+      final updatedUser = User.fromJson(userData);
+      ref.read(authProvider.notifier).setAuthenticated(updatedUser);
+      if (!mounted) return;
+      context.go(_selected == UserRole.service ? '/service' : '/owner');
+    } catch (e) {
+      setState(() {
+        _error = 'common.error_retry'.tr();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(border: null),
-      child: SafeArea(
-        child: ResponsiveContent(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: AppSpacing.lg),
-                Text('auth.role_select_title'.tr(),
-                    style: AppTypography.largeTitle),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'auth.role_select_subtitle'.tr(),
-                  style: AppTypography.body
-                      .copyWith(color: AppColors.labelTertiary),
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                'auth.role_select_title'.tr(),
+                style: AppTypography.displaySmall.copyWith(
+                  color: AppColors.text(context),
+                  height: 1.1,
                 ),
-                const SizedBox(height: AppSpacing.xxxl),
-                _RoleCard(
-                  icon: CupertinoIcons.car_detailed,
-                  title: 'auth.role_owner'.tr(),
-                  subtitle: 'auth.welcome_subtitle'.tr(),
-                  onTap: () => context.push('/register?role=owner'),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'auth.role_select_subtitle'.tr(),
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.text2(context),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _RoleCard(
-                  icon: CupertinoIcons.wrench_fill,
-                  title: 'auth.role_mechanic'.tr(),
-                  subtitle: 'mechanic.home_title'.tr(),
-                  onTap: () => context.push('/register?role=mechanic'),
-                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Owner card
+              _RoleCard(
+                role: UserRole.owner,
+                selected: _selected == UserRole.owner,
+                icon: Icons.directions_car_rounded,
+                title: 'auth.role_owner'.tr(),
+                subtitle: 'auth.role_owner_sub'.tr(),
+                onTap: () => setState(() => _selected = UserRole.owner),
+              ),
+              const SizedBox(height: 12),
+
+              // Service card
+              _RoleCard(
+                role: UserRole.service,
+                selected: _selected == UserRole.service,
+                icon: Icons.tire_repair_rounded,
+                title: 'auth.role_service'.tr(),
+                subtitle: 'auth.role_service_sub'.tr(),
+                onTap: () => setState(() => _selected = UserRole.service),
+              ),
+
+              if (_error.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(_error,
+                    style: AppTypography.body.copyWith(color: AppColors.danger)),
               ],
-            ),
+
+              const Spacer(),
+
+              MButton(
+                label: 'auth.continue_btn'.tr(),
+                onTap: _selected != null ? _confirm : null,
+                enabled: _selected != null,
+                loading: _loading,
+                trailing: const Icon(Icons.arrow_forward_rounded),
+              ),
+            ],
           ),
         ),
       ),
@@ -55,12 +116,16 @@ class RoleSelectScreen extends StatelessWidget {
 }
 
 class _RoleCard extends StatelessWidget {
+  final UserRole role;
+  final bool selected;
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _RoleCard({
+    required this.role,
+    required this.selected,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -69,39 +134,86 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AppColors.primaryOf(context);
-    return SectionCard(
+    return GestureDetector(
       onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
-            child: Icon(icon, color: accent, size: 24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.inverseBg(context) : AppColors.surface(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_xl),
+          border: Border.all(
+            color: selected ? AppColors.inverseBg(context) : AppColors.hairline(context),
+            width: selected ? 2 : 1,
           ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTypography.headline),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: AppTypography.footnote.copyWith(
-                    color: AppColors.labelTertiary,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.inverseText(context).withValues(alpha: 0.15)
+                    : AppColors.surface2(context),
+                borderRadius: BorderRadius.circular(AppSpacing.r_md),
+              ),
+              child: Icon(
+                icon,
+                size: 26,
+                color: selected
+                    ? AppColors.inverseText(context)
+                    : AppColors.text(context),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.soraSize(16, weight: FontWeight.w700)
+                        .copyWith(
+                      color: selected
+                          ? AppColors.inverseText(context)
+                          : AppColors.text(context),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: AppTypography.body.copyWith(
+                      color: selected
+                          ? AppColors.inverseText(context).withValues(alpha: 0.7)
+                          : AppColors.text2(context),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(CupertinoIcons.chevron_right,
-              color: AppColors.labelTertiary, size: 18),
-        ],
+            const SizedBox(width: 12),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: selected ? AppColors.inverseText(context) : Colors.transparent,
+                border: Border.all(
+                  color: selected
+                      ? AppColors.inverseText(context)
+                      : AppColors.hairline2(context),
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? Icon(Icons.check_rounded,
+                      size: 14, color: AppColors.inverseBg(context))
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }

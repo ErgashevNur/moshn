@@ -5,26 +5,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID                  uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	Phone               string     `gorm:"uniqueIndex;not null" json:"phone"`
-	Email               string     `gorm:"uniqueIndex;not null" json:"email"`
-	PasswordHash        string     `gorm:"not null" json:"-"`
-	Role                string     `gorm:"type:varchar(20);not null" json:"role"` // owner, mechanic
-	FullName            string     `gorm:"not null" json:"full_name"`
-	AvatarURL           string     `json:"avatar_url"`
-	Language            string     `gorm:"default:'uz'" json:"language"`
-	IsVerified          bool       `gorm:"default:false" json:"is_verified"`
-	EmailVerified       bool       `gorm:"default:false" json:"email_verified"`
-	EmailOTPCode        string     `json:"-"`
-	EmailOTPExpiresAt   *time.Time `json:"-"`
-	EmailOTPLastSentAt  *time.Time `json:"-"`
-	CreatedAt           time.Time  `json:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at"`
+	ID                 uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	Phone              string     `gorm:"uniqueIndex;not null" json:"phone"`
+	Email              string     `gorm:"uniqueIndex;not null" json:"email"`
+	PasswordHash       string     `gorm:"not null" json:"-"`
+	Role               string     `gorm:"type:varchar(20);not null" json:"role"` // owner, service, admin
+	FullName           string     `gorm:"not null" json:"full_name"`
+	AvatarURL          string     `json:"avatar_url"`
+	Language           string     `gorm:"default:'uz'" json:"language"`
+	IsVerified         bool       `gorm:"default:false" json:"is_verified"`
+	EmailVerified      bool       `gorm:"default:false" json:"email_verified"`
+	EmailOTPCode       string     `json:"-"`
+	EmailOTPExpiresAt  *time.Time `json:"-"`
+	EmailOTPLastSentAt *time.Time `json:"-"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -34,47 +33,47 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type Mechanic struct {
+// ShopProfile — shinomontaj nuqtasi profili
+type ShopProfile struct {
 	ID                 uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	UserID             uuid.UUID      `gorm:"type:uuid;uniqueIndex;not null" json:"user_id"`
 	User               User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Specialization     pq.StringArray `gorm:"type:text[]" json:"specialization"`
-	WorkshopName       string         `json:"workshop_name"`
-	WorkshopAddress    string         `gorm:"not null" json:"workshop_address"`
-	Latitude           float64        `gorm:"not null" json:"latitude"`
-	Longitude          float64        `gorm:"not null" json:"longitude"`
-	WorkHours          string         `json:"work_hours"`
-	StarLevel          int            `gorm:"default:0" json:"star_level"`
-	VerificationStatus string         `gorm:"type:varchar(20);default:'pending'" json:"verification_status"`
+	ShopName           string         `json:"shop_name"`
+	Address            string         `gorm:"not null" json:"address"`
+	Latitude           float64        `json:"latitude"`
+	Longitude          float64        `json:"longitude"`
+	Phone              string         `json:"phone"`
+	WorkingHours       string         `json:"working_hours"`
+	ServiceTypes       pq.StringArray `gorm:"type:text[]" json:"service_types"`
+	VerificationStatus string         `gorm:"type:varchar(20);default:'pending'" json:"verification_status"` // pending, verified, rejected
 	VerificationNotes  string         `json:"verification_notes"`
-	TotalServices      int            `gorm:"default:0" json:"total_services"`
 	RatingAvg          float64        `gorm:"default:0" json:"rating_avg"`
 	RatingCount        int            `gorm:"default:0" json:"rating_count"`
+	TotalBookings      int            `gorm:"default:0" json:"total_bookings"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 }
 
-func (m *Mechanic) BeforeCreate(tx *gorm.DB) error {
-	if m.ID == uuid.Nil {
-		m.ID = uuid.New()
+func (s *ShopProfile) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == uuid.Nil {
+		s.ID = uuid.New()
 	}
 	return nil
 }
 
+// Vehicle — plaka raqami asosiy identifikator
 type Vehicle struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	VIN             string    `gorm:"uniqueIndex;size:17;not null" json:"vin"`
-	CurrentPlate    string    `gorm:"not null" json:"current_plate"`
-	OwnerID         uuid.UUID `gorm:"type:uuid;not null" json:"owner_id"`
-	Owner           User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	Make            string    `gorm:"not null" json:"make"`
-	Model           string    `gorm:"not null" json:"model"`
-	Year            int       `gorm:"not null" json:"year"`
-	Color           string    `json:"color"`
-	PhotoURL        string    `json:"photo_url"`
-	TechpassportURL string    `json:"techpassport_url"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Plate     string    `gorm:"uniqueIndex;not null" json:"plate"`
+	OwnerID   uuid.UUID `gorm:"type:uuid;not null" json:"owner_id"`
+	Owner     User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+	Make      string    `json:"make"`
+	Model     string    `json:"model"`
+	Year      int       `json:"year"`
+	Color     string    `json:"color"`
+	PhotoURL  string    `json:"photo_url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (v *Vehicle) BeforeCreate(tx *gorm.DB) error {
@@ -84,81 +83,122 @@ func (v *Vehicle) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type PlateHistory struct {
-	ID          uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	VehicleID   uuid.UUID  `gorm:"type:uuid;not null" json:"vehicle_id"`
-	PlateNumber string     `gorm:"not null" json:"plate_number"`
-	StartedAt   time.Time  `gorm:"not null" json:"started_at"`
-	EndedAt     *time.Time `json:"ended_at"`
+// ServiceType — xizmat turlari katalogi
+type ServiceType struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Slug      string    `gorm:"uniqueIndex;not null" json:"slug"` // pumping, tire_change, rim_repair
+	NameUz    string    `gorm:"not null" json:"name_uz"`
+	NameRu    string    `gorm:"not null" json:"name_ru"`
+	Icon      string    `json:"icon"`
+	BasePrice int       `json:"base_price"` // UZS
+	IsActive  bool      `gorm:"default:true" json:"is_active"`
 }
 
-func (p *PlateHistory) BeforeCreate(tx *gorm.DB) error {
-	if p.ID == uuid.Nil {
-		p.ID = uuid.New()
-	}
-	return nil
-}
-
-type OwnershipHistory struct {
-	ID        uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	VehicleID uuid.UUID  `gorm:"type:uuid;not null" json:"vehicle_id"`
-	OwnerID   uuid.UUID  `gorm:"type:uuid;not null" json:"owner_id"`
-	Owner     User       `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	StartedAt time.Time  `gorm:"not null" json:"started_at"`
-	EndedAt   *time.Time `json:"ended_at"`
-}
-
-func (o *OwnershipHistory) BeforeCreate(tx *gorm.DB) error {
-	if o.ID == uuid.Nil {
-		o.ID = uuid.New()
-	}
-	return nil
-}
-
-type ServiceRecord struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	VehicleID    uuid.UUID      `gorm:"type:uuid;not null" json:"vehicle_id"`
-	Vehicle      Vehicle        `gorm:"foreignKey:VehicleID" json:"vehicle,omitempty"`
-	MechanicID   uuid.UUID      `gorm:"type:uuid;not null" json:"mechanic_id"`
-	Mechanic     Mechanic       `gorm:"foreignKey:MechanicID" json:"mechanic,omitempty"`
-	OwnerID      uuid.UUID      `gorm:"type:uuid;not null" json:"owner_id"`
-	Owner        User           `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	ServiceDate  time.Time      `gorm:"not null" json:"service_date"`
-	MileageKm    *int           `json:"mileage_km"`
-	ServiceType  string         `gorm:"not null" json:"service_type"`
-	Description  string         `gorm:"not null" json:"description"`
-	PartsUsed    datatypes.JSON `gorm:"type:jsonb" json:"parts_used"`
-	PriceUZS     *int64         `json:"price_uzs"`
-	Notes        string         `json:"notes"`
-	VoiceTextRaw string         `json:"voice_text_raw"`
-	LLMParsed    datatypes.JSON `gorm:"type:jsonb" json:"llm_parsed"`
-	PhotoBefore  pq.StringArray `gorm:"type:text[]" json:"photo_before"`
-	PhotoAfter   pq.StringArray `gorm:"type:text[]" json:"photo_after"`
-	Status       string         `gorm:"type:varchar(30);default:'created'" json:"status"`
-	ConfirmedAt  *time.Time     `json:"confirmed_at"`
-	AutoConfirmed bool          `gorm:"default:false" json:"auto_confirmed"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-}
-
-func (s *ServiceRecord) BeforeCreate(tx *gorm.DB) error {
+func (s *ServiceType) BeforeCreate(tx *gorm.DB) error {
 	if s.ID == uuid.Nil {
 		s.ID = uuid.New()
 	}
 	return nil
 }
 
+// Booking — bron qilish
+type Booking struct {
+	ID            uuid.UUID   `gorm:"type:uuid;primaryKey" json:"id"`
+	CustomerID    uuid.UUID   `gorm:"type:uuid;not null" json:"customer_id"`
+	Customer      User        `gorm:"foreignKey:CustomerID" json:"customer,omitempty"`
+	ShopID        uuid.UUID   `gorm:"type:uuid;not null" json:"shop_id"`
+	Shop          ShopProfile `gorm:"foreignKey:ShopID" json:"shop,omitempty"`
+	VehicleID     uuid.UUID   `gorm:"type:uuid;not null" json:"vehicle_id"`
+	Vehicle       Vehicle     `gorm:"foreignKey:VehicleID" json:"vehicle,omitempty"`
+	ServiceTypeID uuid.UUID   `gorm:"type:uuid;not null" json:"service_type_id"`
+	ServiceType   ServiceType `gorm:"foreignKey:ServiceTypeID" json:"service_type,omitempty"`
+	ScheduledAt   time.Time   `gorm:"not null" json:"scheduled_at"`
+	Notes         string      `json:"notes"`
+	Status        string      `gorm:"type:varchar(30);default:'pending'" json:"status"` // pending, confirmed, in_progress, completed, cancelled
+	TotalPrice    int         `json:"total_price"`
+	CancelReason  string      `json:"cancel_reason"`
+	CompletedAt   *time.Time  `json:"completed_at"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+}
+
+func (b *Booking) BeforeCreate(tx *gorm.DB) error {
+	if b.ID == uuid.Nil {
+		b.ID = uuid.New()
+	}
+	return nil
+}
+
+// Payment — to'lov tranzaksiyasi
+type Payment struct {
+	ID        uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	BookingID uuid.UUID  `gorm:"type:uuid;uniqueIndex;not null" json:"booking_id"`
+	Booking   Booking    `gorm:"foreignKey:BookingID" json:"booking,omitempty"`
+	Amount    int        `gorm:"not null" json:"amount"` // UZS
+	Method    string     `gorm:"type:varchar(30)" json:"method"` // cash, card_qr, installment
+	Status    string     `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, paid, failed
+	QRCode    string     `json:"qr_code"`
+	PaidAt    *time.Time `json:"paid_at"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+func (p *Payment) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	return nil
+}
+
+// Tip — chayivoye
+type Tip struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	BookingID uuid.UUID `gorm:"type:uuid;not null" json:"booking_id"`
+	Booking   Booking   `gorm:"foreignKey:BookingID" json:"booking,omitempty"`
+	Amount    int       `gorm:"not null" json:"amount"` // UZS
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (t *Tip) BeforeCreate(tx *gorm.DB) error {
+	if t.ID == uuid.Nil {
+		t.ID = uuid.New()
+	}
+	return nil
+}
+
+// CustomerCard — servisning mijoz CRM kartochkasi
+type CustomerCard struct {
+	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;uniqueIndex:idx_shop_customer" json:"id"`
+	ShopID      uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_shop_customer" json:"shop_id"`
+	CustomerID  uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_shop_customer" json:"customer_id"`
+	Customer    User       `gorm:"foreignKey:CustomerID" json:"customer,omitempty"`
+	IsVip       bool       `gorm:"default:false" json:"is_vip"`
+	Notes       string     `json:"notes"`
+	VisitCount  int        `gorm:"default:0" json:"visit_count"`
+	LastVisitAt *time.Time `json:"last_visit_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+func (c *CustomerCard) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == uuid.Nil {
+		c.ID = uuid.New()
+	}
+	return nil
+}
+
+// Review — ikki tomonlama baholash: owner→shop va shop→owner
 type Review struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	ServiceRecordID uuid.UUID `gorm:"type:uuid;uniqueIndex;not null" json:"service_record_id"`
-	MechanicID      uuid.UUID `gorm:"type:uuid;not null" json:"mechanic_id"`
-	Mechanic        Mechanic  `gorm:"foreignKey:MechanicID" json:"mechanic,omitempty"`
-	OwnerID         uuid.UUID `gorm:"type:uuid;not null" json:"owner_id"`
-	Owner           User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	Rating          int       `gorm:"not null" json:"rating"`
-	Comment         string    `json:"comment"`
-	IsModerated     bool      `gorm:"default:false" json:"is_moderated"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	BookingID   uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_booking_type" json:"booking_id"`
+	Booking     Booking   `gorm:"foreignKey:BookingID" json:"booking,omitempty"`
+	AuthorID    uuid.UUID `gorm:"type:uuid;not null" json:"author_id"`
+	Author      User      `gorm:"foreignKey:AuthorID" json:"author,omitempty"`
+	TargetID    uuid.UUID `gorm:"type:uuid;not null" json:"target_id"` // shop_id yoki customer_id
+	ReviewType  string    `gorm:"type:varchar(20);not null;uniqueIndex:idx_booking_type" json:"review_type"` // owner_to_shop, shop_to_owner
+	Rating      int       `gorm:"not null" json:"rating"` // 1-5
+	Comment     string    `json:"comment"`
+	IsModerated bool      `gorm:"default:false" json:"is_moderated"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func (r *Review) BeforeCreate(tx *gorm.DB) error {
@@ -168,25 +208,23 @@ func (r *Review) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type WarrantyClaim struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	ServiceRecordID uuid.UUID      `gorm:"type:uuid;not null" json:"service_record_id"`
-	OwnerID         uuid.UUID      `gorm:"type:uuid;not null" json:"owner_id"`
-	Owner           User           `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	MechanicID      uuid.UUID      `gorm:"type:uuid;not null" json:"mechanic_id"`
-	Mechanic        Mechanic       `gorm:"foreignKey:MechanicID" json:"mechanic,omitempty"`
-	Description     string         `gorm:"not null" json:"description"`
-	EvidencePhotos  pq.StringArray `gorm:"type:text[]" json:"evidence_photos"`
-	Status          string         `gorm:"type:varchar(20);default:'open'" json:"status"`
-	AdminNotes      string         `json:"admin_notes"`
-	AmountUZS       *int64         `json:"amount_uzs"`
-	CreatedAt       time.Time      `json:"created_at"`
-	ResolvedAt      *time.Time     `json:"resolved_at"`
+// SeasonalRule — mavsum bildirshnomasi qoidasi
+type SeasonalRule struct {
+	ID         uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	Name       string     `gorm:"not null" json:"name"`
+	SendMonth  int        `gorm:"not null" json:"send_month"` // 1-12
+	SendDay    int        `gorm:"not null" json:"send_day"`   // 1-31
+	MessageUz  string     `gorm:"not null" json:"message_uz"`
+	MessageRu  string     `gorm:"not null" json:"message_ru"`
+	IsActive   bool       `gorm:"default:true" json:"is_active"`
+	LastSentAt *time.Time `json:"last_sent_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
-func (w *WarrantyClaim) BeforeCreate(tx *gorm.DB) error {
-	if w.ID == uuid.Nil {
-		w.ID = uuid.New()
+func (s *SeasonalRule) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == uuid.Nil {
+		s.ID = uuid.New()
 	}
 	return nil
 }
@@ -220,63 +258,6 @@ type FCMToken struct {
 func (f *FCMToken) BeforeCreate(tx *gorm.DB) error {
 	if f.ID == uuid.Nil {
 		f.ID = uuid.New()
-	}
-	return nil
-}
-
-// SosRequest — favqulodda yordam so'rovi. Mashina egasi yo'lda qolganda
-// tasdiqlangan telefon raqami va joylashuvini operatorga yuboradi.
-type SosRequest struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	// Phone — so'rov uchun tasdiqlangan aloqa raqami (akkaunt raqamidan farq qilishi mumkin).
-	Phone     string    `gorm:"not null" json:"phone"`
-	Latitude  float64   `gorm:"not null" json:"latitude"`
-	Longitude float64   `gorm:"not null" json:"longitude"`
-	// Address — teskari geokodlash yoki qo'lda tanlangan manzil izohi.
-	Address string `json:"address"`
-	// AssignedMechanicID — operator SOS so'rovini yo'naltirgan usta.
-	AssignedMechanicID *uuid.UUID `gorm:"type:uuid" json:"assigned_mechanic_id"`
-	AssignedMechanic   *Mechanic  `gorm:"foreignKey:AssignedMechanicID" json:"assigned_mechanic,omitempty"`
-	Status             string     `gorm:"type:varchar(20);default:'new'" json:"status"` // new, in_progress, resolved, cancelled
-	AdminNotes         string     `json:"admin_notes"`
-	CreatedAt          time.Time  `json:"created_at"`
-	ResolvedAt         *time.Time `json:"resolved_at"`
-}
-
-func (s *SosRequest) BeforeCreate(tx *gorm.DB) error {
-	if s.ID == uuid.Nil {
-		s.ID = uuid.New()
-	}
-	return nil
-}
-
-// RepairRequest — mijoz tamirlash uchun usta tanlab, operatorga so'rov yuboradi.
-// Operator usta bilan gaplashib so'rovni unga yo'naltiradi (assign); yo'naltirilgach
-// usta mijoz ma'lumotlarini ko'radi.
-type RepairRequest struct {
-	ID     uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	User   User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Phone  string    `gorm:"not null" json:"phone"`
-	// PreferredMechanicID — mijoz dastlab tanlagan usta.
-	PreferredMechanicID *uuid.UUID `gorm:"type:uuid" json:"preferred_mechanic_id"`
-	PreferredMechanic   *Mechanic  `gorm:"foreignKey:PreferredMechanicID" json:"preferred_mechanic,omitempty"`
-	// AssignedMechanicID — operator yakuniy yo'naltirgan usta.
-	AssignedMechanicID *uuid.UUID `gorm:"type:uuid" json:"assigned_mechanic_id"`
-	AssignedMechanic   *Mechanic  `gorm:"foreignKey:AssignedMechanicID" json:"assigned_mechanic,omitempty"`
-	CarInfo            string     `json:"car_info"`
-	Description        string     `gorm:"not null" json:"description"`
-	Status             string     `gorm:"type:varchar(20);default:'new'" json:"status"` // new, in_progress, resolved, cancelled
-	AdminNotes         string     `json:"admin_notes"`
-	CreatedAt          time.Time  `json:"created_at"`
-	ResolvedAt         *time.Time `json:"resolved_at"`
-}
-
-func (r *RepairRequest) BeforeCreate(tx *gorm.DB) error {
-	if r.ID == uuid.Nil {
-		r.ID = uuid.New()
 	}
 	return nil
 }

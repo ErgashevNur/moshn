@@ -1,93 +1,337 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../models/sos_request.dart';
-import '../../services/sos_service.dart';
+import '../../models/service_type.dart';
+import '../../models/shop.dart';
+import '../../services/shop_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/section_card.dart';
+import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_ph.dart';
+import '../../widgets/m_service_tile.dart';
+import '../../widgets/m_tag.dart';
+import '../../widgets/m_workshop_card.dart';
 
-final _sosProvider = FutureProvider.autoDispose<List<SosRequest>>((ref) {
-  return SosService().mine();
+// ── Providers ──────────────────────────────────────────────────────────────────
+
+final serviceTypesProvider = FutureProvider.autoDispose<List<ServiceType>>((ref) {
+  return ShopService().getServiceTypes();
 });
 
-/// Bizdagi asosiy xizmatlar — bosh sahifada ko'rsatish uchun.
-const _services = [
-  (icon: CupertinoIcons.gauge, title: 'Dvigatel ta\'miri', subtitle: 'Motor, moy, diagnostika'),
-  (icon: CupertinoIcons.car_detailed, title: 'Xodovoy va tormoz', subtitle: 'Podveska, balatka'),
-  (icon: CupertinoIcons.bolt_fill, title: 'Elektrika', subtitle: 'Provodka, akkumulyator'),
-  (icon: CupertinoIcons.snow, title: 'Konditsioner', subtitle: 'Sovutish, to\'ldirish'),
-];
+final selectedServiceTypeProvider = StateProvider<String?>((ref) => null);
 
-const _sosStatusLabels = {
-  'new': 'Yangi',
-  'in_progress': 'Jarayonda',
-  'resolved': 'Hal qilindi',
-  'cancelled': 'Bekor qilindi',
-};
+final shopsProvider = FutureProvider.autoDispose<List<Shop>>((ref) {
+  final type = ref.watch(selectedServiceTypeProvider);
+  return ShopService().getShops(serviceType: type);
+});
 
-Color _sosStatusColor(String s) {
-  switch (s) {
-    case 'in_progress':
-      return AppColors.info;
-    case 'resolved':
-      return AppColors.success;
-    case 'cancelled':
-      return AppColors.labelTertiary;
-    default:
-      return AppColors.destructive; // new
+// ── Responsive helper ──────────────────────────────────────────────────────────
+
+class _R {
+  final double w;
+  const _R(this.w);
+
+  bool get isSmall  => w < 300;
+  bool get isNormal => w >= 300 && w < 600;
+  bool get isMedium => w >= 600 && w < 840;
+  bool get isLarge  => w >= 840;
+  bool get isWide   => w >= 600;
+
+  double get hPad  => w < 340 ? 14 : isWide ? 24 : 18;
+  int    get cols  => isLarge ? 5 : isMedium ? 4 : isSmall ? 2 : 3;
+  double get titleSize  => isSmall ? 20 : isWide ? 30 : 25;
+  double get sectionSize => isSmall ? 15 : isWide ? 20 : 17;
+  double get bodySize    => isSmall ? 13 : 15;
+  double get imgSize     => isSmall ? 60 : isWide ? 88 : 72;
+  double get tileAspect  => isLarge ? 1.1 : isWide ? 1.0 : 0.85;
+}
+
+// ── Icon mapping ───────────────────────────────────────────────────────────────
+
+String _iconForSlug(String slug) {
+  switch (slug) {
+    case 'tire_change':  return 'disc';
+    case 'pumping':      return 'gauge';
+    case 'patch':        return 'wrench';
+    case 'balancing':    return 'disc';
+    case 'rim_repair':   return 'disc';
+    case 'storage':      return 'layers';
+    default:             return 'wrench';
   }
 }
+
+// ── Screen ─────────────────────────────────────────────────────────────────────
 
 class OwnerHomeScreen extends ConsumerWidget {
   const OwnerHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider).user;
-    final sos = ref.watch(_sosProvider);
+    final user       = ref.watch(authProvider).user;
+    final typesAsync = ref.watch(serviceTypesProvider);
+    final shopsAsync = ref.watch(shopsProvider);
+    final selected   = ref.watch(selectedServiceTypeProvider);
 
-    return CupertinoPageScaffold(
-      child: SafeArea(
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            CupertinoSliverNavigationBar(
-              border: null,
-              largeTitle:
-                  Text('${'owner.home_title'.tr()}, ${user?.name ?? ""}'),
-              trailing: CupertinoButton(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                onPressed: () => context.push('/owner/find-mechanic'),
-                child: Icon(CupertinoIcons.search,
-                    color: AppColors.primaryOf(context)),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final r = _R(constraints.maxWidth);
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 24),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.hPad),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _HomeAppBar(user: user, r: r),
+                  SizedBox(height: r.isSmall ? 14 : 20),
+
+                  // Title
+                  Text(
+                    'home.what_service'.tr(),
+                    style: AppTypography.soraSize(r.titleSize,
+                            weight: FontWeight.w700)
+                        .copyWith(
+                      color: AppColors.text(context),
+                      letterSpacing: r.titleSize * -0.03,
+                      height: 1.15,
+                    ),
+                  ),
+                  SizedBox(height: r.isSmall ? 12 : 16),
+
+                  // Search bar
+                  _SearchBar(onTap: () => context.push('/owner/map'), r: r),
+                  SizedBox(height: r.isSmall ? 14 : 20),
+
+                  // Service type grid
+                  typesAsync.when(
+                    data: (types) => _ServiceTypeGrid(
+                      types: types,
+                      selectedSlug: selected,
+                      r: r,
+                      onTap: (slug) => context.push('/owner/services/$slug'),
+                    ),
+                    loading: () => SizedBox(
+                      height: r.isSmall ? 120 : 160,
+                      child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    error: (e, s) => const SizedBox.shrink(),
+                  ),
+                  SizedBox(height: r.isSmall ? 16 : 24),
+
+                  // Promo banner
+                  _PromoBanner(r: r),
+                  SizedBox(height: r.isSmall ? 20 : 28),
+
+                  // Section header
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'home.top_services'.tr(),
+                          style: AppTypography.soraSize(r.sectionSize,
+                                  weight: FontWeight.w700)
+                              .copyWith(color: AppColors.text(context)),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/owner/map'),
+                        child: Text(
+                          'home.view_on_map'.tr(),
+                          style: AppTypography.soraSize(r.isSmall ? 12 : 13,
+                                  weight: FontWeight.w500)
+                              .copyWith(color: AppColors.text2(context)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.isSmall ? 10 : 14),
+
+                  // Shop list
+                  shopsAsync.when(
+                    data: (shops) => shops.isEmpty
+                        ? _EmptyShops(r: r)
+                        : r.isWide
+                            ? _ShopGrid(shops: shops, r: r)
+                            : _ShopList(shops: shops, r: r),
+                    loading: () => Padding(
+                      padding: EdgeInsets.symmetric(vertical: r.isSmall ? 24 : 40),
+                      child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    error: (e, _) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text('home.error_label'.tr(),
+                            style: AppTypography.body
+                                .copyWith(color: AppColors.danger)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            CupertinoSliverRefreshControl(
-              onRefresh: () async {
-                ref.invalidate(_sosProvider);
-                await ref.read(_sosProvider.future);
-              },
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── AppBar ─────────────────────────────────────────────────────────────────────
+
+class _HomeAppBar extends ConsumerWidget {
+  final dynamic user;
+  final _R r;
+  const _HomeAppBar({required this.user, required this.r});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final iconSize = r.isSmall ? 36.0 : 42.0;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'home.near_you'.tr(),
+                  style: AppTypography.eyebrow
+                      .copyWith(color: AppColors.text3(context)),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MoshnIcon(
+                      name: 'pin',
+                      size: r.isSmall ? 13 : 15,
+                      color: AppColors.text(context),
+                    ),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        'Toshkent, Yunusobod',
+                        style: AppTypography.soraSize(
+                                r.isSmall ? 13 : 15,
+                                weight: FontWeight.w600)
+                            .copyWith(color: AppColors.text(context)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(Icons.expand_more_rounded,
+                        size: 16, color: AppColors.text2(context)),
+                  ],
+                ),
+              ],
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate.fixed([
-                  const SizedBox(height: AppSpacing.sm),
-                  _SectionHeader(title: 'SOS holati'),
-                  const SizedBox(height: AppSpacing.sm),
-                  _SosStatusSection(state: sos),
-                  const SizedBox(height: AppSpacing.xl),
-                  _SectionHeader(title: 'Xizmatlar'),
-                  const SizedBox(height: AppSpacing.sm),
-                  const _ServicesSection(),
-                  const SizedBox(height: AppSpacing.huge),
-                ]),
+          ),
+          SizedBox(width: r.isSmall ? 6 : 10),
+
+          // Bell
+          GestureDetector(
+            onTap: () => context.push('/notifications'),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _IconCircle(size: iconSize, child:
+                  Icon(Icons.notifications_outlined,
+                      size: iconSize * 0.48, color: AppColors.text(context))),
+                Positioned(
+                  top: iconSize * 0.18,
+                  right: iconSize * 0.18,
+                  child: Container(
+                    width: 8, height: 8,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFE5382B), shape: BoxShape.circle),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: r.isSmall ? 6 : 8),
+
+          // Avatar
+          GestureDetector(
+            onTap: () => context.push('/profile'),
+            child: Container(
+              width: iconSize, height: iconSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.hairline(context), width: 1),
+              ),
+              child: ClipOval(child: MPh(width: iconSize, height: iconSize, label: 'AV')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconCircle extends StatelessWidget {
+  final double size;
+  final Widget child;
+  const _IconCircle({required this.size, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size, height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.surface(context),
+        border: Border.all(color: AppColors.hairline(context), width: 1),
+      ),
+      child: child,
+    );
+  }
+}
+
+// ── Search bar ─────────────────────────────────────────────────────────────────
+
+class _SearchBar extends StatelessWidget {
+  final VoidCallback onTap;
+  final _R r;
+  const _SearchBar({required this.onTap, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: r.isSmall ? 46 : 52,
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_md),
+          border: Border.all(color: AppColors.hairline(context), width: 1),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            Icon(Icons.search_rounded,
+                size: r.isSmall ? 18 : 20, color: AppColors.text3(context)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'home.search_hint'.tr(),
+                style: AppTypography.soraSize(r.isSmall ? 13 : 15)
+                    .copyWith(color: AppColors.text3(context)),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -97,282 +341,218 @@ class OwnerHomeScreen extends ConsumerWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
+// ── Service type grid ──────────────────────────────────────────────────────────
+
+class _ServiceTypeGrid extends StatelessWidget {
+  final List<ServiceType> types;
+  final String? selectedSlug;
+  final _R r;
+  final void Function(String) onTap;
+
+  const _ServiceTypeGrid({
+    required this.types,
+    required this.selectedSlug,
+    required this.r,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-      child: Text(title, style: AppTypography.title3),
-    );
-  }
-}
-
-class _SosStatusSection extends StatelessWidget {
-  final AsyncValue<List<SosRequest>> state;
-  const _SosStatusSection({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return state.when(
-      data: (items) {
-        if (items.isEmpty) {
-          return SectionCard(
-            onTap: () => context.push('/owner/sos'),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.destructive.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  ),
-                  child: const Icon(CupertinoIcons.exclamationmark_shield_fill,
-                      color: AppColors.destructive),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Faol SOS so\'rovi yo\'q',
-                          style: AppTypography.headline),
-                      const SizedBox(height: 2),
-                      Text('Yo\'lda qolsangiz — SOS tugmasini bosing',
-                          style: AppTypography.footnote
-                              .copyWith(color: AppColors.labelTertiary)),
-                    ],
-                  ),
-                ),
-                const Icon(CupertinoIcons.chevron_right,
-                    color: AppColors.labelTertiary, size: 18),
-              ],
-            ),
-          );
-        }
-        // Eng so'nggi 3 ta SOS so'rovi.
-        return Column(
-          children: items
-              .take(3)
-              .map((s) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: _SosCard(req: s),
-                  ))
-              .toList(),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: types.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: r.cols,
+        crossAxisSpacing: r.isSmall ? 8 : 10,
+        mainAxisSpacing: r.isSmall ? 8 : 10,
+        childAspectRatio: r.tileAspect,
+      ),
+      itemBuilder: (context, i) {
+        final t = types[i];
+        final locale = context.locale.languageCode;
+        return MServiceTile(
+          label: t.nameFor(locale),
+          iconName: _iconForSlug(t.slug),
+          active: selectedSlug == t.slug,
+          onTap: () => onTap(t.slug),
         );
       },
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-        child: Center(child: CupertinoActivityIndicator()),
-      ),
-      error: (_, _) => SectionCard(
-        child: Text('common.error'.tr(),
-            style: AppTypography.body
-                .copyWith(color: AppColors.destructive)),
-      ),
     );
   }
 }
 
-class _SosCard extends StatelessWidget {
-  final SosRequest req;
-  const _SosCard({required this.req});
+// ── Promo banner ───────────────────────────────────────────────────────────────
+
+class _PromoBanner extends StatelessWidget {
+  final _R r;
+  const _PromoBanner({required this.r});
 
   @override
   Widget build(BuildContext context) {
-    final color = _sosStatusColor(req.status);
-    return SectionCard(
-      onTap: () => _showSosDetail(context, req),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
-            child: Icon(CupertinoIcons.exclamationmark_shield_fill, color: color),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  req.assignedMechanicName != null
-                      ? 'Usta: ${req.assignedMechanicName}'
-                      : 'SOS so\'rovi',
-                  style: AppTypography.headline,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  req.address?.isNotEmpty == true
-                      ? req.address!
-                      : '${req.latitude.toStringAsFixed(4)}, ${req.longitude.toStringAsFixed(4)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.footnote
-                      .copyWith(color: AppColors.labelTertiary),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _StatusBadge(status: req.status),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String status;
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _sosStatusColor(status);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: r.isSmall ? 96 : 116),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        color: AppColors.inverseBg(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_xl),
       ),
-      child: Text(
-        _sosStatusLabels[status] ?? status,
-        style: AppTypography.caption1
-            .copyWith(color: color, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-void _showSosDetail(BuildContext context, SosRequest req) {
-  showCupertinoModalPopup(
-    context: context,
-    builder: (_) => CupertinoPopupSurface(
-      isSurfacePainted: true,
-      child: Container(
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.r_xl),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -28, right: -20,
+              child: Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.inverseText(context).withAlpha(20),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -40, right: 60,
+              child: Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.inverseText(context).withAlpha(13),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.isSmall ? 16 : 20,
+                  vertical: r.isSmall ? 16 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('SOS so\'rovi', style: AppTypography.title3),
-                  const Spacer(),
-                  _StatusBadge(status: req.status),
+                  MTag(label: 'home.promo_tag'.tr(), variant: MTagVariant.gold),
+                  const SizedBox(height: 10),
+                  Text(
+                    'home.promo_text'.tr(),
+                    style: AppTypography.soraSize(
+                            r.isSmall ? 16 : 19,
+                            weight: FontWeight.w700)
+                        .copyWith(
+                      color: AppColors.inverseText(context),
+                      height: 1.25,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
-              _DetailRow(label: 'Aloqa raqami', value: req.phone),
-              if (req.address?.isNotEmpty == true)
-                _DetailRow(label: 'Manzil', value: req.address!),
-              _DetailRow(
-                label: 'Koordinata',
-                value:
-                    '${req.latitude.toStringAsFixed(5)}, ${req.longitude.toStringAsFixed(5)}',
-              ),
-              _DetailRow(
-                label: 'Yo\'naltirilgan usta',
-                value: req.assignedMechanicName ?? 'Hali biriktirilmagan',
-              ),
-              if (req.adminNotes?.isNotEmpty == true)
-                _DetailRow(label: 'Operator izohi', value: req.adminNotes!),
-              if (req.createdAt != null)
-                _DetailRow(
-                  label: 'Yuborilgan',
-                  value: DateFormat('dd.MM.yyyy HH:mm').format(req.createdAt!),
-                ),
-              const SizedBox(height: AppSpacing.lg),
-              CupertinoButton.filled(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Yopish'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    ),
-  );
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _DetailRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: AppTypography.caption1
-                  .copyWith(color: AppColors.labelTertiary)),
-          const SizedBox(height: 2),
-          Text(value, style: AppTypography.body),
-        ],
       ),
     );
   }
 }
 
-class _ServicesSection extends StatelessWidget {
-  const _ServicesSection();
+// ── Shop list (phone) ──────────────────────────────────────────────────────────
+
+class _ShopList extends StatelessWidget {
+  final List<Shop> shops;
+  final _R r;
+  const _ShopList({required this.shops, required this.r});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: _services
-          .map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: SectionCard(
-                  onTap: () => context.push('/owner/find-mechanic'),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryOf(context)
-                              .withValues(alpha: 0.12),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusMd),
-                        ),
-                        child: Icon(s.icon,
-                            color: AppColors.primaryOf(context), size: 24),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.title, style: AppTypography.headline),
-                            const SizedBox(height: 2),
-                            Text(s.subtitle,
-                                style: AppTypography.footnote.copyWith(
-                                    color: AppColors.labelTertiary)),
-                          ],
-                        ),
-                      ),
-                      const Icon(CupertinoIcons.chevron_right,
-                          color: AppColors.labelTertiary, size: 18),
-                    ],
-                  ),
-                ),
-              ))
-          .toList(),
+      children: shops.map((s) => Padding(
+        padding: EdgeInsets.only(bottom: r.isSmall ? 8 : 10),
+        child: WorkshopCard(
+          name: s.shopName,
+          rating: s.ratingAvg,
+          reviewCount: s.ratingCount,
+          address: s.address,
+          distance: s.distanceKm != null
+              ? '${s.distanceKm!.toStringAsFixed(1)} km'
+              : null,
+          duration: null,
+          isOpen: true,
+          onTap: () => context.push('/owner/shops/${s.id}'),
+        ),
+      )).toList(),
+    );
+  }
+}
+
+// ── Shop grid (tablet) ─────────────────────────────────────────────────────────
+
+class _ShopGrid extends StatelessWidget {
+  final List<Shop> shops;
+  final _R r;
+  const _ShopGrid({required this.shops, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    final cols = r.isLarge ? 3 : 2;
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: shops.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: cols,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.55,
+      ),
+      itemBuilder: (context, i) {
+        final s = shops[i];
+        return WorkshopCard(
+          name: s.shopName,
+          rating: s.ratingAvg,
+          reviewCount: s.ratingCount,
+          address: s.address,
+          distance: s.distanceKm != null
+              ? '${s.distanceKm!.toStringAsFixed(1)} km'
+              : null,
+          isOpen: true,
+          compact: true,
+          onTap: () => context.push('/owner/shops/${s.id}'),
+        );
+      },
+    );
+  }
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+
+class _EmptyShops extends StatelessWidget {
+  final _R r;
+  const _EmptyShops({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+          vertical: r.isSmall ? 28 : 40, horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_lg),
+        border: Border.all(color: AppColors.hairline(context), width: 1),
+      ),
+      child: Column(
+        children: [
+          Text('🔍', style: TextStyle(fontSize: r.isSmall ? 32 : 40)),
+          SizedBox(height: r.isSmall ? 8 : 12),
+          Text(
+            'home.no_shops'.tr(),
+            style: AppTypography.soraSize(r.isSmall ? 14 : 16,
+                    weight: FontWeight.w600)
+                .copyWith(color: AppColors.text(context)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'home.no_shops_hint'.tr(),
+            style: AppTypography.body
+                .copyWith(color: AppColors.text2(context)),
+          ),
+        ],
+      ),
     );
   }
 }

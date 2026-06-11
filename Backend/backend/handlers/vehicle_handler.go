@@ -1,10 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"moshn/backend/services"
 	"moshn/backend/utils"
 
@@ -94,58 +90,18 @@ func (h *VehicleHandler) DeleteVehicle(c *gin.Context) {
 	utils.Success(c, gin.H{"message": "Mashina o'chirildi"})
 }
 
-func (h *VehicleHandler) OCRVehicle(c *gin.Context) {
-	file, header, err := c.Request.FormFile("image")
+// LookupByPlate — plaka bo'yicha avtomobil egasini topish (autosignal funksiyasi)
+func (h *VehicleHandler) LookupByPlate(c *gin.Context) {
+	plate := c.Param("plate")
+	if plate == "" {
+		utils.BadRequest(c, "Plaka raqami kerak")
+		return
+	}
+
+	vehicle, err := h.svc.LookupByPlate(plate)
 	if err != nil {
-		utils.BadRequest(c, "Rasm topilmadi")
+		utils.NotFound(c, err.Error())
 		return
 	}
-	defer file.Close()
-
-	tmpPath := filepath.Join(os.TempDir(), fmt.Sprintf("ocr_%s%s", uuid.New().String(), filepath.Ext(header.Filename)))
-	dst, _ := os.Create(tmpPath)
-	io.Copy(dst, file)
-	dst.Close()
-	defer os.Remove(tmpPath)
-
-	result, err := h.svc.OCRTechpassport(tmpPath)
-	if err != nil {
-		utils.InternalError(c, err.Error())
-		return
-	}
-	utils.Success(c, result)
-}
-
-func (h *VehicleHandler) GetHistory(c *gin.Context) {
-	userIDStr, _ := c.Get("user_id")
-	userID, _ := uuid.Parse(userIDStr.(string))
-	id, _ := uuid.Parse(c.Param("id"))
-	p := utils.GetPagination(c)
-
-	records, total, err := h.svc.GetServiceHistory(id, userID, p.Page, p.Limit, p.Offset)
-	if err != nil {
-		utils.BadRequest(c, err.Error())
-		return
-	}
-	utils.Success(c, gin.H{"records": records, "total": total, "page": p.Page, "limit": p.Limit})
-}
-
-func (h *VehicleHandler) TransferOwnership(c *gin.Context) {
-	userIDStr, _ := c.Get("user_id")
-	userID, _ := uuid.Parse(userIDStr.(string))
-	id, _ := uuid.Parse(c.Param("id"))
-
-	var input struct {
-		NewOwnerPhone string `json:"new_owner_phone" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.BadRequest(c, err.Error())
-		return
-	}
-
-	if err := h.svc.TransferOwnership(id, userID, input.NewOwnerPhone); err != nil {
-		utils.BadRequest(c, err.Error())
-		return
-	}
-	utils.Success(c, gin.H{"message": "Egalik o'tkazildi"})
+	utils.Success(c, vehicle)
 }

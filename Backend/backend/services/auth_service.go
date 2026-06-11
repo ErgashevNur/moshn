@@ -2,9 +2,9 @@ package services
 
 import (
 	"errors"
-	"strings"
 	"moshn/backend/models"
 	"moshn/backend/utils"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,17 +21,17 @@ func NewAuthService(db *gorm.DB, email *EmailService) *AuthService {
 }
 
 type RegisterInput struct {
-	Phone           string   `json:"phone" binding:"required"`
-	Email           string   `json:"email" binding:"required,email"`
-	Password        string   `json:"password" binding:"required,min=6"`
-	Role            string   `json:"role" binding:"required,oneof=owner mechanic"`
-	FullName        string   `json:"full_name" binding:"required"`
-	WorkshopName    string   `json:"workshop_name"`
-	WorkshopAddress string   `json:"workshop_address"`
-	Latitude        float64  `json:"latitude"`
-	Longitude       float64  `json:"longitude"`
-	WorkHours       string   `json:"work_hours"`
-	Specialization  []string `json:"specialization"`
+	Phone        string   `json:"phone" binding:"required"`
+	Email        string   `json:"email" binding:"required,email"`
+	Password     string   `json:"password" binding:"required,min=6"`
+	Role         string   `json:"role" binding:"required,oneof=owner service"`
+	FullName     string   `json:"full_name" binding:"required"`
+	ShopName     string   `json:"shop_name"`
+	Address      string   `json:"address"`
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	WorkingHours string   `json:"working_hours"`
+	ServiceTypes []string `json:"service_types"`
 }
 
 type TokenResponse struct {
@@ -40,16 +40,9 @@ type TokenResponse struct {
 	User         models.User `json:"user"`
 }
 
-// otpTTL is how long a generated OTP code remains valid.
 const otpTTL = 10 * time.Minute
-
-// otpResendCooldown prevents spamming; user must wait this long between requests.
 const otpResendCooldown = 60 * time.Second
 
-// Register creates a new user (auto-verified for MVP) and returns auth tokens.
-// Why auto-verify: the MVP scope (see CLAUDE.md) excludes OTP/SMS — users should
-// land in the app immediately after sign-up. Re-introduce email verification when
-// SMTP is wired up in production.
 func (s *AuthService) Register(input RegisterInput) (*TokenResponse, error) {
 	email := strings.ToLower(strings.TrimSpace(input.Email))
 
@@ -80,21 +73,21 @@ func (s *AuthService) Register(input RegisterInput) (*TokenResponse, error) {
 		return nil, err
 	}
 
-	if input.Role == "mechanic" {
-		if input.WorkshopAddress == "" {
-			input.WorkshopAddress = "Ko'rsatilmagan"
+	if input.Role == "service" {
+		if input.Address == "" {
+			input.Address = "Ko'rsatilmagan"
 		}
-		mechanic := &models.Mechanic{
+		shop := &models.ShopProfile{
 			UserID:             user.ID,
-			WorkshopName:       input.WorkshopName,
-			WorkshopAddress:    input.WorkshopAddress,
+			ShopName:           input.ShopName,
+			Address:            input.Address,
 			Latitude:           input.Latitude,
 			Longitude:          input.Longitude,
-			WorkHours:          input.WorkHours,
-			Specialization:     input.Specialization,
+			WorkingHours:       input.WorkingHours,
+			ServiceTypes:       input.ServiceTypes,
 			VerificationStatus: "pending",
 		}
-		if err := s.db.Create(mechanic).Error; err != nil {
+		if err := s.db.Create(shop).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -110,22 +103,20 @@ func (s *AuthService) Register(input RegisterInput) (*TokenResponse, error) {
 	}, nil
 }
 
-type AdminCreateMechanicInput struct {
-	Phone           string   `json:"phone" binding:"required"`
-	Email           string   `json:"email" binding:"required,email"`
-	Password        string   `json:"password" binding:"required,min=6"`
-	FullName        string   `json:"full_name" binding:"required"`
-	WorkshopName    string   `json:"workshop_name"`
-	WorkshopAddress string   `json:"workshop_address"`
-	Latitude        float64  `json:"latitude"`
-	Longitude       float64  `json:"longitude"`
-	WorkHours       string   `json:"work_hours"`
-	Specialization  []string `json:"specialization"`
+type AdminCreateShopInput struct {
+	Phone        string   `json:"phone" binding:"required"`
+	Email        string   `json:"email" binding:"required,email"`
+	Password     string   `json:"password" binding:"required,min=6"`
+	FullName     string   `json:"full_name" binding:"required"`
+	ShopName     string   `json:"shop_name"`
+	Address      string   `json:"address"`
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	WorkingHours string   `json:"working_hours"`
+	ServiceTypes []string `json:"service_types"`
 }
 
-// AdminCreateMechanic — admin panel orqali usta qo'shadi. Register'dan farqi:
-// token qaytarmaydi va admin qo'shgani uchun darhol "verified" qilinadi.
-func (s *AuthService) AdminCreateMechanic(input AdminCreateMechanicInput) (*models.Mechanic, error) {
+func (s *AuthService) AdminCreateShop(input AdminCreateShopInput) (*models.ShopProfile, error) {
 	email := strings.ToLower(strings.TrimSpace(input.Email))
 
 	var existing models.User
@@ -145,7 +136,7 @@ func (s *AuthService) AdminCreateMechanic(input AdminCreateMechanicInput) (*mode
 		Phone:         input.Phone,
 		Email:         email,
 		PasswordHash:  hash,
-		Role:          "mechanic",
+		Role:          "service",
 		FullName:      input.FullName,
 		Language:      "uz",
 		EmailVerified: true,
@@ -155,34 +146,31 @@ func (s *AuthService) AdminCreateMechanic(input AdminCreateMechanicInput) (*mode
 		return nil, err
 	}
 
-	if input.WorkshopAddress == "" {
-		input.WorkshopAddress = "Ko'rsatilmagan"
+	if input.Address == "" {
+		input.Address = "Ko'rsatilmagan"
 	}
-	mechanic := &models.Mechanic{
+	shop := &models.ShopProfile{
 		UserID:             user.ID,
-		WorkshopName:       input.WorkshopName,
-		WorkshopAddress:    input.WorkshopAddress,
+		ShopName:           input.ShopName,
+		Address:            input.Address,
 		Latitude:           input.Latitude,
 		Longitude:          input.Longitude,
-		WorkHours:          input.WorkHours,
-		Specialization:     input.Specialization,
+		WorkingHours:       input.WorkingHours,
+		ServiceTypes:       input.ServiceTypes,
 		VerificationStatus: "verified",
 	}
-	if err := s.db.Create(mechanic).Error; err != nil {
+	if err := s.db.Create(shop).Error; err != nil {
 		return nil, err
 	}
 
-	s.db.Preload("User").First(mechanic, "id = ?", mechanic.ID)
-	return mechanic, nil
+	s.db.Preload("User").First(shop, "id = ?", shop.ID)
+	return shop, nil
 }
 
-// SendOTP regenerates and sends a fresh OTP. Use case: user lost the first one
-// or it expired. Rate-limited by otpResendCooldown.
 func (s *AuthService) SendOTP(email string) error {
 	email = strings.ToLower(strings.TrimSpace(email))
 	var user models.User
 	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
-		// Don't reveal whether the email exists — return generic OK.
 		return nil
 	}
 	if user.EmailOTPLastSentAt != nil && time.Since(*user.EmailOTPLastSentAt) < otpResendCooldown {
@@ -191,7 +179,6 @@ func (s *AuthService) SendOTP(email string) error {
 	return s.issueOTP(&user)
 }
 
-// VerifyOTP marks the user's email as verified and returns auth tokens on success.
 func (s *AuthService) VerifyOTP(email, code string) (*TokenResponse, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	code = strings.TrimSpace(code)
@@ -233,7 +220,6 @@ func (s *AuthService) VerifyOTP(email, code string) (*TokenResponse, error) {
 
 func (s *AuthService) Login(identifier, password string) (*TokenResponse, error) {
 	var user models.User
-	// Accept either phone or email in the same field for UX.
 	id := strings.TrimSpace(identifier)
 	if err := s.db.Where("phone = ? OR email = ?", id, strings.ToLower(id)).First(&user).Error; err != nil {
 		return nil, errors.New("email yoki parol noto'g'ri")
@@ -283,7 +269,6 @@ func (s *AuthService) RefreshToken(refreshToken string) (*TokenResponse, error) 
 	}, nil
 }
 
-// issueOTP generates, persists, and emails a fresh OTP to the user.
 func (s *AuthService) issueOTP(user *models.User) error {
 	code := GenerateOTP()
 	expiresAt := time.Now().Add(otpTTL)
@@ -299,4 +284,91 @@ func (s *AuthService) issueOTP(user *models.User) error {
 		lang = "uz"
 	}
 	return s.email.SendOTP(user.Email, code, lang)
+}
+
+// SendOTPByPhone finds-or-creates a user by phone, generates an OTP,
+// stores it in the user record, and returns the code (for dev/SMS).
+func (s *AuthService) SendOTPByPhone(phone string) (string, error) {
+	phone = strings.TrimSpace(phone)
+	if phone == "" {
+		return "", errors.New("telefon raqamini kiriting")
+	}
+
+	var user models.User
+	err := s.db.Where("phone = ?", phone).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		// New user — create a stub account; role will be set after OTP
+		user = models.User{
+			Phone:    phone,
+			Email:    phone + "@phone.shina24.uz",
+			FullName: "Foydalanuvchi",
+			Role:     "",
+		}
+		if err2 := s.db.Create(&user).Error; err2 != nil {
+			return "", err2
+		}
+	} else if err != nil {
+		return "", err
+	}
+
+	if user.EmailOTPLastSentAt != nil && time.Since(*user.EmailOTPLastSentAt) < otpResendCooldown {
+		return "", errors.New("iltimos, 60 soniya kuting")
+	}
+
+	code := GenerateOTP()
+	expiresAt := time.Now().Add(otpTTL)
+	sentAt := time.Now()
+	user.EmailOTPCode = code
+	user.EmailOTPExpiresAt = &expiresAt
+	user.EmailOTPLastSentAt = &sentAt
+	if err := s.db.Save(&user).Error; err != nil {
+		return "", err
+	}
+	// TODO: real SMS gateway integration
+	return code, nil
+}
+
+// VerifyOTPByPhone checks the code and returns auth tokens.
+// new_user=true means the user has no role yet → Flutter routes to role selection.
+func (s *AuthService) VerifyOTPByPhone(phone, code string) (map[string]interface{}, error) {
+	phone = strings.TrimSpace(phone)
+	code = strings.TrimSpace(code)
+
+	var user models.User
+	if err := s.db.Where("phone = ?", phone).First(&user).Error; err != nil {
+		return nil, errors.New("foydalanuvchi topilmadi")
+	}
+
+	// Dev bypass: 000000 always works (remove before production)
+	if code != "000000" {
+		if user.EmailOTPCode == "" || user.EmailOTPExpiresAt == nil {
+			return nil, errors.New("kod topilmadi, qaytadan so'rang")
+		}
+		if time.Now().After(*user.EmailOTPExpiresAt) {
+			return nil, errors.New("kodning muddati o'tdi")
+		}
+		if user.EmailOTPCode != code {
+			return nil, errors.New("kod noto'g'ri")
+		}
+	}
+
+	user.EmailVerified = true
+	user.EmailOTPCode = ""
+	user.EmailOTPExpiresAt = nil
+	if err := s.db.Save(&user).Error; err != nil {
+		return nil, err
+	}
+
+	accessToken, refreshToken, err := utils.GenerateTokenPair(user.ID, user.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	isNewUser := user.Role == ""
+	return map[string]interface{}{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+		"user":          user,
+		"new_user":      isNewUser,
+	}, nil
 }

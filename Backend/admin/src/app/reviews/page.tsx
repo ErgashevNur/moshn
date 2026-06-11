@@ -5,12 +5,20 @@ import api from '@/lib/api'
 
 interface Review {
   id: string
-  mechanic: { user: { full_name: string } }
-  owner: { full_name: string; phone: string }
+  author: { full_name: string; phone?: string }
+  target_id: string
+  review_type: string  // owner_to_shop | shop_to_owner
   rating: number
   comment: string
   is_moderated: boolean
   created_at: string
+}
+
+const STARS = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
+
+const TYPE_LABEL: Record<string, string> = {
+  owner_to_shop:  'Mijoz → Servis',
+  shop_to_owner:  'Servis → Mijoz',
 }
 
 export default function ReviewsPage() {
@@ -19,74 +27,69 @@ export default function ReviewsPage() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
 
-  const fetchReviews = () => {
+  const fetch = () => {
     setLoading(true)
     api.get('/admin/reviews', { params: { page, limit: 20 } })
-      .then((res) => { setReviews(res.data.data.reviews); setTotal(res.data.data.total) })
+      .then((r) => { setReviews(r.data.data.reviews ?? []); setTotal(r.data.data.total ?? 0) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchReviews() }, [page])
+  useEffect(() => { fetch() }, [page])
 
-  const handleModerate = async (id: string, approve: boolean) => {
-    try {
-      await api.put(`/admin/reviews/${id}/moderate`, { approve })
-      fetchReviews()
-    } catch (e) {
-      console.error(e)
-    }
+  const moderate = async (id: string, approve: boolean) => {
+    try { await api.put(`/admin/reviews/${id}/moderate`, { approve }); fetch() }
+    catch (e) { console.error(e) }
   }
 
   return (
     <AdminLayout title="Sharhlar moderatsiyasi">
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-gray-400 text-sm">Moderatsiya qilinmagan sharhlar: {total}</p>
-        </div>
+        <p className="text-text3 text-sm">Jami: <span className="text-text font-semibold">{total}</span> ta sharh</p>
 
-        <div className="bg-dark-card rounded-xl border border-dark-border overflow-hidden">
+        <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-dark-border text-gray-400">
-                <th className="px-4 py-3 text-left">Usta</th>
-                <th className="px-4 py-3 text-left">Egasi</th>
+              <tr className="border-b border-border text-text3 text-xs font-mono uppercase tracking-wide">
+                <th className="px-4 py-3 text-left">Muallif</th>
+                <th className="px-4 py-3 text-left">Tur</th>
                 <th className="px-4 py-3 text-left">Reyting</th>
                 <th className="px-4 py-3 text-left">Izoh</th>
                 <th className="px-4 py-3 text-left">Sana</th>
-                <th className="px-4 py-3 text-left">Amallar</th>
+                <th className="px-4 py-3 text-left">Amal</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">Yuklanmoqda...</td></tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-4 bg-surface2 rounded w-20" /></td>
+                    ))}
+                  </tr>
+                ))
               ) : reviews.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">Hammasi moderatsiya qilingan</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-text3">Sharhlar yo'q</td></tr>
               ) : reviews.map((r) => (
-                <tr key={r.id} className="border-b border-dark-border/50 hover:bg-dark-input/30 transition-colors">
-                  <td className="px-4 py-3">{r.mechanic?.user?.full_name}</td>
+                <tr key={r.id} className={`hover:bg-surface2/50 transition-colors ${r.is_moderated ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-3">
-                    <div>{r.owner?.full_name}</div>
-                    <div className="text-gray-400 text-xs">{r.owner?.phone}</div>
+                    <p className="text-text font-medium">{r.author?.full_name || '—'}</p>
+                    {r.author?.phone && <p className="text-text3 text-xs font-mono">{r.author.phone}</p>}
                   </td>
-                  <td className="px-4 py-3 text-yellow-400">{'⭐'.repeat(r.rating)}</td>
-                  <td className="px-4 py-3 max-w-xs text-gray-300">{r.comment || '—'}</td>
-                  <td className="px-4 py-3 text-gray-400">{new Date(r.created_at).toLocaleDateString('uz')}</td>
+                  <td className="px-4 py-3 text-text3 text-xs">{TYPE_LABEL[r.review_type] ?? r.review_type}</td>
+                  <td className="px-4 py-3 text-gold text-sm">{STARS(r.rating)}</td>
+                  <td className="px-4 py-3 text-text2 max-w-xs truncate">{r.comment || '—'}</td>
+                  <td className="px-4 py-3 text-text3 text-xs">
+                    {new Date(r.created_at).toLocaleDateString('uz-UZ')}
+                  </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleModerate(r.id, true)}
-                        className="text-xs bg-green-500/10 text-green-400 hover:bg-green-500/20 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        ✓ Tasdiqlash
-                      </button>
-                      <button
-                        onClick={() => handleModerate(r.id, false)}
-                        className="text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        ✕ O'chirish
-                      </button>
-                    </div>
+                    {!r.is_moderated && (
+                      <div className="flex gap-1.5">
+                        <button onClick={() => moderate(r.id, true)} className="btn-success text-xs py-1 px-2.5">✓</button>
+                        <button onClick={() => moderate(r.id, false)} className="btn-danger text-xs py-1 px-2.5">✕</button>
+                      </div>
+                    )}
+                    {r.is_moderated && <span className="text-text3 text-xs">Moderatsiya qilingan</span>}
                   </td>
                 </tr>
               ))}
@@ -95,10 +98,10 @@ export default function ReviewsPage() {
         </div>
 
         {total > 20 && (
-          <div className="flex gap-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 bg-dark-card rounded-lg text-sm disabled:opacity-50">← Oldingi</button>
-            <span className="px-3 py-1.5 text-sm text-gray-400">Sahifa {page}</span>
-            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="px-3 py-1.5 bg-dark-card rounded-lg text-sm disabled:opacity-50">Keyingi →</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">← Oldingi</button>
+            <span className="text-text3 text-sm">{page}-sahifa</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Keyingi →</button>
           </div>
         )}
       </div>

@@ -35,10 +35,10 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 	role, _ := c.Get("role")
 	result := gin.H{"user": user}
 
-	if role == "mechanic" {
-		var mechanic models.Mechanic
-		if h.db.Where("user_id = ?", userID).First(&mechanic).Error == nil {
-			result["mechanic"] = mechanic
+	if role == "service" {
+		var shop models.ShopProfile
+		if h.db.Where("user_id = ?", userID).First(&shop).Error == nil {
+			result["shop"] = shop
 		}
 	}
 
@@ -60,6 +60,34 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	var user models.User
 	h.db.First(&user, "id = ?", userID)
 	h.db.Model(&user).Updates(map[string]interface{}{"full_name": input.FullName})
+	utils.Success(c, user)
+}
+
+func (h *ProfileHandler) SetRole(c *gin.Context) {
+	userIDStr, _ := c.Get("user_id")
+	userID, _ := uuid.Parse(userIDStr.(string))
+
+	var input struct {
+		Role     string `json:"role" binding:"required,oneof=owner service"`
+		FullName string `json:"full_name"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.BadRequest(c, err.Error())
+		return
+	}
+
+	var user models.User
+	if err := h.db.First(&user, "id = ?", userID).Error; err != nil {
+		utils.NotFound(c, "Foydalanuvchi topilmadi")
+		return
+	}
+
+	updates := map[string]interface{}{"role": input.Role}
+	if input.FullName != "" {
+		updates["full_name"] = input.FullName
+	}
+	h.db.Model(&user).Updates(updates)
+	h.db.First(&user, "id = ?", userID) // reload
 	utils.Success(c, user)
 }
 

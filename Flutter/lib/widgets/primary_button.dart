@@ -21,8 +21,8 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = destructive ? AppColors.destructive : AppColors.primaryOf(context);
-    final fg = destructive ? CupertinoColors.white : AppColors.onPrimaryOf(context);
+    final bg = destructive ? AppColors.danger : AppColors.inverseBg(context);
+    final fg = destructive ? CupertinoColors.white : AppColors.inverseText(context);
     return SizedBox(
       width: double.infinity,
       height: AppSpacing.buttonHeight,
@@ -42,7 +42,7 @@ class PrimaryButton extends StatelessWidget {
                   ],
                   Text(
                     label,
-                    style: AppTypography.headline.copyWith(color: fg),
+                    style: AppTypography.titleSmall.copyWith(color: fg),
                   ),
                 ],
               ),
@@ -67,10 +67,10 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = CupertinoTheme.brightnessOf(context);
     final bg = brightness == Brightness.dark
-        ? AppColors.surfaceElevatedDark
-        : AppColors.fillPrimary;
+        ? AppColors.surface2(context)
+        : AppColors.surface(context);
     final fg =
-        brightness == Brightness.dark ? AppColors.labelDark : AppColors.label;
+        brightness == Brightness.dark ? AppColors.inverseText(context) : AppColors.text(context);
     return SizedBox(
       width: double.infinity,
       height: AppSpacing.buttonHeight,
@@ -86,7 +86,7 @@ class SecondaryButton extends StatelessWidget {
               Icon(icon, color: fg, size: 20),
               const SizedBox(width: 8),
             ],
-            Text(label, style: AppTypography.headline.copyWith(color: fg)),
+            Text(label, style: AppTypography.titleSmall.copyWith(color: fg)),
           ],
         ),
       ),

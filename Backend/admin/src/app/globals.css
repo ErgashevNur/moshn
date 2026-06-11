@@ -1,72 +1,84 @@
-/* moshn.uz fonts (Fontshare) */
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=switzer@300,400,500,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* moshn.uz dark ("Qorong'u rejim") palette */
-  --bg: #0e1620;
-  --surface: #1a2535;
-  --surface-deep: #131d2b;
-  --ink: #f2ece2;
-  --ink-mute: #9aa3af;
-  --ink-soft: #6b7580;
-  --accent: #ff5230;
-  --accent-deep: #e83c1f;
-  --accent-tint: #ff52301a;
-  --border: #283449;
+  --bg:       #09090A;
+  --elevated: #131316;
+  --surface:  #1A1A1E;
+  --surface2: #242429;
+  --surface3: #2E2E34;
+  --text:     #F4F4F2;
+  --text2:    rgba(244,244,242,0.60);
+  --text3:    rgba(244,244,242,0.36);
+  --border:   rgba(255,255,255,0.085);
+  --border2:  rgba(255,255,255,0.14);
+  --gold:     #D4A843;
+  --danger:   #E5382B;
+  --success:  #30D158;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  color: var(--ink);
   background: var(--bg);
-  font-family: 'Switzer', 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* moshn.uz uses Clash Display for headings */
-h1, h2, h3, h4, .font-display {
-  font-family: 'Clash Display', 'Cabinet Grotesk', system-ui, sans-serif;
-  letter-spacing: -0.01em;
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--elevated); }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+/* ── Status badges ─────────────────────────────────────────────────────── */
+.badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium font-mono;
+}
+.badge-pending   { @apply bg-warning/15 text-warning; }
+.badge-confirmed { @apply bg-success/15 text-success; }
+.badge-in_progress { @apply bg-info/15 text-info; }
+.badge-completed { @apply bg-success/15 text-success; }
+.badge-cancelled { @apply bg-text3/20 text-text2; }
+.badge-verified  { @apply bg-success/15 text-success; }
+.badge-rejected  { @apply bg-danger/15 text-danger; }
+.badge-vip       { @apply bg-gold/15 text-gold; }
+.badge-owner     { @apply bg-info/15 text-info; }
+.badge-service   { @apply bg-gold/15 text-gold; }
+.badge-admin     { @apply bg-danger/15 text-danger; }
+
+/* ── Card ──────────────────────────────────────────────────────────────── */
+.card {
+  @apply bg-surface rounded-lg border border-border;
 }
 
-/* Editorial mono label — like moshn.uz "§ 01 — SOS tizimi" */
-.mono-label {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.7rem;
+/* ── Input ─────────────────────────────────────────────────────────────── */
+.inp {
+  @apply w-full bg-surface2 border border-border rounded-md px-3 py-2.5
+         text-text text-sm placeholder-text3
+         focus:outline-none focus:border-border2 transition-colors;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ── Button variants ───────────────────────────────────────────────────── */
+.btn-primary {
+  @apply px-4 py-2 rounded-md bg-text text-bg text-sm font-semibold
+         hover:bg-text/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
 }
-
-::-webkit-scrollbar-track {
-  background: var(--surface-deep);
+.btn-ghost {
+  @apply px-4 py-2 rounded-md bg-surface2 text-text2 text-sm font-medium
+         hover:bg-surface3 hover:text-text transition-colors;
 }
-
-::-webkit-scrollbar-thumb {
-  background: #2f3e54;
-  border-radius: 0;
+.btn-danger {
+  @apply px-4 py-2 rounded-md bg-danger/15 text-danger text-sm font-medium
+         hover:bg-danger/25 transition-colors;
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+.btn-success {
+  @apply px-4 py-2 rounded-md bg-success/15 text-success text-sm font-medium
+         hover:bg-success/25 transition-colors;
 }
-
-/* Status badges — sharp corners, moshn palette */
-.status-created { @apply bg-warning/15 text-warning px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-confirmed { @apply bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-rejected { @apply bg-danger/15 text-danger px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-auto_confirmed { @apply bg-warning/15 text-warning px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-pending { @apply bg-warning/15 text-warning px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-verified { @apply bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-open { @apply bg-accent/15 text-accent px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-new { @apply bg-accent/15 text-accent px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-in_progress { @apply bg-sky-500/15 text-sky-400 px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-resolved { @apply bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
-.status-cancelled { @apply bg-ink-soft/15 text-ink-mute px-2 py-1 rounded-none text-xs font-medium font-mono uppercase tracking-wide; }
