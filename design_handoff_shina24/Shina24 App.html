@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Shina24 — Dizayn Prototipi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="shina24.css" />
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1b1b1f 0%, transparent 60%),
+      #0e0e10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: "Sora", system-ui, sans-serif;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    gap: 20px;
+  }
+
+  /* Header */
+  .page-header {
+    display: flex; align-items: center; gap: 20; flex-wrap: wrap;
+    color: rgba(255,255,255,.7); font-size: 14px; gap: 16px;
+  }
+  .page-header h1 { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -.04em; margin: 0; }
+  .page-header .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.1); letter-spacing: .04em; text-transform: uppercase; }
+
+  /* Dual device layout */
+  .devices {
+    display: flex; gap: 48px; align-items: flex-start; justify-content: center;
+    flex-wrap: wrap;
+  }
+  .device-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .device-label { color: rgba(255,255,255,.5); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+  .device-label-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .device-shadow { filter: drop-shadow(0 40px 90px rgba(0,0,0,0.5)); }
+
+  /* Role switch hints */
+  .hint { font-size: 12px; color: rgba(255,255,255,.35); text-align: center; max-width: 380px; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    .devices { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Shina24</h1>
+  <span class="badge">Dizayn Prototipi v1.0</span>
+  <span style="opacity:.4">·</span>
+  <span>Owner (mijoz) + Service (shinomontaj) — ikki rol</span>
+</div>
+
+<div class="devices">
+  <!-- OWNER phone -->
+  <div class="device-wrapper">
+    <div class="device-label">
+      <span class="device-label-dot" style="background:#30D158"></span>
+      Mijoz (Car Owner)
+    </div>
+    <div class="device-shadow" id="owner-root"></div>
+  </div>
+
+  <!-- SERVICE phone -->
+  <div class="device-wrapper">
+    <div class="device-label">
+      <span class="device-label-dot" style="background:#D4A843"></span>
+      Shinomontaj (Service)
+    </div>
+    <div class="device-shadow" id="service-root"></div>
+  </div>
+</div>
+
+<div class="hint">
+  Har bir telefon mustaqil — turli ro'llarni sinab ko'ring.<br/>
+  Profil ekranida rollar o'rtasida almashishingiz mumkin.
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="shina24-i18n.jsx"></script>
+<script type="text/babel" src="shina24-data.jsx"></script>
+<script type="text/babel" src="shina24-icons.jsx"></script>
+<script type="text/babel" src="shina24-ui.jsx"></script>
+<script type="text/babel" src="shina24-screens-auth.jsx"></script>
+<script type="text/babel" src="shina24-screens-owner.jsx"></script>
+<script type="text/babel" src="shina24-screens-service.jsx"></script>
+<script type="text/babel" src="shina24-screens-account.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const LS  = (k, d) => { try { return localStorage.getItem("s24_"+k) ?? d; } catch(e){ return d; } };
+const setLS = (k, v) => { try { localStorage.setItem("s24_"+k, v); } catch(e){} };
+
+// ===== OWNER BOTTOM NAV =====
+function OwnerBottomNav({ app }) {
+  const { t, tab, go } = app;
+  const items = [
+    { id: "ownerHome",     icon: "home",     label: t("navHome") },
+    { id: "ownerBookings", icon: "calendar", label: t("navBookings") },
+    null, // center map
+    { id: "ownerVehicles", icon: "car",      label: t("navVehicles") },
+    { id: "ownerProfile",  icon: "user",     label: t("navProfile") },
+  ];
+  return (
+    <div className="botnav">
+      {items.map((it, i) => it === null ? (
+        <button key="map-center" className="botnav-sos"
+          style={{ background: "var(--inverse-bg)", color: "var(--inverse-text)", boxShadow: "0 8px 22px -4px rgba(0,0,0,.35), 0 0 0 5px var(--bg)" }}
+          onClick={() => go("map")}>
+          <Icon name="pin" size={22} />
+        </button>
+      ) : (
+        <button key={it.id} className="botnav-item" data-active={tab === it.id} onClick={() => go(it.id)}>
+          <Icon name={it.icon} size={23} stroke={tab === it.id ? 2 : 1.7} />
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ===== SERVICE BOTTOM NAV =====
+function ServiceBottomNav({ app }) {
+  const { t, tab, go } = app;
+  const items = [
+    { id: "serviceToday",     icon: "home",     label: t("navToday") },
+    { id: "serviceAllBooks",  icon: "calendar", label: t("navAllBooks") },
+    null, // center QR
+    { id: "serviceCustomers", icon: "users",    label: t("navCustomers") },
+    { id: "serviceProfile",   icon: "settings", label: t("navProfile") },
+  ];
+  return (
+    <div className="botnav">
+      {items.map((it, i) => it === null ? (
+        <button key="qr-center" className="botnav-sos"
+          style={{ background: "var(--success)", color: "#fff", boxShadow: "0 8px 22px -4px var(--success), 0 0 0 5px var(--bg)" }}
+          onClick={() => app.go("serviceStats")}>
+          <Icon name="barChart" size={22} />
+          <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.06em", marginTop: 2 }}>STAT</span>
+        </button>
+      ) : (
+        <button key={it.id} className="botnav-item" data-active={tab === it.id} onClick={() => go(it.id)}>
+          <Icon name={it.icon} size={23} stroke={tab === it.id ? 2 : 1.7} />
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ===== OWNER APP =====
+const OWNER_TABS  = ["ownerHome","ownerBookings","ownerVehicles","ownerProfile"];
+const SERVICE_TABS = ["serviceToday","serviceAllBooks","serviceCustomers","serviceProfile"];
+
+function AppInstance({ rootId, defaultRole, defaultRoute }) {
+  const prefix = rootId;
+  const [lang,    setLangS]   = useState(LS(prefix+"_lang",   "uz"));
+  const [theme,   setThemeS]  = useState(LS(prefix+"_theme",  "dark"));
+  const [route,   setRoute]   = useState(LS(prefix+"_route",  defaultRoute || "welcome"));
+  const [tab,     setTab]     = useState(LS(prefix+"_tab",    defaultRole === "service" ? "serviceToday" : "ownerHome"));
+  const [role,    setRoleS]   = useState(LS(prefix+"_role",   defaultRole || ""));
+  const [svc,     setSvc]     = useState(null);
+  const [shop,    setShop]    = useState(null);
+  const [order,   setOrder]   = useState(null);
+  const [serviceBooking, setServiceBooking] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const rootRef = useRef(null);
+
+  const t = makeT(lang);
+  const setLang  = l  => { setLangS(l);  setLS(prefix+"_lang",  l); };
+  const setTheme = th => { setThemeS(th); setLS(prefix+"_theme", th); };
+  const setRole  = r  => { setRoleS(r);  setLS(prefix+"_role",  r); };
+
+  useEffect(() => { setLS(prefix+"_route", route); }, [route]);
+  useEffect(() => { setLS(prefix+"_tab",   tab);   }, [tab]);
+
+  useEffect(() => {
+    let id1, id2;
+    id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => {
+        if (rootRef.current) rootRef.current.classList.add("motion");
+      });
+    });
+    return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2); };
+  }, []);
+
+  const go = (name) => {
+    const ownerTabIds  = OWNER_TABS;
+    const serviceTabIds = SERVICE_TABS;
+    const allTabs = [...ownerTabIds, ...serviceTabIds];
+
+    if (allTabs.includes(name)) {
+      setTab(name);
+      const isServiceTab = SERVICE_TABS.includes(name);
+      setRoute(isServiceTab ? "serviceApp" : "ownerApp");
+    } else {
+      setRoute(name);
+    }
+    const body = document.querySelector(`#${rootId} .screen-body`);
+    if (body) body.scrollTop = 0;
+  };
+
+  const app = {
+    lang, theme, t, setLang, setTheme, route, setRoute, tab, setTab, go,
+    role, setRole, svc, setSvc, shop, setShop, order, setOrder,
+    serviceBooking, setServiceBooking, customer, setCustomer,
+  };
+
+  const ownerTabScreens = {
+    ownerHome:      <OwnerHome app={app} />,
+    ownerBookings:  <OwnerBookings app={app} />,
+    ownerVehicles:  <OwnerVehicles app={app} />,
+    ownerProfile:   <OwnerProfile app={app} />,
+  };
+  const serviceTabScreens = {
+    serviceToday:     <ServiceDashboard app={app} />,
+    serviceAllBooks:  <ServiceAllBookings app={app} />,
+    serviceCustomers: <CRMList app={app} />,
+    serviceProfile:   <ServiceProfilePage app={app} />,
+  };
+  const standalone = {
+    welcome:               <Welcome app={app} />,
+    roleSelect:            <RoleSelect app={app} />,
+    onboarding:            <Onboarding app={app} />,
+    auth:                  <Auth app={app} />,
+    map:                   <MapScreen app={app} />,
+    serviceDetail:         <ServiceDetail app={app} />,
+    ownerBooking:          <OwnerBooking app={app} />,
+    ownerPayment:          <OwnerPayment app={app} />,
+    ownerConfirm:          <OwnerConfirmation app={app} />,
+    serviceBookingDetail:  <ServiceBookingDetail app={app} />,
+    servicePaymentReceipt: <ServicePaymentReceipt app={app} />,
+    customerDetail:        <CustomerDetail app={app} />,
+    serviceStats:          <ServiceStats app={app} />,
+    ownerNotifications:    <OwnerNotifications app={app} />,
+    serviceNotifications:  <ServiceNotifications app={app} />,
+  };
+
+  const isOwnerApp   = route === "ownerApp";
+  const isServiceApp = route === "serviceApp";
+
+  return (
+    <div ref={rootRef} className="moshn" data-theme={theme} style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg)", overflow: "hidden" }}>
+      <div style={{ height: 50, flexShrink: 0, background: "var(--bg)" }} />
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        <div key={route + tab} className="anim-in" style={{ position: "absolute", inset: 0 }}>
+          {isOwnerApp ? (
+            <div className="screen">
+              <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+                <div style={{ position: "absolute", inset: 0 }}>{ownerTabScreens[tab] || ownerTabScreens.ownerHome}</div>
+              </div>
+              <OwnerBottomNav app={app} />
+            </div>
+          ) : isServiceApp ? (
+            <div className="screen">
+              <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+                <div style={{ position: "absolute", inset: 0 }}>{serviceTabScreens[tab] || serviceTabScreens.serviceToday}</div>
+              </div>
+              <ServiceBottomNav app={app} />
+            </div>
+          ) : (
+            standalone[route] || <Welcome app={app} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mount both apps
+function MountApp({ rootId, defaultRole, defaultRoute }) {
+  return (
+    <IOSDevice dark={true}>
+      <AppInstance rootId={rootId} defaultRole={defaultRole} defaultRoute={defaultRoute} />
+    </IOSDevice>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("owner-root")).render(
+  <MountApp rootId="owner"   defaultRole="owner"   defaultRoute="welcome" />
+);
+ReactDOM.createRoot(document.getElementById("service-root")).render(
+  <MountApp rootId="service" defaultRole="service" defaultRoute="auth" />
+);
+</script>
+</body>
+</html>
