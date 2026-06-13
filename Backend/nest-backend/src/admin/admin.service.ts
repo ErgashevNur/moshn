@@ -113,11 +113,30 @@ export class AdminService {
     return this.prisma.serviceType.findMany({ where: { isActive: true }, orderBy: { nameUz: 'asc' } });
   }
 
-  async createServiceType(data: {
-    slug: string; nameUz: string; nameRu: string; icon?: string; basePrice?: number;
-  }) {
+  async createServiceType(data: any) {
     return this.prisma.serviceType.create({
-      data: { slug: data.slug, nameUz: data.nameUz, nameRu: data.nameRu, icon: data.icon ?? '', basePrice: data.basePrice ?? 0, isActive: true },
+      data: {
+        slug: data.slug,
+        nameUz: data.nameUz ?? data.name_uz,
+        nameRu: data.nameRu ?? data.name_ru ?? '',
+        icon: data.icon ?? '',
+        basePrice: data.basePrice ?? data.base_price ?? 0,
+        isActive: data.isActive ?? data.is_active ?? true,
+      },
+    });
+  }
+
+  async updateServiceType(id: string, data: any) {
+    return this.prisma.serviceType.update({
+      where: { id },
+      data: {
+        slug: data.slug,
+        nameUz: data.nameUz ?? data.name_uz,
+        nameRu: data.nameRu ?? data.name_ru,
+        icon: data.icon,
+        basePrice: data.basePrice ?? data.base_price,
+        isActive: data.isActive ?? data.is_active,
+      },
     });
   }
 

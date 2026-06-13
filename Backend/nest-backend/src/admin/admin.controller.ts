@@ -90,6 +90,12 @@ export class AdminController {
     return { data: await this.svc.createServiceType(body) };
   }
 
+  @Put('service-types/:id')
+  @ApiOperation({ summary: 'Xizmat turini yangilash' })
+  async updateServiceType(@Param('id') id: string, @Body() body: any) {
+    return { data: await this.svc.updateServiceType(id, body) };
+  }
+
   @Get('seasonal-rules')
   @ApiOperation({ summary: 'Mavsum bildirshnoma qoidalari' })
   async listSeasonalRules() {

@@ -414,11 +414,6 @@ class _FeatureGrid extends StatelessWidget {
 
   List<Widget> _tiles(BuildContext context) => [
         _FeatureTile(
-          icon: CupertinoIcons.bell,
-          title: 'owner.feature.avto_signal'.tr(),
-          subtitle: 'owner.feature.avto_signal_sub'.tr(),
-        ),
-        _FeatureTile(
           icon: Icons.warning_amber_rounded,
           iconColor: AppColors.danger,
           title: 'owner.feature.jarimalar'.tr(),
@@ -431,25 +426,6 @@ class _FeatureGrid extends StatelessWidget {
           subtitle: 'owner.feature.shinomontaj_sub'.tr(),
           onTap: () {},
         ),
-        _FeatureTile(
-          icon: CupertinoIcons.snow,
-          title: 'owner.feature.mavsumiy'.tr(),
-          subtitle: 'owner.feature.mavsumiy_sub'.tr(),
-          showProgress: true,
-          progressValue: 0.75,
-        ),
-        _FeatureTile(
-          icon: Icons.sos_rounded,
-          iconColor: AppColors.danger,
-          title: 'owner.feature.sos'.tr(),
-          subtitle: 'owner.feature.sos_sub'.tr(),
-          accentLeft: true,
-        ),
-        _FeatureTile(
-          icon: CupertinoIcons.clock,
-          title: 'owner.feature.tashriflar'.tr(),
-          subtitle: 'owner.feature.tashriflar_sub'.tr(),
-        ),
       ];
 }
 
@@ -459,9 +435,6 @@ class _FeatureTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color? subtitleColor;
-  final bool showProgress;
-  final double progressValue;
-  final bool accentLeft;
   final VoidCallback? onTap;
 
   const _FeatureTile({
@@ -470,9 +443,6 @@ class _FeatureTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.subtitleColor,
-    this.showProgress = false,
-    this.progressValue = 0.0,
-    this.accentLeft = false,
     this.onTap,
   });
 
@@ -489,26 +459,9 @@ class _FeatureTile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            // Red left accent for SOS
-            if (accentLeft)
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  width: 3,
-                  color: AppColors.danger,
-                ),
-              ),
-
             // Content
             Padding(
-              padding: EdgeInsets.fromLTRB(
-                accentLeft ? AppSpacing.lg : AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                showProgress ? 24 : AppSpacing.md,
-              ),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -540,20 +493,6 @@ class _FeatureTile extends StatelessWidget {
               ),
             ),
 
-            // Progress bar at bottom (Mavsumiy)
-            if (showProgress)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: LinearProgressIndicator(
-                  value: progressValue,
-                  minHeight: 3,
-                  backgroundColor: AppColors.surface2(context),
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.success),
-                ),
-              ),
           ],
         ),
       ),
