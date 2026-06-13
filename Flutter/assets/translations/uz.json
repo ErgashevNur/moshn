@@ -78,18 +78,10 @@
     "find_shops": "Shinomontaj topish",
     "all_services": "Hammasi",
     "feature": {
-      "avto_signal": "Avto Signal",
-      "avto_signal_sub": "Haydovchini ogohlantirish",
       "jarimalar": "Jarimalar",
       "jarimalar_sub": "1 ta to'lanmagan",
       "shinomontaj": "Shinomontaj",
-      "shinomontaj_sub": "Eng yaqin servisni toping",
-      "mavsumiy": "Mavsumiy",
-      "mavsumiy_sub": "Qish g'ildiragi - 45 kun",
-      "sos": "SOS",
-      "sos_sub": "Yo'lda qolsam",
-      "tashriflar": "Tashriflar",
-      "tashriflar_sub": "3 ta tashrif"
+      "shinomontaj_sub": "Eng yaqin servisni toping"
     }
   },
   "home": {

@@ -76,18 +76,10 @@
     "find_shops": "Найти шиномонтаж",
     "all_services": "Все",
     "feature": {
-      "avto_signal": "Авто Сигнал",
-      "avto_signal_sub": "Оповещение водителя",
       "jarimalar": "Штрафы",
       "jarimalar_sub": "1 не оплачен",
       "shinomontaj": "Шиномонтаж",
-      "shinomontaj_sub": "Найти ближайший сервис",
-      "mavsumiy": "Сезонная",
-      "mavsumiy_sub": "Зимняя резина - 45 дней",
-      "sos": "SOS",
-      "sos_sub": "Застрял на дороге",
-      "tashriflar": "Визиты",
-      "tashriflar_sub": "3 визита"
+      "shinomontaj_sub": "Найти ближайший сервис"
     }
   },
   "home": {
