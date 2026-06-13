@@ -11,7 +11,7 @@ import '../../theme/typography.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
-final allBookingsProvider = FutureProvider<List<Booking>>((ref) {
+final allBookingsProvider = FutureProvider.autoDispose<List<Booking>>((ref) {
   return BookingService().getMyBookings();
 });
 

@@ -141,14 +141,14 @@ class _ServiceHomeScreenState extends ConsumerState<ServiceHomeScreen> {
   }
 
   String _statusLabel(String s) {
-    const map = {
-      'all': 'Hammasi',
-      'pending': 'Kutilmoqda',
-      'confirmed': 'Tasdiqlandi',
-      'in_progress': 'Jarayonda',
-      'completed': 'Bajarildi',
-    };
-    return map[s] ?? s;
+    switch (s) {
+      case 'all':         return 'service.filter_all'.tr();
+      case 'pending':     return 'booking.status_pending'.tr();
+      case 'confirmed':   return 'booking.status_confirmed'.tr();
+      case 'in_progress': return 'booking.status_in_progress'.tr();
+      case 'completed':   return 'booking.status_completed'.tr();
+      default:            return s;
+    }
   }
 }
 
@@ -247,13 +247,16 @@ class _StatusBadge extends StatelessWidget {
   final String status;
   const _StatusBadge(this.status);
 
-  static const _labels = {
-    'pending': 'Kutilmoqda',
-    'confirmed': 'Tasdiqlandi',
-    'in_progress': 'Jarayonda',
-    'completed': 'Bajarildi',
-    'cancelled': 'Bekor',
-  };
+  static String _label(String s) {
+    switch (s) {
+      case 'pending':     return 'booking.status_pending'.tr();
+      case 'confirmed':   return 'booking.status_confirmed'.tr();
+      case 'in_progress': return 'booking.status_in_progress'.tr();
+      case 'completed':   return 'booking.status_completed'.tr();
+      case 'cancelled':   return 'booking.status_cancelled_short'.tr();
+      default:            return s;
+    }
+  }
 
   static Color _color(String s) {
     switch (s) {
@@ -268,7 +271,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        _labels[status] ?? status,
+        _label(status),
         style: AppTypography.labelMedium
             .copyWith(color: _color(status), fontWeight: FontWeight.w600),
       );

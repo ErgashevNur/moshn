@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/user.dart';
+import '../../services/vehicle_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -27,10 +29,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _phone = TextEditingController(text: '+998');
   final _email = TextEditingController();
   final _password = TextEditingController();
+  // Owner uchun ixtiyoriy mashina ma'lumotlari
+  final _plate = TextEditingController();
+  final _vehicleMake = TextEditingController();
+  final _vehicleModel = TextEditingController();
+
   String? _nameError;
   String? _phoneError;
   String? _emailError;
   String? _passError;
+
+  bool get _isOwner => widget.role == UserRole.owner;
 
   @override
   void dispose() {
@@ -38,6 +47,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _phone.dispose();
     _email.dispose();
     _password.dispose();
+    _plate.dispose();
+    _vehicleMake.dispose();
+    _vehicleModel.dispose();
     super.dispose();
   }
 
@@ -81,8 +93,50 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ],
         ),
       );
+      return;
+    }
+
+    // Ro'yxatdan o'tish muvaffaqiyatli — owner bo'lsa va plaka kiritilgan bo'lsa mashina saqlash
+    if (_isOwner && _plate.text.trim().isNotEmpty) {
+      try {
+        await VehicleService().createVehicle(
+          plate: _plate.text.trim().toUpperCase(),
+          make: _vehicleMake.text.trim(),
+          model: _vehicleModel.text.trim(),
+        );
+      } catch (e) {
+        // Mashina saqlash xatosi foydalanuvchini to'xtatmasin — garajda qo'shib olish mumkin
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_vehicleErrMsg(e)),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
     // Router redirect handles navigation to /owner or /service on success.
+  }
+
+  String _vehicleErrMsg(Object e) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        return 'Server bilan ulanishda xatolik';
+      }
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final msg = data['message'];
+        if (msg is String && msg.isNotEmpty) return msg;
+        if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      }
+      if (e.response?.statusCode == 409) {
+        return 'Bu davlat raqami allaqachon ro\'yxatda';
+      }
+    }
+    return 'Mashina saqlanmadi — garajdan qo\'shib oling';
   }
 
   @override
@@ -180,6 +234,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ? setState(() => _passError = null)
                             : null,
                       ),
+
+                      // Owner roli uchun mashina bo'limi
+                      if (_isOwner) ...[
+                        const SizedBox(height: AppSpacing.xxl),
+                        _SectionDivider(
+                          label: 'Mashina ma\'lumotlari (ixtiyoriy)',
+                          icon: CupertinoIcons.car_detailed,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _plate,
+                          placeholder: 'vehicle.plate_hint'.tr(),
+                          icon: CupertinoIcons.creditcard,
+                          textCapitalization: TextCapitalization.characters,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AppTextField(
+                                controller: _vehicleMake,
+                                placeholder: 'vehicle.make_hint'.tr(),
+                                icon: CupertinoIcons.car,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: AppTextField(
+                                controller: _vehicleModel,
+                                placeholder: 'vehicle.model_hint'.tr(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
                       const SizedBox(height: AppSpacing.xxl),
                       PrimaryButton(
                         label: 'auth.register'.tr(),
@@ -195,6 +285,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionDivider extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  const _SectionDivider({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.text3(context)),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.text3(context),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Divider(
+            color: AppColors.text3(context).withValues(alpha: 0.3),
+            height: 1,
+          ),
+        ),
+      ],
     );
   }
 }

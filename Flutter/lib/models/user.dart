@@ -22,11 +22,11 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: json['id'] as String,
         phone: json['phone'] as String,
-        name: (json['full_name'] ?? json['name'] ?? '') as String,
+        name: (json['fullName'] ?? json['full_name'] ?? json['name'] ?? '') as String,
         role: _parseRole(json['role'] as String?),
         email: json['email'] as String?,
-        avatarUrl: json['avatar_url'] as String?,
-        createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        avatarUrl: (json['avatarUrl'] ?? json['avatar_url']) as String?,
+        createdAt: DateTime.tryParse((json['createdAt'] ?? json['created_at'] ?? '') as String) ?? DateTime.now(),
       );
 
   static UserRole _parseRole(String? r) {

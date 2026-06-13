@@ -31,22 +31,22 @@ class Shop {
 
   factory Shop.fromJson(Map<String, dynamic> json) => Shop(
         id: json['id'] as String,
-        shopName: (json['shop_name'] ?? '') as String,
+        shopName: (json['shopName'] ?? json['shop_name'] ?? '') as String,
         address: (json['address'] ?? '') as String,
-        latitude: (json['latitude'] ?? 0.0).toDouble(),
-        longitude: (json['longitude'] ?? 0.0).toDouble(),
+        latitude: ((json['latitude'] ?? 0.0) as num).toDouble(),
+        longitude: ((json['longitude'] ?? 0.0) as num).toDouble(),
         phone: (json['phone'] ?? '') as String,
-        workingHours: (json['working_hours'] ?? '') as String,
-        serviceTypes: (json['service_types'] as List<dynamic>?)
+        workingHours: (json['workingHours'] ?? json['working_hours'] ?? '') as String,
+        serviceTypes: ((json['serviceTypes'] ?? json['service_types']) as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??
             [],
-        verificationStatus: (json['verification_status'] ?? 'pending') as String,
-        ratingAvg: (json['rating_avg'] ?? 0.0).toDouble(),
-        ratingCount: (json['rating_count'] ?? 0) as int,
-        totalBookings: (json['total_bookings'] ?? 0) as int,
-        distanceKm: json['distance_km'] != null
-            ? (json['distance_km'] as num).toDouble()
+        verificationStatus: (json['verificationStatus'] ?? json['verification_status'] ?? 'pending') as String,
+        ratingAvg: ((json['ratingAvg'] ?? json['rating_avg'] ?? 0.0) as num).toDouble(),
+        ratingCount: ((json['ratingCount'] ?? json['rating_count'] ?? 0) as num).toInt(),
+        totalBookings: ((json['totalBookings'] ?? json['total_bookings'] ?? 0) as num).toInt(),
+        distanceKm: (json['distance_km'] ?? json['distanceKm']) != null
+            ? ((json['distance_km'] ?? json['distanceKm']) as num).toDouble()
             : null,
       );
 }

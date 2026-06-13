@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../models/review.dart';
 import '../models/shop.dart';
 import '../models/service_type.dart';
 import 'api.dart';
@@ -55,6 +56,16 @@ class ShopService {
   }
 
   Future<void> setVip(String customerId, bool isVip) async {
-    await _dio.put('/service/customers/$customerId/vip', data: {'is_vip': isVip});
+    await _dio.put('/service/customers/$customerId', data: {'is_vip': isVip});
+  }
+
+  Future<List<Review>> getShopReviews(String shopId, {int page = 1, int limit = 10}) async {
+    final resp = await _dio.get(
+      '/shops/$shopId/reviews',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+    final list = (payload['reviews'] ?? []) as List<dynamic>;
+    return list.map((e) => Review.fromJson(e as Map<String, dynamic>)).toList();
   }
 }

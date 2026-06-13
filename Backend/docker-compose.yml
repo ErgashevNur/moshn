@@ -15,17 +15,17 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build: ./nest-backend
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgres://${DB_USER:-moshn}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-moshn}?sslmode=disable
+      - DATABASE_URL=postgresql://${DB_USER:-moshn}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-moshn}
       - JWT_SECRET=${JWT_SECRET}
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       - UZBEKVOICE_API_KEY=${UZBEKVOICE_API_KEY}
-      - FCM_SERVER_KEY=${FCM_SERVER_KEY}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
       - YANDEX_MAPS_API_KEY=${YANDEX_MAPS_API_KEY}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
@@ -33,7 +33,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM=${SMTP_FROM}
       - PORT=8080
-      - GIN_MODE=release
+      - NODE_ENV=production
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
       - uploads:/app/uploads

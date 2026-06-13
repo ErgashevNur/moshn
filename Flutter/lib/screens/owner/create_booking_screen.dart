@@ -59,7 +59,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   final _chipFrac = ValueNotifier<double>(0);
   final _dateFrac = ValueNotifier<double>(0);
 
-  static const _unavailableSlots = {'10:00', '13:00', '16:00'};
+  static const _unavailableSlots = <String>{};
   static final _timeSlots = _buildSlots();
 
   static List<String> _buildSlots() {
@@ -177,7 +177,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     final diff = date
         .difference(DateTime(today.year, today.month, today.day))
         .inDays;
-    if (diff == 0) return 'Bug';
+    if (diff == 0) return 'Bugun';
     if (diff == 1) return 'Ert';
     const abbr = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
     return abbr[date.weekday - 1];

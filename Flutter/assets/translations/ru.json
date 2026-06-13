@@ -47,6 +47,8 @@
     "role_owner_sub": "Нахожу шиномонтаж, записываюсь, оплачиваю",
     "role_service_sub": "Принимаю записи, управляю клиентами",
     "continue_btn": "Продолжить",
+    "otp_wrong": "Неверный код подтверждения. Попробуйте ещё раз.",
+    "network_error": "Не удалось подключиться. Проверьте интернет.",
     "forgot_password": "Забыли пароль?",
     "no_account": "Нет аккаунта?",
     "have_account": "Уже есть аккаунт?",
@@ -65,12 +67,28 @@
     "nearby_shops": "Ближайшие шиномонтажи",
     "my_bookings": "Мои записи",
     "my_vehicles": "Мои авто",
+    "my_garage": "Мой Гараж",
+    "primary": "Основной",
     "add_vehicle": "Добавить авто",
     "no_vehicles": "Авто ещё не добавлено",
     "no_bookings": "Пока нет записей",
     "book_now": "Записаться",
     "find_shops": "Найти шиномонтаж",
-    "all_services": "Все"
+    "all_services": "Все",
+    "feature": {
+      "avto_signal": "Авто Сигнал",
+      "avto_signal_sub": "Оповещение водителя",
+      "jarimalar": "Штрафы",
+      "jarimalar_sub": "1 не оплачен",
+      "shinomontaj": "Шиномонтаж",
+      "shinomontaj_sub": "Найти ближайший сервис",
+      "mavsumiy": "Сезонная",
+      "mavsumiy_sub": "Зимняя резина - 45 дней",
+      "sos": "SOS",
+      "sos_sub": "Застрял на дороге",
+      "tashriflar": "Визиты",
+      "tashriflar_sub": "3 визита"
+    }
   },
   "home": {
     "what_service": "Какая услуга нужна?",
@@ -83,7 +101,9 @@
     "no_shops": "Шиномонтаж не найден",
     "no_shops_hint": "Выберите другой тип услуги",
     "error_label": "Ошибка",
-    "nearby_count": "{count} рядом"
+    "nearby_count": "{count} рядом",
+    "location_all": "Узбекистан",
+    "service_types_error": "Типы услуг не загружены"
   },
   "booking": {
     "title": "Запись",
@@ -130,7 +150,8 @@
     "card_qr": "QR-код",
     "paid": "Оплачено",
     "leave_review": "Оценить",
-    "book_slot": "Записаться"
+    "book_slot": "Записаться",
+    "cancel_error": "Ошибка при отмене записи"
   },
   "payment": {
     "title": "Оплата",
@@ -151,7 +172,8 @@
     "success_body": "Сервис принял вашу заявку.\nПришлём напоминание.",
     "add_to_calendar": "Добавить в календарь",
     "view_booking": "Посмотреть запись",
-    "price_from": "ОТ"
+    "price_from": "ОТ",
+    "error": "Ошибка при оплате"
   },
   "service": {
     "home_title": "Записи на сегодня",
@@ -178,7 +200,8 @@
     "shop_name": "Название мастерской",
     "address": "Адрес",
     "working_hours": "Часы работы",
-    "service_types": "Виды услуг"
+    "service_types": "Виды услуг",
+    "filter_all": "Все"
   },
   "service_category": {
     "process_title": "Процесс",
@@ -226,7 +249,8 @@
     "user_placeholder": "Пользователь",
     "about": "О приложении",
     "version": "Версия",
-    "logout_confirm": "Выйти из аккаунта?"
+    "logout_confirm": "Выйти из аккаунта?",
+    "coming_soon": "Скоро"
   },
   "tabs": {
     "home": "Главная",
@@ -250,7 +274,10 @@
     "year": "Год",
     "color": "Цвет",
     "add": "Добавить авто",
-    "plate_required": "Введите гос. номер"
+    "plate_required": "Введите гос. номер",
+    "make_hint": "Chevrolet",
+    "model_hint": "Cobalt",
+    "color_hint": "Белый"
   },
   "dates": {
     "today": "Сегодня",
@@ -273,6 +300,10 @@
     "photo_placeholder": "ФОТО СЕРВИСА",
     "desc_default": "Профессиональный шиномонтаж.",
     "desc_long": "{name} — профессиональный шиномонтажный сервис. Один из ведущих в городе. Выполняем все виды шиномонтажных работ качественно.",
-    "min": "мин"
-  }
+    "min": "мин",
+    "no_reviews": "Пока нет отзывов",
+    "price_on_request": "Цена по запросу",
+    "is_verified": "Проверено"
+  },
+  "payment_error": "Ошибка при оплате"
 }

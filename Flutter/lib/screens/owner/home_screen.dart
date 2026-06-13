@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/service_type.dart';
 import '../../models/shop.dart';
+import '../../services/notification_service.dart';
 import '../../services/shop_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
@@ -20,6 +21,15 @@ import '../../widgets/m_workshop_card.dart';
 
 final serviceTypesProvider = FutureProvider.autoDispose<List<ServiceType>>((ref) {
   return ShopService().getServiceTypes();
+});
+
+final _unreadCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  try {
+    final list = await NotificationService().list();
+    return list.where((n) => !n.read).length;
+  } catch (_) {
+    return 0;
+  }
 });
 
 final selectedServiceTypeProvider = StateProvider<String?>((ref) => null);
@@ -123,7 +133,29 @@ class OwnerHomeScreen extends ConsumerWidget {
                       child: const Center(
                           child: CircularProgressIndicator(strokeWidth: 2)),
                     ),
-                    error: (e, s) => const SizedBox.shrink(),
+                    error: (e, st) => Padding(
+                      padding: EdgeInsets.symmetric(vertical: r.isSmall ? 16 : 24),
+                      child: Column(
+                        children: [
+                          Text(
+                            'home.service_types_error'.tr(),
+                            style: AppTypography.body.copyWith(color: AppColors.text3(context)),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () => ref.invalidate(serviceTypesProvider),
+                            child: Text(
+                              'common.retry'.tr(),
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.text(context),
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppColors.text(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   SizedBox(height: r.isSmall ? 16 : 24),
 
@@ -196,6 +228,7 @@ class _HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final iconSize = r.isSmall ? 36.0 : 42.0;
+    final unread = ref.watch(_unreadCountProvider).valueOrNull ?? 0;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
@@ -224,7 +257,7 @@ class _HomeAppBar extends ConsumerWidget {
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
-                        'Toshkent, Yunusobod',
+                        'home.location_all'.tr(),
                         style: AppTypography.soraSize(
                                 r.isSmall ? 13 : 15,
                                 weight: FontWeight.w600)
@@ -232,9 +265,6 @@ class _HomeAppBar extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 3),
-                    Icon(Icons.expand_more_rounded,
-                        size: 16, color: AppColors.text2(context)),
                   ],
                 ),
               ],
@@ -251,15 +281,16 @@ class _HomeAppBar extends ConsumerWidget {
                 _IconCircle(size: iconSize, child:
                   Icon(Icons.notifications_outlined,
                       size: iconSize * 0.48, color: AppColors.text(context))),
-                Positioned(
-                  top: iconSize * 0.18,
-                  right: iconSize * 0.18,
-                  child: Container(
-                    width: 8, height: 8,
-                    decoration: const BoxDecoration(
-                        color: Color(0xFFE5382B), shape: BoxShape.circle),
+                if (unread > 0)
+                  Positioned(
+                    top: iconSize * 0.18,
+                    right: iconSize * 0.18,
+                    child: Container(
+                      width: 8, height: 8,
+                      decoration: const BoxDecoration(
+                          color: Color(0xFFE5382B), shape: BoxShape.circle),
+                    ),
                   ),
-                ),
               ],
             ),
           ),

@@ -21,16 +21,17 @@ class Payment {
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
         id: json['id'] as String,
-        bookingId: (json['booking_id'] ?? '') as String,
-        amount: (json['amount'] ?? 0) as int,
+        bookingId: (json['bookingId'] ?? json['booking_id'] ?? '') as String,
+        amount: ((json['amount'] ?? 0) as num).toInt(),
         method: (json['method'] ?? '') as String,
         status: (json['status'] ?? 'pending') as String,
-        qrCode: json['qr_code'] as String?,
-        paidAt: json['paid_at'] != null
-            ? DateTime.tryParse(json['paid_at'] as String)
+        qrCode: (json['qrCode'] ?? json['qr_code']) as String?,
+        paidAt: (json['paidAt'] ?? json['paid_at']) != null
+            ? DateTime.tryParse((json['paidAt'] ?? json['paid_at']) as String)
             : null,
-        createdAt:
-            DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(
+                (json['createdAt'] ?? json['created_at'] ?? '') as String) ??
+            DateTime.now(),
       );
 
   bool get isPaid => status == 'paid';

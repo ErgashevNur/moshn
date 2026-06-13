@@ -43,21 +43,23 @@ class Booking {
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
         id: json['id'] as String,
-        customerId: (json['customer_id'] ?? '') as String,
-        shopId: (json['shop_id'] ?? '') as String,
-        vehicleId: (json['vehicle_id'] ?? '') as String,
-        serviceTypeId: (json['service_type_id'] ?? '') as String,
-        scheduledAt:
-            DateTime.tryParse(json['scheduled_at'] ?? '') ?? DateTime.now(),
+        customerId: (json['customerId'] ?? json['customer_id'] ?? '') as String,
+        shopId: (json['shopId'] ?? json['shop_id'] ?? '') as String,
+        vehicleId: (json['vehicleId'] ?? json['vehicle_id'] ?? '') as String,
+        serviceTypeId: (json['serviceTypeId'] ?? json['service_type_id'] ?? '') as String,
+        scheduledAt: DateTime.tryParse(
+                (json['scheduledAt'] ?? json['scheduled_at'] ?? '') as String) ??
+            DateTime.now(),
         notes: (json['notes'] ?? '') as String,
         status: (json['status'] ?? 'pending') as String,
-        totalPrice: (json['total_price'] ?? 0) as int,
-        cancelReason: json['cancel_reason'] as String?,
-        completedAt: json['completed_at'] != null
-            ? DateTime.tryParse(json['completed_at'] as String)
+        totalPrice: ((json['totalPrice'] ?? json['total_price'] ?? 0) as num).toInt(),
+        cancelReason: (json['cancelReason'] ?? json['cancel_reason']) as String?,
+        completedAt: (json['completedAt'] ?? json['completed_at']) != null
+            ? DateTime.tryParse((json['completedAt'] ?? json['completed_at']) as String)
             : null,
-        createdAt:
-            DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(
+                (json['createdAt'] ?? json['created_at'] ?? '') as String) ??
+            DateTime.now(),
         customer: json['customer'] != null
             ? User.fromJson(json['customer'] as Map<String, dynamic>)
             : null,
@@ -67,8 +69,9 @@ class Booking {
         vehicle: json['vehicle'] != null
             ? Vehicle.fromJson(json['vehicle'] as Map<String, dynamic>)
             : null,
-        serviceType: json['service_type'] != null
-            ? ServiceType.fromJson(json['service_type'] as Map<String, dynamic>)
+        serviceType: (json['serviceType'] ?? json['service_type']) != null
+            ? ServiceType.fromJson(
+                (json['serviceType'] ?? json['service_type']) as Map<String, dynamic>)
             : null,
       );
 

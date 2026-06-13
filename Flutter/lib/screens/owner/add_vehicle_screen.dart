@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
@@ -53,10 +54,31 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       if (!mounted) return;
       context.pop();
     } catch (e) {
-      if (mounted) _showError(e.toString());
+      if (mounted) _showError(_errMsg(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  String _errMsg(Object e) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return 'Server bilan ulanishda xatolik. WiFi ulanishingizni tekshiring.';
+      }
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final msg = data['message'];
+        if (msg is String && msg.isNotEmpty) return msg;
+        if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      }
+      if (e.response?.statusCode == 409) {
+        return 'Bu davlat raqami allaqachon ro\'yxatda';
+      }
+      if (e.response?.statusCode == 400) return 'Ma\'lumotlarni to\'g\'ri kiriting';
+    }
+    return e.toString();
   }
 
   void _showError(String msg) {
@@ -138,7 +160,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                             _label('vehicle.make'.tr()),
                             AppTextField(
                               controller: _make,
-                              placeholder: 'Chevrolet',
+                              placeholder: 'vehicle.make_hint'.tr(),
                             ),
                           ],
                         ),
@@ -151,7 +173,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                             _label('vehicle.model'.tr()),
                             AppTextField(
                               controller: _model,
-                              placeholder: 'Cobalt',
+                              placeholder: 'vehicle.model_hint'.tr(),
                             ),
                           ],
                         ),
@@ -182,7 +204,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                             _label('vehicle.color'.tr()),
                             AppTextField(
                               controller: _color,
-                              placeholder: 'Oq',
+                              placeholder: 'vehicle.color_hint'.tr(),
                             ),
                           ],
                         ),

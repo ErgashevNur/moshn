@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/booking.dart';
+import '../../models/payment.dart';
 import '../../services/booking_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -14,6 +15,11 @@ import '../../widgets/section_card.dart';
 final _bookingDetailProvider =
     FutureProvider.autoDispose.family<Booking, String>(
   (ref, id) => BookingService().getBooking(id),
+);
+
+final _bookingPaymentProvider =
+    FutureProvider.autoDispose.family<Payment?, String>(
+  (ref, bookingId) => BookingService().getPayment(bookingId),
 );
 
 class BookingDetailScreen extends ConsumerWidget {
@@ -86,6 +92,9 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final paymentAsync = ref.watch(_bookingPaymentProvider(booking.id));
+    final isPaid = paymentAsync.valueOrNull?.isPaid == true;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -95,7 +104,7 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           _InfoCard(booking: booking),
           const SizedBox(height: AppSpacing.xl),
-          if (booking.isCompleted) ...[
+          if (booking.isCompleted && !isPaid) ...[
             PrimaryButton(
               label: 'booking.pay_now'.tr(),
               onPressed: () => context.push(
@@ -105,6 +114,17 @@ class _Body extends ConsumerWidget {
             TextButton(
               onPressed: () => _showTipDialog(context, ref),
               child: Text('booking.add_tip'.tr()),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          if (booking.isCompleted && isPaid) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              alignment: Alignment.center,
+              child: Text(
+                'booking.paid'.tr(),
+                style: AppTypography.labelMedium.copyWith(color: AppColors.success),
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
           ],
@@ -150,7 +170,15 @@ class _Body extends ConsumerWidget {
         await BookingService().cancelBooking(booking.id);
         if (!context.mounted) return;
         onRefresh();
-      } catch (_) {}
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('booking.cancel_error'.tr()),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 

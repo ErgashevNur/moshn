@@ -33,8 +33,8 @@ class Vehicle {
         model: json['model'] as String? ?? '',
         year: (json['year'] as num?)?.toInt() ?? 0,
         color: json['color'] as String?,
-        photoUrl: json['photo_url'] as String?,
-        ownerId: json['owner_id'] as String? ?? '',
-        createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        photoUrl: (json['photoUrl'] ?? json['photo_url']) as String?,
+        ownerId: (json['ownerId'] ?? json['owner_id']) as String? ?? '',
+        createdAt: DateTime.tryParse((json['createdAt'] ?? json['created_at'] ?? '') as String) ?? DateTime.now(),
       );
 }

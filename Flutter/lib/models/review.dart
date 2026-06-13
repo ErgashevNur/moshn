@@ -27,16 +27,16 @@ class Review {
     final author = json['author'] as Map<String, dynamic>?;
     return Review(
       id:          json['id']          as String? ?? '',
-      bookingId:   json['booking_id']  as String? ?? '',
-      authorId:    json['author_id']   as String? ?? '',
-      targetId:    json['target_id']   as String? ?? '',
-      reviewType:  json['review_type'] as String? ?? '',
+      bookingId:   (json['bookingId']  ?? json['booking_id'])  as String? ?? '',
+      authorId:    (json['authorId']   ?? json['author_id'])   as String? ?? '',
+      targetId:    (json['targetId']   ?? json['target_id'])   as String? ?? '',
+      reviewType:  (json['reviewType'] ?? json['review_type']) as String? ?? '',
       rating:      (json['rating']     as num?)?.toInt() ?? 0,
       comment:     json['comment']     as String? ?? '',
-      authorName:  author?['full_name'] as String? ?? '',
-      isModerated: json['is_moderated'] as bool? ?? false,
-      createdAt:   json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
+      authorName:  (author?['fullName'] ?? author?['full_name']) as String? ?? '',
+      isModerated: (json['isModerated'] ?? json['is_moderated']) as bool? ?? false,
+      createdAt:   (json['createdAt'] ?? json['created_at']) != null
+          ? DateTime.tryParse((json['createdAt'] ?? json['created_at']) as String)
           : null,
     );
   }

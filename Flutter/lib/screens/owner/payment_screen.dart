@@ -82,24 +82,33 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   // ── Action ────────────────────────────────────────────────────────────────
 
-  void _confirm() {
-    // Darhol success ekranini ko'rsatamiz
-    final booking = ref.read(_bookingForPayProvider(widget.bookingId)).valueOrNull;
-    setState(() {
-      _paying = false;
-      _paid = true;
-      _confirmedBooking = booking;
-    });
+  Future<void> _confirm() async {
+    setState(() => _paying = true);
 
-    // API fire-and-forget (background, xatolik ko'rsatmaymiz)
     final method = switch (_methodIndex) {
       1 => 'later',
       2 => 'installment',
       _ => 'card_qr',
     };
-    BookingService().markPaid(widget.bookingId, method).ignore();
-    if (_tipAmount > 0) {
-      BookingService().addTip(widget.bookingId, _tipAmount).ignore();
+
+    try {
+      await BookingService().markPaid(widget.bookingId, method);
+      if (_tipAmount > 0) {
+        await BookingService().addTip(widget.bookingId, _tipAmount);
+      }
+      if (!mounted) return;
+      final booking = ref.read(_bookingForPayProvider(widget.bookingId)).valueOrNull;
+      setState(() {
+        _paying = false;
+        _paid = true;
+        _confirmedBooking = booking;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _paying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('to_pay_error'.tr()), backgroundColor: Colors.red),
+      );
     }
   }
 

@@ -34,16 +34,16 @@ class AuthService {
       'phone': phone,
       'email': email,
       'password': password,
-      'full_name': name,
+      'fullName': name,
       'role': role == UserRole.service ? 'service' : 'owner',
     };
     if (role == UserRole.service) {
-      data['shop_name'] = shopName ?? '';
+      data['shopName'] = shopName ?? '';
       data['address'] = address ?? 'Ko\'rsatilmagan';
       data['latitude'] = latitude ?? 0.0;
       data['longitude'] = longitude ?? 0.0;
-      data['working_hours'] = workingHours ?? '';
-      data['service_types'] = serviceTypes ?? [];
+      data['workingHours'] = workingHours ?? '';
+      data['serviceTypes'] = serviceTypes ?? [];
     }
     final resp = await _dio.post('/auth/register', data: data);
     final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;

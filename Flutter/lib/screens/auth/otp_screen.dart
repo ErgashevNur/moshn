@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:dio/dio.dart';
+
 import '../../models/user.dart';
 import '../../services/api.dart';
 import '../../services/auth_service.dart';
@@ -53,8 +55,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _nodes) f.dispose();
+    for (final c in _controllers) { c.dispose(); }
+    for (final f in _nodes) { f.dispose(); }
     _timer?.cancel();
     super.dispose();
   }
@@ -65,8 +67,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) { t.cancel(); return; }
       setState(() {
-        if (_countdown > 0) _countdown--;
-        else t.cancel();
+        if (_countdown > 0) {
+          _countdown--;
+        } else {
+          t.cancel();
+        }
       });
     });
   }
@@ -119,13 +124,23 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       } else {
         context.go(result.user.role == UserRole.service ? '/service' : '/owner');
       }
-    } catch (_) {
+    } catch (e) {
+      String msg;
+      if (e is DioException &&
+          (e.type == DioExceptionType.connectionError ||
+              e.type == DioExceptionType.connectionTimeout ||
+              e.type == DioExceptionType.receiveTimeout)) {
+        msg = 'auth.network_error'.tr();
+      } else {
+        msg = 'auth.otp_wrong'.tr();
+      }
       setState(() {
-        _error = _t('Noto\'g\'ri kod. Qaytadan urinib ko\'ring.',
-            'Неверный код. Попробуйте ещё раз.');
+        _error = msg;
         _loading = false;
       });
-      for (final c in _controllers) c.clear();
+      for (final c in _controllers) {
+        c.clear();
+      }
       if (mounted) _nodes[0].requestFocus();
     }
   }

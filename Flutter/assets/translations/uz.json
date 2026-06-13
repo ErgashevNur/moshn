@@ -59,7 +59,9 @@
     "role_select_subtitle": "Rolni keyinchalik o'zgartirish mumkin emas",
     "role_owner_sub": "Shinomontaj topaman, bron qilaman, to'layman",
     "role_service_sub": "Bronlarni qabul qilaman, mijozlarni boshqaraman",
-    "continue_btn": "Davom etish"
+    "continue_btn": "Davom etish",
+    "otp_wrong": "Noto'g'ri tasdiqlash kodi. Qayta urinib ko'ring.",
+    "network_error": "Internetga ulanib bo'lmadi. Aloqani tekshiring."
   },
   "owner": {
     "home_title": "Salom",
@@ -67,12 +69,28 @@
     "nearby_shops": "Yaqin shinomontajlar",
     "my_bookings": "Bronlarim",
     "my_vehicles": "Mashinalarim",
-    "add_vehicle": "Mashina qo'shish",
+    "my_garage": "Mening Garajim",
+    "primary": "Asosiy",
+    "add_vehicle": "Avtomobil qo'shish",
     "no_vehicles": "Hali mashina qo'shilmagan",
     "no_bookings": "Hali bron yo'q",
     "book_now": "Bron qilish",
     "find_shops": "Shinomontaj topish",
-    "all_services": "Hammasi"
+    "all_services": "Hammasi",
+    "feature": {
+      "avto_signal": "Avto Signal",
+      "avto_signal_sub": "Haydovchini ogohlantirish",
+      "jarimalar": "Jarimalar",
+      "jarimalar_sub": "1 ta to'lanmagan",
+      "shinomontaj": "Shinomontaj",
+      "shinomontaj_sub": "Eng yaqin servisni toping",
+      "mavsumiy": "Mavsumiy",
+      "mavsumiy_sub": "Qish g'ildiragi - 45 kun",
+      "sos": "SOS",
+      "sos_sub": "Yo'lda qolsam",
+      "tashriflar": "Tashriflar",
+      "tashriflar_sub": "3 ta tashrif"
+    }
   },
   "home": {
     "what_service": "Qanday xizmat kerak?",
@@ -85,7 +103,9 @@
     "no_shops": "Shinomontaj topilmadi",
     "no_shops_hint": "Boshqa xizmat turini tanlang",
     "error_label": "Xatolik yuz berdi",
-    "nearby_count": "{count} ta yaqin atrofda"
+    "nearby_count": "{count} ta yaqin atrofda",
+    "location_all": "O'zbekiston",
+    "service_types_error": "Xizmat turlari yuklanmadi"
   },
   "booking": {
     "title": "Bron qilish",
@@ -132,7 +152,8 @@
     "card_qr": "QR kod",
     "paid": "To'landi",
     "leave_review": "Baholash",
-    "book_slot": "Vaqtga yozilish"
+    "book_slot": "Vaqtga yozilish",
+    "cancel_error": "Bekor qilishda xatolik yuz berdi"
   },
   "payment": {
     "title": "To'lov",
@@ -153,7 +174,8 @@
     "success_body": "Servis so'rovingizni qabul qildi.\nEslatma yuboramiz.",
     "add_to_calendar": "Kalendarga qo'shish",
     "view_booking": "Bandlovni ko'rish",
-    "price_from": "DAN"
+    "price_from": "DAN",
+    "error": "To'lovda xatolik yuz berdi"
   },
   "service": {
     "home_title": "Bugungi bronlar",
@@ -180,7 +202,8 @@
     "shop_name": "Ustaxona nomi",
     "address": "Manzil",
     "working_hours": "Ish vaqti",
-    "service_types": "Xizmat turlari"
+    "service_types": "Xizmat turlari",
+    "filter_all": "Hammasi"
   },
   "service_category": {
     "process_title": "Jarayon",
@@ -228,7 +251,8 @@
     "user_placeholder": "Foydalanuvchi",
     "about": "Dastur haqida",
     "version": "Versiya",
-    "logout_confirm": "Hisobdan chiqishni xohlaysizmi?"
+    "logout_confirm": "Hisobdan chiqishni xohlaysizmi?",
+    "coming_soon": "Tez kunda"
   },
   "tabs": {
     "home": "Asosiy",
@@ -252,7 +276,10 @@
     "year": "Yil",
     "color": "Rang",
     "add": "Mashina qo'shish",
-    "plate_required": "Davlat raqamini kiriting"
+    "plate_required": "Davlat raqamini kiriting",
+    "make_hint": "Chevrolet",
+    "model_hint": "Cobalt",
+    "color_hint": "Oq"
   },
   "dates": {
     "today": "Bugun",
@@ -275,6 +302,10 @@
     "photo_placeholder": "SERVIS FOTOSI",
     "desc_default": "Professional shinomontaj xizmati.",
     "desc_long": "{name} — professional shinomontaj xizmati. Shahardagi yetakchi ustaxonalardan biri. Barcha turdagi shinomontaj ishlarini sifatli bajaramiz.",
-    "min": "daq"
-  }
+    "min": "daq",
+    "no_reviews": "Hali sharh yo'q",
+    "price_on_request": "Narx so'raladi",
+    "is_verified": "Tasdiqlangan"
+  },
+  "payment_error": "To'lovda xatolik yuz berdi"
 }

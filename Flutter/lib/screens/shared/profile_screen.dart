@@ -1,14 +1,138 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/user.dart';
+import '../../services/api.dart';
 import '../../store/auth_store.dart';
 import '../../store/theme_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_moshn_icon.dart';
+
+void _showComingSoon(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('profile.coming_soon'.tr()),
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) async {
+  final nameCtrl = TextEditingController(text: user?.name == 'Foydalanuvchi' ? '' : (user?.name ?? ''));
+  bool saving = false;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.bg(context),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              24, 20, 24,
+              MediaQuery.of(ctx).viewInsets.bottom + 32,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.hairline(ctx),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'auth.name'.tr(),
+                  style: AppTypography.soraSize(18, weight: FontWeight.w700)
+                      .copyWith(color: AppColors.text(ctx)),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  style: AppTypography.body.copyWith(color: AppColors.text(ctx)),
+                  decoration: InputDecoration(
+                    hintText: 'auth.name_hint'.tr(),
+                    hintStyle: AppTypography.body.copyWith(color: AppColors.text3(ctx)),
+                    filled: true,
+                    fillColor: AppColors.surface(ctx),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                      borderSide: BorderSide(color: AppColors.hairline(ctx)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                      borderSide: BorderSide(color: AppColors.hairline(ctx)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                      borderSide: BorderSide(color: AppColors.inverseBg(ctx), width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.inverseBg(ctx),
+                      foregroundColor: AppColors.inverseText(ctx),
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                      ),
+                    ),
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final name = nameCtrl.text.trim();
+                            if (name.isEmpty) return;
+                            setModalState(() => saving = true);
+                            try {
+                              await ApiClient.instance.dio.put(
+                                '/profile',
+                                data: {'full_name': name},
+                              );
+                              await ref.read(authProvider.notifier).refreshUser();
+                              if (ctx.mounted) Navigator.pop(ctx);
+                            } catch (_) {
+                              setModalState(() => saving = false);
+                            }
+                          },
+                    child: saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text('common.save'.tr()),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+  nameCtrl.dispose();
+}
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -40,7 +164,10 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Foydalanuvchi kartochkasi ─────────────────────────────────
-            _UserCard(user: user),
+            _UserCard(
+              user: user,
+              onTap: () => _showEditProfile(context, ref, user),
+            ),
             const SizedBox(height: 12),
 
             // ── Til + Ko'rinish ───────────────────────────────────────────
@@ -84,6 +211,7 @@ class ProfileScreen extends ConsumerWidget {
               _MenuItem(
                 icon: Icons.notifications_outlined,
                 label: 'profile.notifications'.tr(),
+                onTap: () => context.push('/notifications'),
               ),
               _Hairline(indent: 62),
               _MenuItem(
@@ -175,13 +303,14 @@ class ProfileScreen extends ConsumerWidget {
 
 class _UserCard extends StatelessWidget {
   final User? user;
-  const _UserCard({this.user});
+  final VoidCallback? onTap;
+  const _UserCard({this.user, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -362,13 +491,14 @@ class _SegmentPill extends StatelessWidget {
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _MenuItem({required this.icon, required this.label});
+  const _MenuItem({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () => _showComingSoon(context),
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -421,7 +551,7 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _showComingSoon(context),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

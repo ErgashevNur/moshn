@@ -9,6 +9,7 @@ import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/app_text_field.dart';
 import '../../widgets/m_button.dart';
 
 class RoleSelectScreen extends ConsumerStatefulWidget {
@@ -22,15 +23,26 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
   UserRole? _selected;
   bool _loading = false;
   String _error = '';
+  final _nameCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _confirm() async {
     if (_selected == null || _loading) return;
     setState(() { _loading = true; _error = ''; });
 
     try {
-      final resp = await ApiClient.instance.dio.put('/profile/role', data: {
+      final body = <String, dynamic>{
         'role': _selected == UserRole.service ? 'service' : 'owner',
-      });
+      };
+      final name = _nameCtrl.text.trim();
+      if (name.isNotEmpty) body['full_name'] = name;
+
+      final resp = await ApiClient.instance.dio.put('/profile/role', data: body);
       final userData = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
       final updatedUser = User.fromJson(userData);
       ref.read(authProvider.notifier).setAuthenticated(updatedUser);
@@ -69,7 +81,16 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
                   color: AppColors.text2(context),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 28),
+
+              // Ism maydoni
+              AppTextField(
+                controller: _nameCtrl,
+                placeholder: 'auth.name_hint'.tr(),
+                icon: Icons.person_outline_rounded,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 24),
 
               // Owner card
               _RoleCard(

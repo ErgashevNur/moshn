@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api.dart';
@@ -115,12 +116,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> refreshUser() async {
+    try {
+      final user = await _service.me();
+      state = state.copyWith(user: user);
+    } catch (_) {}
+  }
+
   Future<void> logout() async {
     await ApiClient.instance.clearTokens();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
-  String _errMsg(Object e) => e.toString();
+  String _errMsg(Object e) {
+    if (e is DioException) {
+      // Ulanish / timeout xatosi
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return 'Server bilan ulanishda xatolik. Internet yoki WiFi ulanishingizni tekshiring.';
+      }
+      // Backend qaytargan xabar
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final msg = data['message'];
+        if (msg is String && msg.isNotEmpty) return msg;
+        if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      }
+      if (e.response?.statusCode == 401) return 'Email yoki parol noto\'g\'ri';
+      if (e.response?.statusCode == 400) return 'Ma\'lumotlar noto\'g\'ri';
+      if (e.response?.statusCode == 409) return 'Bu foydalanuvchi allaqachon mavjud';
+    }
+    return e.toString();
+  }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(

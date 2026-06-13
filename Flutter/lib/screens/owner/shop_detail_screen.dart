@@ -2,9 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../models/shop.dart';
 import '../../models/review.dart';
+import '../../models/shop.dart';
 import '../../services/shop_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -21,14 +22,13 @@ final _shopDetailProvider =
   (ref, id) => ShopService().getShop(id),
 );
 
-// Reviews placeholder — a real ReviewService would be injected here.
 final _shopReviewsProvider =
     FutureProvider.autoDispose.family<List<Review>, String>(
-  (ref, shopId) async {
-    // Placeholder: return empty list until ReviewService is wired.
-    return const [];
-  },
+  (ref, shopId) => ShopService().getShopReviews(shopId),
 );
+
+final _shopFavoriteProvider =
+    StateProvider.autoDispose.family<bool, String>((ref, shopId) => false);
 
 // ── Icon mapping ───────────────────────────────────────────────────────────────
 
@@ -192,9 +192,13 @@ class _ShopDetailBody extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         // Reviews
-                        reviewsAsync.maybeWhen(
+                        reviewsAsync.when(
                           data: (reviews) => _ReviewsSection(reviews: reviews),
-                          orElse: () => const SizedBox.shrink(),
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          error: (e, st) => const SizedBox.shrink(),
                         ),
 
                         SizedBox(
@@ -218,12 +222,13 @@ class _ShopDetailBody extends ConsumerWidget {
 
 // ── Hero section ──────────────────────────────────────────────────────────────
 
-class _HeroSection extends StatelessWidget {
+class _HeroSection extends ConsumerWidget {
   final Shop shop;
   const _HeroSection({required this.shop});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavorite = ref.watch(_shopFavoriteProvider(shop.id));
     final safeTop = MediaQuery.of(context).padding.top;
     final screenH = MediaQuery.of(context).size.height;
     final heroH = (screenH * 0.35).clamp(200.0, 280.0) + safeTop;
@@ -271,8 +276,11 @@ class _HeroSection extends StatelessWidget {
             top: MediaQuery.of(context).padding.top + 8,
             right: 16,
             child: _IconCircleButton(
-              icon: Icons.favorite_border_rounded,
-              onTap: () {},
+              icon: isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              iconColor: isFavorite ? Colors.red : null,
+              onTap: () => ref.read(_shopFavoriteProvider(shop.id).notifier).state = !isFavorite,
             ),
           ),
 
@@ -317,7 +325,8 @@ class _BackButton extends StatelessWidget {
 class _IconCircleButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _IconCircleButton({required this.icon, required this.onTap});
+  final Color? iconColor;
+  const _IconCircleButton({required this.icon, required this.onTap, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +340,7 @@ class _IconCircleButton extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.hairline(context), width: 1),
         ),
-        child: Icon(icon, size: 20, color: AppColors.text(context)),
+        child: Icon(icon, size: 20, color: iconColor ?? AppColors.text(context)),
       ),
     );
   }
@@ -353,7 +362,9 @@ class _ImageDots extends StatelessWidget {
           height: 6,
           margin: const EdgeInsets.only(right: 4),
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.white38,
+            color: active
+                ? Colors.white
+                : Colors.white.withAlpha(100),
             borderRadius: BorderRadius.circular(AppSpacing.r_full),
           ),
         );
@@ -363,6 +374,11 @@ class _ImageDots extends StatelessWidget {
 }
 
 // ── Name row ──────────────────────────────────────────────────────────────────
+
+bool _is24h(String workingHours) {
+  final h = workingHours.toLowerCase();
+  return h.contains('24/7') || h.contains('24:00') || h.contains('00:00-00:00');
+}
 
 class _ShopNameRow extends StatelessWidget {
   final Shop shop;
@@ -384,24 +400,28 @@ class _ShopNameRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (isVerified)
-              MTag(
-                label: 'VIP',
-                variant: MTagVariant.gold,
-                icon: Icons.workspace_premium_rounded,
-              ),
-            const SizedBox(height: 4),
-            MTag(
-              label: '24/7',
-              variant: MTagVariant.default_,
-              icon: Icons.access_time_rounded,
-            ),
-          ],
-        ),
+        if (isVerified || _is24h(shop.workingHours)) ...[
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (isVerified)
+                MTag(
+                  label: 'shop.is_verified'.tr(),
+                  variant: MTagVariant.gold,
+                  icon: Icons.verified_rounded,
+                ),
+              if (isVerified && _is24h(shop.workingHours))
+                const SizedBox(height: 4),
+              if (_is24h(shop.workingHours))
+                MTag(
+                  label: '24/7',
+                  variant: MTagVariant.default_,
+                  icon: Icons.access_time_rounded,
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -481,8 +501,26 @@ class _ActionButtons extends StatelessWidget {
   final Shop shop;
   const _ActionButtons({required this.shop});
 
+  Future<void> _openMaps() async {
+    final uri = Uri.parse(
+        'https://maps.google.com/?q=${shop.latitude},${shop.longitude}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _call() async {
+    final uri = Uri.parse('tel:${shop.phone}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasCoords = shop.latitude != 0 || shop.longitude != 0;
+    final hasPhone = shop.phone.isNotEmpty;
+
     return Row(
       children: [
         Expanded(
@@ -491,7 +529,7 @@ class _ActionButtons extends StatelessWidget {
             variant: MButtonVariant.secondary,
             small: true,
             leading: const Icon(Icons.directions_rounded),
-            onTap: () {},
+            onTap: hasCoords ? _openMaps : null,
           ),
         ),
         const SizedBox(width: 10),
@@ -501,7 +539,7 @@ class _ActionButtons extends StatelessWidget {
             variant: MButtonVariant.secondary,
             small: true,
             leading: const Icon(Icons.phone_rounded),
-            onTap: () {},
+            onTap: hasPhone ? _call : null,
           ),
         ),
       ],
@@ -537,13 +575,6 @@ class _ServicesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (serviceTypes.isEmpty) return const SizedBox.shrink();
 
-    final prices = [35000, 80000, 150000, 50000, 45000, 120000];
-    final minLabel = 'shop.min'.tr();
-    final durations = [
-      '15 $minLabel', '30 $minLabel', '60 $minLabel',
-      '20 $minLabel', '25 $minLabel', '45 $minLabel',
-    ];
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(context),
@@ -555,8 +586,6 @@ class _ServicesCard extends StatelessWidget {
           final i = entry.key;
           final slug = entry.value;
           final isLast = i == serviceTypes.length - 1;
-          final price = i < prices.length ? prices[i] : 50000;
-          final duration = i < durations.length ? durations[i] : '30 daq';
 
           return Column(
             children: [
@@ -564,7 +593,6 @@ class _ServicesCard extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 child: Row(
                   children: [
-                    // Icon box
                     Container(
                       width: 38,
                       height: 38,
@@ -579,33 +607,18 @@ class _ServicesCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Name + duration
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _labelForSlug(slug, context.locale.languageCode),
-                            style: AppTypography.soraSize(14,
-                                    weight: FontWeight.w500)
-                                .copyWith(color: AppColors.text(context)),
-                          ),
-                          Text(
-                            duration,
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.text3(context),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        _labelForSlug(slug, context.locale.languageCode),
+                        style: AppTypography.soraSize(14, weight: FontWeight.w500)
+                            .copyWith(color: AppColors.text(context)),
                       ),
                     ),
-                    // Price
                     Text(
-                      '${_formatPrice(price)} ${'common.sum'.tr()}',
-                      style: AppTypography.mono.copyWith(
-                        color: AppColors.text(context),
-                        fontSize: 13,
+                      'shop.price_on_request'.tr(),
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.text3(context),
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -625,16 +638,6 @@ class _ServicesCard extends StatelessWidget {
       ),
     );
   }
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
 }
 
 // ── Reviews section ───────────────────────────────────────────────────────────
@@ -645,59 +648,35 @@ class _ReviewsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Show mock reviews when the list is empty to demonstrate the UI
-    final locale = context.locale.languageCode;
-    final displayReviews = reviews.isNotEmpty
-        ? reviews
-        : [
-            Review(
-              id: 'mock1',
-              bookingId: '',
-              authorId: '',
-              targetId: '',
-              reviewType: 'owner_to_shop',
-              rating: 5,
-              comment: locale == 'ru'
-                  ? 'Отличный сервис! Быстро и качественно.'
-                  : 'Juda yaxshi xizmat! Tez va sifatli bajarishdi.',
-              authorName: 'Dilshod T.',
-              isModerated: false,
-              createdAt: DateTime.now().subtract(const Duration(days: 2)),
-            ),
-            Review(
-              id: 'mock2',
-              bookingId: '',
-              authorId: '',
-              targetId: '',
-              reviewType: 'owner_to_shop',
-              rating: 4,
-              comment: locale == 'ru'
-                  ? 'Цена приемлемая, обслуживание отличное.'
-                  : "Narxi qulay, xizmat a'lo darajada.",
-              authorName: 'Malika R.',
-              isModerated: false,
-              createdAt: DateTime.now().subtract(const Duration(days: 5)),
-            ),
-          ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             _SectionLabel(label: 'shop.reviews'.tr()),
-            const SizedBox(width: 8),
-            Text(
-              '${displayReviews.length} ${'shop.reviews_count'.tr()}',
-              style: AppTypography.body.copyWith(color: AppColors.text3(context)),
-            ),
+            if (reviews.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Text(
+                '${reviews.length} ${'shop.reviews_count'.tr()}',
+                style: AppTypography.body.copyWith(color: AppColors.text3(context)),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 12),
-        ...displayReviews.map((r) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _ReviewCard(review: r),
-            )),
+        if (reviews.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'shop.no_reviews'.tr(),
+              style: AppTypography.body.copyWith(color: AppColors.text3(context)),
+            ),
+          )
+        else
+          ...reviews.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ReviewCard(review: r),
+              )),
       ],
     );
   }
@@ -785,8 +764,6 @@ class _StickyBookingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const basePrice = 35000;
-
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -802,7 +779,7 @@ class _StickyBookingBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Price column
+          // Price label
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 130),
             child: Column(
@@ -817,11 +794,11 @@ class _StickyBookingBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_formatPrice(basePrice)} ${'common.sum'.tr()}',
-                  style: AppTypography.mono.copyWith(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text(context),
+                  'shop.price_on_request'.tr(),
+                  style: AppTypography.body.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text2(context),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -848,15 +825,5 @@ class _StickyBookingBar extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
-      buf.write(s[i]);
-    }
-    return buf.toString();
   }
 }
