@@ -41,6 +41,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _service = AuthService();
 
   Future<void> initialize() async {
+    ApiClient.instance.onUnauthorized = () {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    };
+
     final token = await ApiClient.instance.accessToken;
     if (token == null || token.isEmpty) {
       state = state.copyWith(status: AuthStatus.unauthenticated);

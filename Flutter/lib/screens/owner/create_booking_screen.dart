@@ -604,7 +604,34 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
             child:
                 Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: GestureDetector(
+              onTap: () => ref.invalidate(_vehiclesForBookingProvider),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                  border: Border.all(color: AppColors.hairline(context)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh_rounded,
+                        size: 18, color: AppColors.text3(context)),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Avtomobillarni yuklashda xato. Qayta urinish uchun bosing.',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.text3(context)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );

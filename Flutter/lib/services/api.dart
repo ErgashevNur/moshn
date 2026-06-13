@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show VoidCallback, kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
+  /// Token yangilash muvaffaqiyatsiz bo'lganda chaqiriladi (login ekraniga yo'naltirish uchun).
+  VoidCallback? onUnauthorized;
+
   ApiClient._() {
     _dio = Dio(
       BaseOptions(
@@ -109,6 +112,7 @@ class ApiClient {
       return true;
     } catch (_) {
       await clearTokens();
+      onUnauthorized?.call();
       return false;
     }
   }
