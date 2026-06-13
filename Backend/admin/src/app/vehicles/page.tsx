@@ -1,6 +1,6 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
-import AdminLayout from '@/components/AdminLayout'
+import AdminShell from '@/components/admin/AdminShell'
 import api from '@/lib/api'
 
 interface Vehicle {
@@ -32,7 +32,7 @@ export default function VehiclesPage() {
   useEffect(() => { fetchVehicles() }, [page])
 
   return (
-    <AdminLayout title="Avtomobillar">
+    <AdminShell title="Avtomobillar">
       <div className="space-y-4">
         <form onSubmit={(e) => { e.preventDefault(); setPage(1); fetchVehicles() }} className="flex gap-2">
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -75,10 +75,10 @@ export default function VehiclesPage() {
                     <p className="text-text font-medium">{v.make} {v.model}</p>
                   </td>
                   <td className="text-text2 text-xs">
-                    <p>{v.color || '—'}</p>
-                    <p className="text-text3">{v.year > 0 ? v.year : '—'}</p>
+                    <p>{v.color || 'â€”'}</p>
+                    <p className="text-text3">{v.year > 0 ? v.year : 'â€”'}</p>
                   </td>
-                  <td className="text-text2">{v.owner?.fullName || '—'}</td>
+                  <td className="text-text2">{v.owner?.fullName || 'â€”'}</td>
                   <td className="text-text3 text-xs font-mono">{v.owner?.phone}</td>
                   <td className="text-text3 text-xs">
                     {new Date(v.createdAt).toLocaleDateString('uz-UZ')}
@@ -91,12 +91,12 @@ export default function VehiclesPage() {
 
         {total > 20 && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">← Oldingi</button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">â† Oldingi</button>
             <span className="text-text3 text-sm">{page}-sahifa</span>
-            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Keyingi →</button>
+            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Keyingi â†’</button>
           </div>
         )}
       </div>
-    </AdminLayout>
+    </AdminShell>
   )
 }

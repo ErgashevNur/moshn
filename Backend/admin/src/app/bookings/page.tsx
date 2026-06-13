@@ -1,128 +1,120 @@
 'use client'
-import { useEffect, useState } from 'react'
-import AdminLayout from '@/components/AdminLayout'
+import { useEffect, useState, useCallback } from 'react'
+import AdminShell from '@/components/admin/AdminShell'
+import Icon from '@/components/ui/Icon'
 import api from '@/lib/api'
 
-interface Booking {
-  id: string
-  customer: { full_name: string; phone: string }
-  shop: { shop_name: string }
-  vehicle: { plate: string; make: string; model: string }
-  service_type: { name_uz: string }
-  scheduled_at: string
-  status: string
-  total_price: number
-  created_at: string
+const SC: Record<string, {l:string; c:string}> = {
+  pending:     {l:'Kutilmoqda',   c:'b-blue'},
+  confirmed:   {l:'Tasdiqlangan', c:'b-amber'},
+  in_progress: {l:'Jarayonda',    c:'b-amber'},
+  completed:   {l:'Tugadi',       c:'b-green'},
+  cancelled:   {l:'Bekor',        c:'b-red'},
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  pending:     'Kutilmoqda',
-  confirmed:   'Tasdiqlangan',
-  in_progress: 'Jarayonda',
-  completed:   'Bajarildi',
-  cancelled:   'Bekor qilindi',
+function fmt(n: number) { return n.toLocaleString('uz') }
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('uz', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
+function shortId(id: string) { return id.slice(0, 8).toUpperCase() }
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState('')
-  const [page, setPage] = useState(1)
+  const [bookings, setBookings] = useState<any[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState('')
+  const [st, setSt]             = useState('all')
+  const [q, setQ]               = useState('')
 
-  useEffect(() => {
+  const load = useCallback((status = '') => {
     setLoading(true)
-    const params: Record<string, unknown> = { page, limit: 20 }
-    if (status) params.status = status
-    api.get('/admin/bookings', { params })
-      .then((r) => { setBookings(r.data.data.bookings ?? []); setTotal(r.data.data.total ?? 0) })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [status, page])
+    const qs = status && status !== 'all' ? `?status=${status}&limit=100` : '?limit=100'
+    api.get(`/admin/bookings${qs}`).then(r => {
+      setBookings(r.data.data?.bookings || [])
+    }).catch(() => setError('Buyurtmalarni yuklashda xatolik')).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const statusTabs = [
+    ['all','Hammasi'],
+    ['completed','Tugadi'],
+    ['in_progress','Jarayonda'],
+    ['confirmed','Tasdiqlangan'],
+    ['pending','Kutilmoqda'],
+    ['cancelled','Bekor'],
+  ]
+
+  const list = bookings.filter(b => {
+    const matchSt = st === 'all' || b.status === st
+    const qLow = q.toLowerCase()
+    const matchQ = !q
+      || (b.customer?.fullName || '').toLowerCase().includes(qLow)
+      || (b.shop?.shopName || '').toLowerCase().includes(qLow)
+    return matchSt && matchQ
+  })
 
   return (
-    <AdminLayout title="Bronlar">
-      <div className="space-y-4">
-        {/* Status filter */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {['', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'].map((s) => (
-            <button key={s} onClick={() => { setStatus(s); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                status === s
-                  ? 'border-text/30 bg-text/10 text-text'
-                  : 'border-border text-text3 hover:text-text2'
-              }`}
-            >
-              {s === '' ? 'Hammasi' : STATUS_LABEL[s]}
-            </button>
-          ))}
-          <span className="text-text3 text-sm ml-auto">{total} ta bron</span>
+    <AdminShell title="Buyurtmalar">
+      <div className="fade-in">
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
+          <div className="srch" style={{flex:1}}>
+            <Icon n="search" s={15} col="var(--txt3)"/>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Mijoz yoki servis qidirish…"
+              style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
+            {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
+          </div>
+          <div className="tabs">
+            {statusTabs.map(([k,l]) => (
+              <div key={k} className={`tab ${st===k?'on':''}`}
+                onClick={() => { setSt(k); load(k === 'all' ? '' : k) }}
+                style={{fontSize:12.5,padding:'7px 14px'}}>{l}</div>
+            ))}
+          </div>
         </div>
 
-        {/* Table */}
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-text3 text-xs font-mono uppercase tracking-wide">
-                <th className="px-4 py-3 text-left">Mijoz</th>
-                <th className="px-4 py-3 text-left">Servis</th>
-                <th className="px-4 py-3 text-left">Avtomobil</th>
-                <th className="px-4 py-3 text-left">Xizmat</th>
-                <th className="px-4 py-3 text-left">Sana/vaqt</th>
-                <th className="px-4 py-3 text-left">Narx</th>
-                <th className="px-4 py-3 text-left">Holat</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 7 }).map((__, j) => (
-                      <td key={j} className="px-4 py-3"><div className="h-4 bg-surface2 rounded w-24" /></td>
-                    ))}
-                  </tr>
-                ))
-              ) : bookings.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-text3">Bron topilmadi</td></tr>
-              ) : bookings.map((b) => (
-                <tr key={b.id} className="hover:bg-surface2/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="text-text font-medium">{b.customer?.full_name || '—'}</p>
-                    <p className="text-text3 text-xs font-mono">{b.customer?.phone}</p>
-                  </td>
-                  <td className="px-4 py-3 text-text2">{b.shop?.shop_name || '—'}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-text2 font-mono text-xs">{b.vehicle?.plate}</p>
-                    <p className="text-text3 text-xs">{b.vehicle?.make} {b.vehicle?.model}</p>
-                  </td>
-                  <td className="px-4 py-3 text-text2 text-xs">{b.service_type?.name_uz || '—'}</td>
-                  <td className="px-4 py-3 text-text3 text-xs">
-                    {new Date(b.scheduled_at).toLocaleString('uz-UZ', {
-                      day: '2-digit', month: '2-digit', year: '2-digit',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-text2 font-mono text-xs">
-                    {b.total_price > 0 ? b.total_price.toLocaleString() + ' so\'m' : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`badge badge-${b.status}`}>{STATUS_LABEL[b.status] ?? b.status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          {loading ? (
+            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+          ) : error ? (
+            <div style={{padding:40,textAlign:'center',color:'var(--red)'}}>
+              {error} <button onClick={() => load()} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Qayta urinish</button>
+            </div>
+          ) : (
+            <table className="tbl">
+              <thead>
+                <tr><th>ID</th><th>Mijoz</th><th>Servis</th><th>Xizmat</th><th>Sana/Vaqt</th><th>Narx</th><th>Holat</th></tr>
+              </thead>
+              <tbody>
+                {list.length === 0 ? (
+                  <tr><td colSpan={7} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Buyurtmalar topilmadi</td></tr>
+                ) : list.map(b => {
+                  const s = SC[b.status] || {l: b.status, c:'b-gray'}
+                  return (
+                    <tr key={b.id}>
+                      <td style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'var(--txt3)'}}>{shortId(b.id)}</td>
+                      <td>
+                        <div style={{fontWeight:600,color:'var(--txt)'}}>{b.customer?.fullName || '—'}</div>
+                        <div style={{fontSize:11.5,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace"}}>{b.customer?.phone || ''}</div>
+                      </td>
+                      <td style={{color:'var(--txt2)'}}>{b.shop?.shopName || '—'}</td>
+                      <td style={{color:'var(--txt2)'}}>{b.serviceType?.nameUz || '—'}</td>
+                      <td style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,color:'var(--txt)'}}>{fmtDate(b.scheduledAt)}</td>
+                      <td><span style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:600,color:'var(--txt)'}}>{fmt(b.totalPrice)}</span></td>
+                      <td><span className={`badge ${s.c}`}>{s.l}</span></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Pagination */}
-        {total > 20 && (
-          <div className="flex items-center gap-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">← Oldingi</button>
-            <span className="text-text3 text-sm">{page}-sahifa</span>
-            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Keyingi →</button>
+        {!loading && !error && (
+          <div style={{textAlign:'right',marginTop:10,fontSize:12.5,color:'var(--txt3)'}}>
+            Jami: {list.length} ta buyurtma
           </div>
         )}
       </div>
-    </AdminLayout>
+    </AdminShell>
   )
 }
