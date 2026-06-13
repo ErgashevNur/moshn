@@ -40,8 +40,7 @@ class ApiClient {
   static const _hostOverride = String.fromEnvironment('API_HOST');
   static const _portOverride = String.fromEnvironment('API_PORT', defaultValue: '8080');
 
-  // Lokal dev uchun host mashina IP si — WiFi orqali ishlaydi (adb reverse shart emas)
-  static const _devHost = '192.168.1.12';
+  static const _ngrokUrl = 'https://snore-likewise-aground.ngrok-free.dev';
 
   static String get baseUrl {
     if (_baseOverride.isNotEmpty) return _baseOverride;
@@ -49,8 +48,7 @@ class ApiClient {
       return 'http://$_hostOverride:$_portOverride/v1';
     }
     if (kIsWeb) return 'http://localhost:8080/v1';
-    // Android fizik qurilma uchun — LAN IP ishlatiladi
-    return 'http://$_devHost:$_portOverride/v1';
+    return '$_ngrokUrl/v1';
   }
 
   Future<String?> get accessToken => _storage.read(key: _accessKey);

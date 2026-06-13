@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api.dart';
 import '../services/auth_service.dart';
+import '../services/ws_service.dart';
 
 enum AuthStatus { initial, authenticated, unauthenticated }
 
@@ -124,6 +125,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    WsService.instance.disconnect();
     await ApiClient.instance.clearTokens();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 import 'navigation/router.dart';
 import 'services/push_service.dart';
@@ -12,6 +13,9 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await initLocalNotifications();
+  // Hybrid Composition ba'zi qurilmalarda qora ekran ko'rsatadi — Virtual Display ishlatamiz
+  AndroidYandexMap.useAndroidViewSurface = false;
 
   runApp(
     EasyLocalization(
