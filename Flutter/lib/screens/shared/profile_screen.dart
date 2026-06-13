@@ -111,8 +111,17 @@ Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) a
                               );
                               await ref.read(authProvider.notifier).refreshUser();
                               if (ctx.mounted) Navigator.pop(ctx);
-                            } catch (_) {
-                              setModalState(() => saving = false);
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setModalState(() => saving = false);
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Xatolik: ${e.toString().split('\n').first}'),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             }
                           },
                     child: saving

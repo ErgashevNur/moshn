@@ -1,135 +1,84 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/user.dart';
-import '../../services/api.dart';
-import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/app_text_field.dart';
 import '../../widgets/m_button.dart';
 
-class RoleSelectScreen extends ConsumerStatefulWidget {
+class RoleSelectScreen extends StatefulWidget {
   const RoleSelectScreen({super.key});
 
   @override
-  ConsumerState<RoleSelectScreen> createState() => _RoleSelectScreenState();
+  State<RoleSelectScreen> createState() => _RoleSelectScreenState();
 }
 
-class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
+class _RoleSelectScreenState extends State<RoleSelectScreen> {
   UserRole? _selected;
-  bool _loading = false;
-  String _error = '';
-  final _nameCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _confirm() async {
-    if (_selected == null || _loading) return;
-    setState(() { _loading = true; _error = ''; });
-
-    try {
-      final body = <String, dynamic>{
-        'role': _selected == UserRole.service ? 'service' : 'owner',
-      };
-      final name = _nameCtrl.text.trim();
-      if (name.isNotEmpty) body['full_name'] = name;
-
-      final resp = await ApiClient.instance.dio.put('/profile/role', data: body);
-      final userData = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
-      final updatedUser = User.fromJson(userData);
-      ref.read(authProvider.notifier).setAuthenticated(updatedUser);
-      if (!mounted) return;
-      context.go(_selected == UserRole.service ? '/service' : '/owner');
-    } catch (e) {
-      setState(() {
-        _error = 'common.error_retry'.tr();
-        _loading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'auth.role_select_title'.tr(),
-                style: AppTypography.displaySmall.copyWith(
-                  color: AppColors.text(context),
-                  height: 1.1,
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'auth.role_select_title'.tr(),
+                      style: AppTypography.displaySmall.copyWith(
+                        color: AppColors.text(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'auth.role_select_subtitle'.tr(),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.text2(context),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    _RoleCard(
+                      selected: _selected == UserRole.owner,
+                      icon: Icons.directions_car_rounded,
+                      title: 'auth.role_owner'.tr(),
+                      subtitle: 'auth.role_owner_sub'.tr(),
+                      onTap: () => setState(() => _selected = UserRole.owner),
+                    ),
+                    const SizedBox(height: 12),
+                    _RoleCard(
+                      selected: _selected == UserRole.service,
+                      icon: Icons.tire_repair_rounded,
+                      title: 'auth.role_service'.tr(),
+                      subtitle: 'auth.role_service_sub'.tr(),
+                      onTap: () => setState(() => _selected = UserRole.service),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'auth.role_select_subtitle'.tr(),
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.text2(context),
-                ),
-              ),
-              const SizedBox(height: 28),
+            ),
 
-              // Ism maydoni
-              AppTextField(
-                controller: _nameCtrl,
-                placeholder: 'auth.name_hint'.tr(),
-                icon: Icons.person_outline_rounded,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 24),
-
-              // Owner card
-              _RoleCard(
-                role: UserRole.owner,
-                selected: _selected == UserRole.owner,
-                icon: Icons.directions_car_rounded,
-                title: 'auth.role_owner'.tr(),
-                subtitle: 'auth.role_owner_sub'.tr(),
-                onTap: () => setState(() => _selected = UserRole.owner),
-              ),
-              const SizedBox(height: 12),
-
-              // Service card
-              _RoleCard(
-                role: UserRole.service,
-                selected: _selected == UserRole.service,
-                icon: Icons.tire_repair_rounded,
-                title: 'auth.role_service'.tr(),
-                subtitle: 'auth.role_service_sub'.tr(),
-                onTap: () => setState(() => _selected = UserRole.service),
-              ),
-
-              if (_error.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(_error,
-                    style: AppTypography.body.copyWith(color: AppColors.danger)),
-              ],
-
-              const Spacer(),
-
-              MButton(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: MButton(
                 label: 'auth.continue_btn'.tr(),
-                onTap: _selected != null ? _confirm : null,
+                onTap: _selected != null
+                    ? () => context.push('/profile-setup', extra: _selected)
+                    : null,
                 enabled: _selected != null,
-                loading: _loading,
                 trailing: const Icon(Icons.arrow_forward_rounded),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -137,7 +86,6 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
 }
 
 class _RoleCard extends StatelessWidget {
-  final UserRole role;
   final bool selected;
   final IconData icon;
   final String title;
@@ -145,7 +93,6 @@ class _RoleCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _RoleCard({
-    required this.role,
     required this.selected,
     required this.icon,
     required this.title,
@@ -161,10 +108,14 @@ class _RoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: selected ? AppColors.inverseBg(context) : AppColors.surface(context),
+          color: selected
+              ? AppColors.inverseBg(context)
+              : AppColors.surface(context),
           borderRadius: BorderRadius.circular(AppSpacing.r_xl),
           border: Border.all(
-            color: selected ? AppColors.inverseBg(context) : AppColors.hairline(context),
+            color: selected
+                ? AppColors.inverseBg(context)
+                : AppColors.hairline(context),
             width: selected ? 2 : 1,
           ),
         ),
@@ -206,7 +157,8 @@ class _RoleCard extends StatelessWidget {
                     subtitle,
                     style: AppTypography.body.copyWith(
                       color: selected
-                          ? AppColors.inverseText(context).withValues(alpha: 0.7)
+                          ? AppColors.inverseText(context)
+                              .withValues(alpha: 0.7)
                           : AppColors.text2(context),
                     ),
                   ),
@@ -220,7 +172,9 @@ class _RoleCard extends StatelessWidget {
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? AppColors.inverseText(context) : Colors.transparent,
+                color: selected
+                    ? AppColors.inverseText(context)
+                    : Colors.transparent,
                 border: Border.all(
                   color: selected
                       ? AppColors.inverseText(context)

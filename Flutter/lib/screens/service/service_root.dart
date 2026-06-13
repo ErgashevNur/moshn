@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_moshn_icon.dart';
@@ -16,6 +17,18 @@ class ServiceRoot extends StatefulWidget {
 
 class _ServiceRootState extends State<ServiceRoot> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WsService.instance.connect();
+  }
+
+  @override
+  void dispose() {
+    WsService.instance.disconnect();
+    super.dispose();
+  }
 
   static const _pages = <Widget>[
     ServiceHomeScreen(),
