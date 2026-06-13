@@ -19,7 +19,19 @@ async function bootstrap() {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000,http://localhost:8080')
     .split(',')
     .map((o) => o.trim());
-  app.enableCors({ origin: allowedOrigins, credentials: true });
+  app.enableCors({
+    origin: (origin, cb) => {
+      // Same-origin yoki server-to-server so'rovlar (origin yo'q)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      // ngrok preview domenlarini ham o'tkazib yuborish
+      if (/\.ngrok-free\.app$/.test(origin) || /\.ngrok\.io$/.test(origin)) return cb(null, true);
+      return cb(new Error(`CORS: ${origin} ruxsatsiz`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
+  });
 
   // Global validation
   app.useGlobalPipes(
