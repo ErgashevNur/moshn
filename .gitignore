@@ -8,12 +8,19 @@
 *.p12
 **/google-services.json
 **/GoogleService-Info.plist
+*-firebase-adminsdk-*.json
+**/serviceAccountKey.json
+**/firebase-credentials.json
 
-# ============ Backend (Go) ============
+# ============ Backend (Go — o'chirilgan) ============
 Backend/backend/server
 Backend/backend/createadmin
 Backend/backend/seed
 *.exe
+
+# ============ Backend (NestJS) ============
+Backend/nest-backend/dist/
+Backend/nest-backend/uploads/
 
 # ============ Uploads / runtime data ============
 Backend/uploads/*
