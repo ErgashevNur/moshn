@@ -1,7 +1,8 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminRoleGuard } from '../common/guards/admin-role.guard';
 import { JwtGuard } from '../common/guards/jwt.guard';
+import { PromosService } from '../promos/promos.service';
 import { AdminService } from './admin.service';
 
 @ApiTags('admin')
@@ -9,7 +10,7 @@ import { AdminService } from './admin.service';
 @UseGuards(JwtGuard, AdminRoleGuard)
 @Controller('v1/admin')
 export class AdminController {
-  constructor(private readonly svc: AdminService) {}
+  constructor(private readonly svc: AdminService, private readonly promos: PromosService) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Umumiy statistika' })
@@ -129,5 +130,33 @@ export class AdminController {
   async broadcast(@Body('title') title: string, @Body('body') body: string) {
     await this.svc.broadcast(title, body);
     return { data: { message: 'Bildirishnoma yuborildi' } };
+  }
+
+  // ── Promos (aksiyalar) ──────────────────────────────────────────────────────
+
+  @Get('promos')
+  @ApiOperation({ summary: 'Barcha aksiyalar' })
+  async listPromos() {
+    return { data: await this.promos.listAll() };
+  }
+
+  @Post('promos')
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Yangi aksiya yaratish' })
+  async createPromo(@Body() body: any) {
+    return { data: await this.promos.create(body) };
+  }
+
+  @Put('promos/:id')
+  @ApiOperation({ summary: 'Aksiyani yangilash' })
+  async updatePromo(@Param('id') id: string, @Body() body: any) {
+    return { data: await this.promos.update(id, body) };
+  }
+
+  @Delete('promos/:id')
+  @ApiOperation({ summary: 'Aksiyani o\'chirish' })
+  async deletePromo(@Param('id') id: string) {
+    await this.promos.delete(id);
+    return { data: { message: 'O\'chirildi' } };
   }
 }

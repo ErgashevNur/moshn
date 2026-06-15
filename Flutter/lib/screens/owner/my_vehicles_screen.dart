@@ -39,10 +39,33 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
           data: (vehicles) => _buildContent(context, vehicles),
           loading: () =>
               const Center(child: CircularProgressIndicator.adaptive()),
-          error: (e, _) => Center(
-            child: TextButton(
-              onPressed: () => ref.invalidate(_vehiclesProvider),
-              child: Text('common.retry'.tr()),
+          error: (e, _) => Container(
+            color: AppColors.bg(context),
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.directions_car_outlined,
+                    size: 48, color: AppColors.text3(context)),
+                const SizedBox(height: 16),
+                Text(
+                  'owner.vehicles_error'.tr(),
+                  style: AppTypography.body.copyWith(color: AppColors.text2(context)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => ref.invalidate(_vehiclesProvider),
+                  child: Text(
+                    'common.retry'.tr(),
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.text(context),
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.text(context),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

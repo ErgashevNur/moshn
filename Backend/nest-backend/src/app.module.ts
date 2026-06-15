@@ -8,6 +8,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
+import { PromosModule } from './promos/promos.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ShopsModule } from './shops/shops.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
@@ -25,6 +26,7 @@ import { WsModule } from './ws/ws.module';
     ShopsModule,
     BookingsModule,
     PaymentsModule,
+    PromosModule,
     ReviewsModule,
     NotificationsModule,
     AdminModule,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 import '../../models/review.dart';
 import '../../models/shop.dart';
@@ -222,27 +223,65 @@ class _ShopDetailBody extends ConsumerWidget {
 
 // ── Hero section ──────────────────────────────────────────────────────────────
 
-class _HeroSection extends ConsumerWidget {
+class _HeroSection extends ConsumerStatefulWidget {
   final Shop shop;
   const _HeroSection({required this.shop});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isFavorite = ref.watch(_shopFavoriteProvider(shop.id));
+  ConsumerState<_HeroSection> createState() => _HeroSectionState();
+}
+
+class _HeroSectionState extends ConsumerState<_HeroSection> {
+  YandexMapController? _mapController;
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isFavorite = ref.watch(_shopFavoriteProvider(widget.shop.id));
     final safeTop = MediaQuery.of(context).padding.top;
     final screenH = MediaQuery.of(context).size.height;
     final heroH = (screenH * 0.35).clamp(200.0, 280.0) + safeTop;
+
+    final hasCoords = widget.shop.latitude != 0 || widget.shop.longitude != 0;
+    final shopPoint = Point(
+      latitude: hasCoords ? widget.shop.latitude : 41.2995,
+      longitude: hasCoords ? widget.shop.longitude : 69.2401,
+    );
+
     return SizedBox(
       height: heroH,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background photo placeholder
-          MPh(
-            width: double.infinity,
-            height: heroH,
-            radius: 0,
-            label: 'shop.photo_placeholder'.tr(),
+          // Yandex mini-xarita
+          YandexMap(
+            onMapCreated: (controller) async {
+              _mapController = controller;
+              await controller.moveCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(target: shopPoint, zoom: 15),
+                ),
+              );
+            },
+            mapObjects: [
+              PlacemarkMapObject(
+                mapId: const MapObjectId('shop_pin'),
+                point: shopPoint,
+                opacity: 1.0,
+                icon: PlacemarkIcon.single(
+                  PlacemarkIconStyle(
+                    image: BitmapDescriptor.fromAssetImage('assets/images/pin_active.png'),
+                    scale: 2.0,
+                    anchor: const Offset(0.5, 1.0),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           // Gradient overlay
@@ -252,7 +291,7 @@ class _HeroSection extends ConsumerWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  stops: const [0.0, 0.3, 0.65, 1.0],
+                  stops: const [0.0, 0.25, 0.7, 1.0],
                   colors: [
                     AppColors.scrim(context),
                     Colors.transparent,
@@ -280,15 +319,10 @@ class _HeroSection extends ConsumerWidget {
                   ? Icons.favorite_rounded
                   : Icons.favorite_border_rounded,
               iconColor: isFavorite ? Colors.red : null,
-              onTap: () => ref.read(_shopFavoriteProvider(shop.id).notifier).state = !isFavorite,
+              onTap: () =>
+                  ref.read(_shopFavoriteProvider(widget.shop.id).notifier).state =
+                      !isFavorite,
             ),
-          ),
-
-          // Bottom right: image dots
-          Positioned(
-            bottom: 14,
-            right: 16,
-            child: _ImageDots(count: 3, activeIndex: 0),
           ),
         ],
       ),
@@ -346,32 +380,6 @@ class _IconCircleButton extends StatelessWidget {
   }
 }
 
-class _ImageDots extends StatelessWidget {
-  final int count;
-  final int activeIndex;
-  const _ImageDots({required this.count, required this.activeIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(count, (i) {
-        final active = i == activeIndex;
-        return Container(
-          width: active ? 16 : 6,
-          height: 6,
-          margin: const EdgeInsets.only(right: 4),
-          decoration: BoxDecoration(
-            color: active
-                ? Colors.white
-                : Colors.white.withAlpha(100),
-            borderRadius: BorderRadius.circular(AppSpacing.r_full),
-          ),
-        );
-      }),
-    );
-  }
-}
 
 // ── Name row ──────────────────────────────────────────────────────────────────
 

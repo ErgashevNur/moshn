@@ -36,7 +36,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _moveTo(Point point, {double zoom = 14}) async {
-    await _mapController?.moveCamera(
+    if (!mounted || _mapController == null) return;
+    await _mapController!.moveCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: point, zoom: zoom),
       ),
@@ -88,7 +89,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               data: (shops) => YandexMap(
                 onMapCreated: (controller) async {
                   _mapController = controller;
-                  await _moveTo(_tashkent, zoom: 12);
+                  if (mounted) await _moveTo(_tashkent, zoom: 12);
                 },
                 mapObjects: _buildMapObjects(shops),
                 onMapTap: (_) {
@@ -101,7 +102,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               error: (_, p) => YandexMap(
                 onMapCreated: (controller) async {
                   _mapController = controller;
-                  await _moveTo(_tashkent, zoom: 12);
+                  if (mounted) await _moveTo(_tashkent, zoom: 12);
                 },
                 mapObjects: const [],
               ),

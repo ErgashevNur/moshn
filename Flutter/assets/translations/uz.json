@@ -73,6 +73,7 @@
     "primary": "Asosiy",
     "add_vehicle": "Avtomobil qo'shish",
     "no_vehicles": "Hali mashina qo'shilmagan",
+    "vehicles_error": "Mashinalarni yuklashda xatolik. Qayta urinib ko'ring.",
     "no_bookings": "Hali bron yo'q",
     "book_now": "Bron qilish",
     "find_shops": "Shinomontaj topish",

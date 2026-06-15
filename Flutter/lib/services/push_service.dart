@@ -2,7 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
 
+import '../navigation/router.dart' as app_router;
 import 'notification_service.dart';
 
 final _localNotifications = FlutterLocalNotificationsPlugin();
@@ -20,12 +22,38 @@ const _channel = AndroidNotificationChannel(
 Future<void> initLocalNotifications() async {
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
   const initSettings = InitializationSettings(android: androidSettings);
-  await _localNotifications.initialize(initSettings);
+  await _localNotifications.initialize(
+    initSettings,
+    onDidReceiveNotificationResponse: _onLocalNotificationTap,
+    onDidReceiveBackgroundNotificationResponse: _onLocalNotificationTap,
+  );
 
-  // Channel'ni Android'da ro'yxatga olamiz
   await _localNotifications
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(_channel);
+}
+
+@pragma('vm:entry-point')
+void _onLocalNotificationTap(NotificationResponse response) {
+  final ctx = app_router.navigatorKey.currentContext;
+  if (ctx != null) {
+    GoRouter.of(ctx).push('/notifications');
+  }
+}
+
+void _navigateFromRemoteMessage(RemoteMessage message) {
+  final ctx = app_router.navigatorKey.currentContext;
+  if (ctx == null) return;
+  final router = GoRouter.of(ctx);
+  final data = message.data;
+  if (data['booking_id'] != null) {
+    router.push('/owner/bookings/${data['booking_id']}');
+  } else if (data['route'] != null) {
+    router.push(data['route'] as String);
+  } else {
+    router.push('/notifications');
+  }
 }
 
 void showLocalNotification({
@@ -63,7 +91,19 @@ class PushService {
     try {
       await Firebase.initializeApp();
       final messaging = FirebaseMessaging.instance;
-      final settings = await messaging.requestPermission();
+
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
       if (settings.authorizationStatus == AuthorizationStatus.denied) return;
 
       final token = await messaging.getToken();
@@ -79,9 +119,21 @@ class PushService {
         NotificationService().registerToken(t).catchError((_) {});
       });
 
+      // App o'ldirilgan holda notification tap — app ochiladi
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        Future.delayed(const Duration(milliseconds: 600), () {
+          _navigateFromRemoteMessage(initialMessage);
+        });
+      }
+
+      // App background'da — notification tap
+      FirebaseMessaging.onMessageOpenedApp.listen(_navigateFromRemoteMessage);
+
       // Foreground: local notification bilan ovoz + vibro
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
       FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+
       _initialized = true;
     } catch (e) {
       if (kDebugMode) debugPrint('Push init xatosi: $e');

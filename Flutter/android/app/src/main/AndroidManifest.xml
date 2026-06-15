@@ -13,7 +13,7 @@
 
     <application
         android:label="Shina24"
-        android:name="${applicationName}"
+        android:name=".MainApplication"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -46,6 +46,9 @@
         <meta-data
             android:name="com.yandex.android.mapkit.API_KEY"
             android:value="1f1dbc7c-8a01-46da-9e77-b9c2572d89d9" />
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/promo.dart';
 import '../../models/service_type.dart';
 import '../../models/shop.dart';
 import '../../services/notification_service.dart';
+import '../../services/promo_service.dart';
 import '../../services/shop_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
@@ -39,6 +43,10 @@ final shopsProvider = FutureProvider.autoDispose<List<Shop>>((ref) {
   return ShopService().getShops(serviceType: type);
 });
 
+final promosProvider = FutureProvider.autoDispose<List<Promo>>((ref) {
+  return PromoService().getActive();
+});
+
 // ── Responsive helper ──────────────────────────────────────────────────────────
 
 class _R {
@@ -61,17 +69,27 @@ class _R {
 }
 
 // ── Icon mapping ───────────────────────────────────────────────────────────────
-
-String _iconForSlug(String slug) {
-  switch (slug) {
-    case 'tire_change':  return 'disc';
-    case 'pumping':      return 'gauge';
-    case 'patch':        return 'wrench';
-    case 'balancing':    return 'disc';
-    case 'rim_repair':   return 'disc';
-    case 'storage':      return 'layers';
-    default:             return 'wrench';
-  }
+// Backend icon value (t.icon) → MoshnIcon name
+String _resolveIcon(String backendIcon, String slug) {
+  const map = {
+    // Backend icon values (from admin SVG picker)
+    'tire_change':  'disc',
+    'tire_inflate': 'gauge',
+    'tire_storage': 'layers',
+    'disk_repair':  'disc',
+    'balance':      'disc',
+    'vulcanize':    'wrench',
+    // Slug fallbacks
+    'pumping':      'gauge',
+    'patch':        'wrench',
+    'balancing':    'disc',
+    'rim_repair':   'disc',
+    'storage':      'layers',
+    'perezobuvka':  'disc',
+    'podkachka':    'gauge',
+    'vulkanizatsiya': 'wrench',
+  };
+  return map[backendIcon] ?? map[slug] ?? 'wrench';
 }
 
 // ── Screen ─────────────────────────────────────────────────────────────────────
@@ -81,10 +99,11 @@ class OwnerHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user       = ref.watch(authProvider).user;
-    final typesAsync = ref.watch(serviceTypesProvider);
-    final shopsAsync = ref.watch(shopsProvider);
-    final selected   = ref.watch(selectedServiceTypeProvider);
+    final user        = ref.watch(authProvider).user;
+    final typesAsync  = ref.watch(serviceTypesProvider);
+    final shopsAsync  = ref.watch(shopsProvider);
+    final selected    = ref.watch(selectedServiceTypeProvider);
+    final promosAsync = ref.watch(promosProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -159,8 +178,14 @@ class OwnerHomeScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: r.isSmall ? 16 : 24),
 
-                  // Promo banner
-                  _PromoBanner(r: r),
+                  // Promo banner (dynamic)
+                  promosAsync.when(
+                    data: (promos) => promos.isEmpty
+                        ? const SizedBox.shrink()
+                        : _PromoBannerSection(promos: promos, r: r),
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, st) => const SizedBox.shrink(),
+                  ),
                   SizedBox(height: r.isSmall ? 20 : 28),
 
                   // Section header
@@ -202,9 +227,26 @@ class OwnerHomeScreen extends ConsumerWidget {
                     error: (e, _) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
-                        child: Text('home.error_label'.tr(),
-                            style: AppTypography.body
-                                .copyWith(color: AppColors.danger)),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('home.error_label'.tr(),
+                                style: AppTypography.body
+                                    .copyWith(color: AppColors.danger)),
+                            const SizedBox(height: 10),
+                            GestureDetector(
+                              onTap: () => ref.invalidate(shopsProvider),
+                              child: Text(
+                                'common.retry'.tr(),
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: AppColors.text(context),
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors.text(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -404,7 +446,7 @@ class _ServiceTypeGrid extends StatelessWidget {
         final locale = context.locale.languageCode;
         return MServiceTile(
           label: t.nameFor(locale),
-          iconName: _iconForSlug(t.slug),
+          iconName: _resolveIcon(t.icon, t.slug),
           active: selectedSlug == t.slug,
           onTap: () => onTap(t.slug),
         );
@@ -413,14 +455,106 @@ class _ServiceTypeGrid extends StatelessWidget {
   }
 }
 
-// ── Promo banner ───────────────────────────────────────────────────────────────
+// ── Promo banner section (column ≤2, carousel >2) ─────────────────────────────
 
-class _PromoBanner extends StatelessWidget {
+class _PromoBannerSection extends StatefulWidget {
+  final List<Promo> promos;
   final _R r;
-  const _PromoBanner({required this.r});
+  const _PromoBannerSection({required this.promos, required this.r});
+
+  @override
+  State<_PromoBannerSection> createState() => _PromoBannerSectionState();
+}
+
+class _PromoBannerSectionState extends State<_PromoBannerSection> {
+  late final PageController _controller;
+  int _current = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController();
+    if (widget.promos.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (!mounted) return;
+        final next = (_current + 1) % widget.promos.length;
+        _controller.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final promos = widget.promos;
+    final r = widget.r;
+    final bannerH = r.isSmall ? 112.0 : 132.0;
+
+    return Column(
+      children: [
+        SizedBox(
+          height: bannerH,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: promos.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (ctx, i) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: _PromoBanner(promo: promos[i], r: r),
+            ),
+          ),
+        ),
+        if (promos.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(promos.length, (i) {
+              final active = _current == i;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: active ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: active
+                      ? AppColors.inverseBg(context)
+                      : AppColors.hairline(context),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+          SizedBox(height: r.isSmall ? 4 : 6),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Promo banner ───────────────────────────────────────────────────────────────
+
+class _PromoBanner extends StatelessWidget {
+  final Promo promo;
+  final _R r;
+  const _PromoBanner({required this.promo, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.locale.languageCode;
+    final badge = promo.badgeFor(locale);
+    final title = promo.titleFor(locale);
+
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(minHeight: r.isSmall ? 96 : 116),
@@ -460,10 +594,11 @@ class _PromoBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  MTag(label: 'home.promo_tag'.tr(), variant: MTagVariant.gold),
-                  const SizedBox(height: 10),
+                  if (badge.isNotEmpty)
+                    MTag(label: badge, variant: MTagVariant.gold),
+                  if (badge.isNotEmpty) const SizedBox(height: 10),
                   Text(
-                    'home.promo_text'.tr(),
+                    title,
                     style: AppTypography.soraSize(
                             r.isSmall ? 16 : 19,
                             weight: FontWeight.w700)

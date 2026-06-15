@@ -27,10 +27,13 @@ import '../screens/shared/notifications_screen.dart';
 import '../screens/shared/profile_screen.dart';
 import '../store/auth_store.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authProvider);
 
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: '/onboarding',
     refreshListenable: _RouterRefresh(ref),
     redirect: (context, state) {

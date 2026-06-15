@@ -154,7 +154,7 @@ export class NotificationsService implements OnModuleInit {
           tokens: chunk,
           notification: { title, body },
           data: stringData,
-          android: { priority: 'high', notification: { sound: 'default', channelId: 'shina24_default' } },
+          android: { priority: 'high', notification: { sound: 'default', channelId: 'shina24_main' } },
           apns: { payload: { aps: { sound: 'default', badge: 1 } } },
         };
         const res = await getMessaging().sendEachForMulticast(message);

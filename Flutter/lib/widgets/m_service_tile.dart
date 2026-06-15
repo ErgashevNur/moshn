@@ -51,15 +51,31 @@ class MServiceTile extends StatelessWidget {
             children: [
               MoshnIcon(name: iconName, size: iconSize, color: fg),
               SizedBox(height: gap),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTypography.soraSize(fontSize, weight: FontWeight.w500).copyWith(
-                  color: fg,
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              SizedBox(
+                width: w - 2 * hPad,
+                child: label.contains(' ')
+                  ? Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.soraSize(fontSize, weight: FontWeight.w500).copyWith(
+                        color: fg,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.soraSize(fontSize, weight: FontWeight.w500).copyWith(
+                          color: fg,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
               ),
             ],
           ),
