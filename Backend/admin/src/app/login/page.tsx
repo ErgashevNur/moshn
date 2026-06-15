@@ -61,7 +61,7 @@ export default function LoginPage() {
                 type="text"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                placeholder="admin@shina24.uz"
+                placeholder="example@gmail.com"
                 className="inp"
                 required
                 autoComplete="username"
