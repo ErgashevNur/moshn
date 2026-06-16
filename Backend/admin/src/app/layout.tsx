@@ -3,12 +3,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Shina24',
-  description: 'Shina24 boshqaruv paneli',
+  description: 'Shina24 — панель управления',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz">
+    <html lang="ru">
       <body>{children}</body>
     </html>
   )

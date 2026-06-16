@@ -9,10 +9,10 @@ function fmtDate(d: string) {
 }
 
 const ROLE_LABEL: Record<string, string> = {
-  owner:   'Mijoz',
-  service: 'Servis',
-  admin:   'Admin',
-  '':      'Aniqlanmagan',
+  owner:   'Клиент',
+  service: 'Сервис',
+  admin:   'Администратор',
+  '':      'Не определён',
 }
 
 export default function UsersPage() {
@@ -27,7 +27,7 @@ export default function UsersPage() {
     const r = role !== 'all' ? `&role=${role}` : ''
     api.get(`/admin/users?limit=100${r}`).then(res => {
       setUsers(res.data.data?.users || [])
-    }).catch(() => setError('Foydalanuvchilarni yuklashda xatolik')).finally(() => setLoading(false))
+    }).catch(() => setError('Ошибка загрузки пользователей')).finally(() => setLoading(false))
   }, [role])
 
   useEffect(() => { load() }, [load])
@@ -40,38 +40,38 @@ export default function UsersPage() {
   )
 
   return (
-    <AdminShell title="Foydalanuvchilar">
+    <AdminShell title="Пользователи">
       <div className="fade-in">
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
           <div className="srch" style={{flex:1}}>
             <Icon n="search" s={15} col="var(--txt3)"/>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Ism, telefon yoki email…"
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Имя, телефон или email…"
               style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
             {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
           </div>
           <div className="tabs">
-            {[['all','Hammasi'],['owner','Mijozlar'],['service','Servislar'],['admin','Adminlar']].map(([k,l]) => (
+            {[['all','Все'],['owner','Клиенты'],['service','Сервисы'],['admin','Администраторы']].map(([k,l]) => (
               <div key={k} className={`tab ${role===k?'on':''}`} onClick={() => setRole(k)} style={{fontSize:12.5,padding:'7px 14px'}}>{l}</div>
             ))}
           </div>
-          <span style={{fontSize:13,color:'var(--txt3)',flexShrink:0}}>{list.length} ta</span>
+          <span style={{fontSize:13,color:'var(--txt3)',flexShrink:0}}>{list.length} чел.</span>
         </div>
 
         <div className="card" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
-            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (
             <div style={{padding:40,textAlign:'center',color:'var(--red)'}}>
-              {error} <button onClick={load} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Qayta urinish</button>
+              {error} <button onClick={load} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Повторить</button>
             </div>
           ) : (
             <table className="tbl">
               <thead>
-                <tr><th>Foydalanuvchi</th><th>Telefon</th><th>Email</th><th>Rol</th><th>Ro'yxatga kirgan</th></tr>
+                <tr><th>Пользователь</th><th>Телефон</th><th>Email</th><th>Роль</th><th>Зарегистрирован</th></tr>
               </thead>
               <tbody>
                 {list.length === 0 ? (
-                  <tr><td colSpan={5} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Foydalanuvchilar topilmadi</td></tr>
+                  <tr><td colSpan={5} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Пользователи не найдены</td></tr>
                 ) : list.map(u => (
                   <tr key={u.id}>
                     <td>

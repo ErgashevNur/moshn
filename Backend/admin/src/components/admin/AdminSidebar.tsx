@@ -5,12 +5,12 @@ import Icon from '../ui/Icon'
 import Brand from '../ui/Brand'
 
 const NAV = [
-  { id:'dashboard', icon:'dash'   as const, label:'Dashboard',        href:'/dashboard',  group:0 },
-  { id:'services',  icon:'store'  as const, label:'Servislar',        href:'/services',   group:0, badge:2 },
-  { id:'bookings',  icon:'list'   as const, label:'Buyurtmalar',      href:'/bookings',   group:0 },
-  { id:'users',     icon:'users'  as const, label:'Foydalanuvchilar', href:'/users',      group:1 },
-  { id:'finance',   icon:'wallet' as const, label:'Moliya',           href:'/finance',    group:1 },
-  { id:'marketing', icon:'bolt'   as const, label:'Marketing',        href:'/marketing',  group:1 },
+  { id:'dashboard', icon:'dash'   as const, label:'Дашборд',          href:'/dashboard',  group:0 },
+  { id:'services',  icon:'store'  as const, label:'Сервисы',          href:'/services',   group:0, badge:2 },
+  { id:'bookings',  icon:'list'   as const, label:'Заказы',           href:'/bookings',   group:0 },
+  { id:'users',     icon:'users'  as const, label:'Пользователи',     href:'/users',      group:1 },
+  { id:'finance',   icon:'wallet' as const, label:'Финансы',          href:'/finance',    group:1 },
+  { id:'marketing', icon:'bolt'   as const, label:'Маркетинг',        href:'/marketing',  group:1 },
 ]
 
 interface Props {
@@ -122,20 +122,20 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
           {showLabel && (
             <div style={{minWidth:0,overflow:'hidden'}}>
               <div style={{fontSize:15,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',whiteSpace:'nowrap'}}>Shina24</div>
-              <div style={{fontSize:11,color:'var(--txt3)',fontWeight:500}}>Admin panel</div>
+              <div style={{fontSize:11,color:'var(--txt3)',fontWeight:500}}>Панель администратора</div>
             </div>
           )}
         </div>
 
         {/* Nav */}
         {showLabel && (
-          <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Asosiy</div>
+          <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Основное</div>
         )}
         {!showLabel && <div style={{height:6}}/>}
         {NAV.filter(n=>n.group===0).map(navBtn)}
 
         {showLabel
-          ? <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Boshqaruv</div>
+          ? <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Управление</div>
           : <div style={{height:10,borderTop:'1px solid var(--hair)',margin:'6px 10px'}}/>
         }
         {NAV.filter(n=>n.group===1).map(navBtn)}
@@ -147,19 +147,19 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
           <button onClick={toggleTheme}
             style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
             <Icon n={theme==='dark'?'sun':'moon'} s={17}/>
-            {showLabel && (theme==='dark' ? "Yorug' rejim" : 'Tungi rejim')}
+            {showLabel && (theme==='dark' ? 'Светлая тема' : 'Тёмная тема')}
           </button>
           <button onClick={logout}
             style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
             <Icon n="logout" s={17}/>
-            {showLabel && 'Chiqish'}
+            {showLabel && 'Выйти'}
           </button>
           {/* Collapse toggle — desktop only */}
           {!isMobile && (
             <button onClick={onToggleCollapse}
               style={{display:'flex',alignItems:'center',justifyContent:collapsed?'center':'flex-start',gap:collapsed?0:10,padding:collapsed?'10px 0':'9px 12px',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt3)',cursor:'pointer',border:'none',background:'none'}}>
               <Icon n={collapsed?'chevR':'chevL'} s={17}/>
-              {!collapsed && "Yig'ish"}
+              {!collapsed && 'Свернуть'}
             </button>
           )}
         </div>

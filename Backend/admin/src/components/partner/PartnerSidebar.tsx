@@ -5,11 +5,11 @@ import Icon from '../ui/Icon'
 import Brand from '../ui/Brand'
 
 const NAV = [
-  {id:'today',     icon:'cal'   as const, label:'Bugun',    href:'/partner'},
-  {id:'queue',     icon:'list'  as const, label:'Navbat',   href:'/partner/queue'},
-  {id:'customers', icon:'users' as const, label:'Mijozlar', href:'/partner/customers'},
-  {id:'terminal',  icon:'card'  as const, label:'Terminal', href:'/partner/terminal'},
-  {id:'stats',     icon:'chart' as const, label:'Hisobot',  href:'/partner/stats'},
+  {id:'today',     icon:'cal'   as const, label:'Сегодня',  href:'/partner'},
+  {id:'queue',     icon:'list'  as const, label:'Очередь',  href:'/partner/queue'},
+  {id:'customers', icon:'users' as const, label:'Клиенты',  href:'/partner/customers'},
+  {id:'terminal',  icon:'card'  as const, label:'Терминал', href:'/partner/terminal'},
+  {id:'stats',     icon:'chart' as const, label:'Отчёт',    href:'/partner/stats'},
 ]
 
 const DARK: Record<string,string> = {bg:'#09090a',bgE:'#131316',surf:'#1a1a1e',surf2:'#242429',surf3:'#2e2e34',hair:'rgba(255,255,255,.085)',hair2:'rgba(255,255,255,.14)',txt:'#f4f4f2',txt2:'rgba(244,244,242,.60)',txt3:'rgba(244,244,242,.36)',inv:'#f4f4f2',invT:'#0a0a0b',gold:'#d4a843',goldDim:'rgba(212,168,67,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#30d158',greenDim:'rgba(48,209,88,.16)',amber:'#f59e0b',amberDim:'rgba(245,158,11,.15)',blue:'#3b82f6',blueDim:'rgba(59,130,246,.15)'}
@@ -118,11 +118,11 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
       <div style={{width:34,height:1,background:'var(--hair)',margin:'6px 0'}}/>
       <button onClick={toggleTheme}
         style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--txt3)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
-        <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Tema
+        <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Тема
       </button>
       <button onClick={logout}
         style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--txt3)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
-        <Icon n="logout" s={20}/>Chiqish
+        <Icon n="logout" s={20}/>Выйти
       </button>
     </div>
   )

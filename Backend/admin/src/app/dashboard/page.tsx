@@ -4,7 +4,7 @@ import AdminShell from '@/components/admin/AdminShell'
 import Icon from '@/components/ui/Icon'
 import api from '@/lib/api'
 
-const DAYS = ['Du','Se','Ch','Pa','Ju','Sh','Ya']
+const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
 const WEEK = [8400000,9200000,7600000,11000000,9800000,13200000,8000000]
 const maxW = Math.max(...WEEK)
 function fmtM(n: number) { return (n/1_000_000).toFixed(1).replace('.0','') }
@@ -25,22 +25,22 @@ export default function DashboardPage() {
   }, [])
 
   const kpis = stats ? [
-    {l:'Foydalanuvchilar', v: String(stats.users ?? 0),        d:8.1,  ic:'users'  as const, c:'var(--gold)'},
-    {l:'Faol servislar',   v: String(stats.active_shops ?? 0), d:4.3,  ic:'store'  as const, c:'var(--blue)'},
-    {l:'Jami buyurtmalar', v: String(stats.bookings ?? 0),     d:12.3, ic:'list'   as const, c:'var(--amber)'},
-    {l:'Avtomobillar',     v: String(stats.vehicles ?? 0),     d:6.2,  ic:'car'    as const, c:'var(--green)'},
+    {l:'Пользователи',    v: String(stats.users ?? 0),        d:8.1,  ic:'users'  as const, c:'var(--gold)'},
+    {l:'Активные сервисы', v: String(stats.active_shops ?? 0), d:4.3,  ic:'store'  as const, c:'var(--blue)'},
+    {l:'Всего заказов',   v: String(stats.bookings ?? 0),     d:12.3, ic:'list'   as const, c:'var(--amber)'},
+    {l:'Автомобили',      v: String(stats.vehicles ?? 0),     d:6.2,  ic:'car'    as const, c:'var(--green)'},
   ] : [
-    {l:'Foydalanuvchilar',v:'—',d:0,ic:'users'  as const,c:'var(--gold)'},
-    {l:'Faol servislar',  v:'—',d:0,ic:'store'  as const,c:'var(--blue)'},
-    {l:'Jami buyurtmalar',v:'—',d:0,ic:'list'   as const,c:'var(--amber)'},
-    {l:'Avtomobillar',    v:'—',d:0,ic:'car'    as const,c:'var(--green)'},
+    {l:'Пользователи',   v:'—',d:0,ic:'users'  as const,c:'var(--gold)'},
+    {l:'Активные сервисы',v:'—',d:0,ic:'store'  as const,c:'var(--blue)'},
+    {l:'Всего заказов',  v:'—',d:0,ic:'list'   as const,c:'var(--amber)'},
+    {l:'Автомобили',     v:'—',d:0,ic:'car'    as const,c:'var(--green)'},
   ]
 
   const activity = [
-    {ic:'store'  as const,c:'var(--blue)',  txt:"Express Tire ro'yxatdan o'tdi",t:'12 daq'},
-    {ic:'check'  as const,c:'var(--green)', txt:'Bugungi buyurtmalar bajarilmoqda',t:'30 daq'},
-    {ic:'crown'  as const,c:'var(--gold)',  txt:'Yangi VIP mijozlar qo\'shildi',t:'1 soat'},
-    {ic:'bell'   as const,c:'var(--purple)',txt:'Sezon eslatmasi yuborildi',t:'4 soat'},
+    {ic:'store'  as const,c:'var(--blue)',  txt:'Express Tire зарегистрировался',t:'12 мин'},
+    {ic:'check'  as const,c:'var(--green)', txt:'Сегодняшние заказы выполняются',t:'30 мин'},
+    {ic:'crown'  as const,c:'var(--gold)',  txt:'Добавлены новые VIP-клиенты',t:'1 ч'},
+    {ic:'bell'   as const,c:'var(--purple)',txt:'Отправлено сезонное напоминание',t:'4 ч'},
   ]
 
   return (
@@ -61,7 +61,7 @@ export default function DashboardPage() {
               {!loading && s.d !== 0 && (
                 <div style={{display:'flex',alignItems:'center',gap:5}}>
                   <span style={{color:s.d>0?'var(--green)':'var(--red)',fontWeight:600,fontSize:12.5}}>{s.d>0?'+':''}{s.d}%</span>
-                  <span style={{color:'var(--txt3)',fontSize:12}}>o'tgan haftaga</span>
+                  <span style={{color:'var(--txt3)',fontSize:12}}>за прошлую неделю</span>
                 </div>
               )}
             </div>
@@ -71,8 +71,8 @@ export default function DashboardPage() {
         <div className="g2" style={{marginBottom:18}}>
           <div className="card">
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
-              <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Haftalik tushum (taxminiy)</span>
-              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,color:'var(--green)'}}>{fmtM(WEEK.reduce((s,v)=>s+v,0))} mln so'm</span>
+              <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Недельная выручка (примерная)</span>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,color:'var(--green)'}}>{fmtM(WEEK.reduce((s,v)=>s+v,0))} млн сум</span>
             </div>
             <div style={{display:'flex',alignItems:'stretch',gap:7,height:96,marginBottom:8}}>
               {WEEK.map((r,i) => (
@@ -87,7 +87,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="card">
-            <div style={{fontSize:15,fontWeight:700,marginBottom:14,color:'var(--txt)'}}>So'nggi faollik</div>
+            <div style={{fontSize:15,fontWeight:700,marginBottom:14,color:'var(--txt)'}}>Последняя активность</div>
             {activity.map((a,i) => (
               <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'9px 0',borderBottom:i<activity.length-1?'1px solid var(--hair)':'none'}}>
                 <div style={{width:32,height:32,borderRadius:8,background:`color-mix(in srgb,${a.c} 14%,transparent)`,display:'grid',placeItems:'center',color:a.c,flexShrink:0}}>
@@ -102,15 +102,15 @@ export default function DashboardPage() {
 
         <div className="card" style={{padding:0,overflow:'hidden'}}>
           <div style={{padding:'14px 20px',borderBottom:'1px solid var(--hair)'}}>
-            <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Top servislar (buyurtmalar bo'yicha)</span>
+            <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Топ сервисы (по заказам)</span>
           </div>
           <table className="tbl">
-            <thead><tr><th>#</th><th>Servis</th><th>Manzil</th><th>Reyting</th><th>Buyurtmalar</th><th>Holat</th></tr></thead>
+            <thead><tr><th>#</th><th>Сервис</th><th>Адрес</th><th>Рейтинг</th><th>Заказы</th><th>Статус</th></tr></thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Yuklanmoqda…</td></tr>
+                <tr><td colSpan={6} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Загрузка…</td></tr>
               ) : shops.length === 0 ? (
-                <tr><td colSpan={6} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Ma'lumot yo'q</td></tr>
+                <tr><td colSpan={6} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Нет данных</td></tr>
               ) : [...shops].sort((a,b)=>(b.totalBookings||0)-(a.totalBookings||0)).slice(0,5).map((s,i) => (
                 <tr key={s.id}>
                   <td style={{color:'var(--txt3)',fontWeight:600,fontSize:12}}>{i+1}</td>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                   <td style={{color:'var(--txt2)'}}>{s.totalBookings ?? 0}</td>
                   <td>
                     <span className={`badge ${s.verificationStatus==='verified'?'b-green':s.verificationStatus==='pending'?'b-amber':'b-red'}`}>
-                      {s.verificationStatus==='verified'?'Faol':s.verificationStatus==='pending'?'Tekshiruv':'Bloklangan'}
+                      {s.verificationStatus==='verified'?'Активен':s.verificationStatus==='pending'?'На проверке':'Заблокирован'}
                     </span>
                   </td>
                 </tr>

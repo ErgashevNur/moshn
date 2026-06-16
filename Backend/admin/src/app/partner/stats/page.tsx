@@ -6,7 +6,7 @@ import partnerApi from '@/lib/partnerApi'
 
 function fmt(n: number) { return n.toLocaleString('uz') }
 
-const DAYS = ['Du','Se','Ch','Pa','Ju','Sh','Ya']
+const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
 
 export default function PartnerStatsPage() {
   const router  = useRouter()
@@ -42,7 +42,7 @@ export default function PartnerStatsPage() {
   // Service type breakdown
   const svcMap: Record<string, {name:string; cnt:number}> = {}
   bookings.forEach(b => {
-    const k = b.serviceType?.nameUz || 'Boshqa'
+    const k = b.serviceType?.nameUz || 'Прочее'
     if (!svcMap[k]) svcMap[k] = { name: k, cnt: 0 }
     svcMap[k].cnt++
   })
@@ -57,18 +57,18 @@ export default function PartnerStatsPage() {
         <div style={{height:60,display:'flex',alignItems:'center',padding:'0 22px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
           <div style={{flex:1}}>
             <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
-            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Hisobot</div>
+            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Отчёт</div>
           </div>
         </div>
 
         <div style={{flex:1,overflowY:'auto',padding:'20px 22px'}}>
           {loading ? (
-            <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+            <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Загрузка…</div>
           ) : (
             <div className="fade-in">
               <div className="g2" style={{marginBottom:14}}>
                 <div className="scard">
-                  <div className="slbl" style={{marginBottom:14}}>So'nggi 7 kunlik tushum</div>
+                  <div className="slbl" style={{marginBottom:14}}>Выручка за последние 7 дней</div>
                   <div style={{display:'flex',alignItems:'flex-end',gap:7,height:90,marginBottom:8}}>
                     {dayRevs.map((r,i) => (
                       <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
@@ -78,22 +78,22 @@ export default function PartnerStatsPage() {
                     ))}
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',paddingTop:12,borderTop:'1px solid var(--hair)'}}>
-                    <span style={{fontSize:12.5,color:'var(--txt3)'}}>Haftalik jami</span>
-                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,color:'var(--txt)'}}>{fmt(weekTotal)} so'm</span>
+                    <span style={{fontSize:12.5,color:'var(--txt3)'}}>Итого за неделю</span>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,color:'var(--txt)'}}>{fmt(weekTotal)} сум</span>
                   </div>
                 </div>
 
                 <div className="scard">
-                  <div className="slbl" style={{marginBottom:14}}>Xizmat tahlili</div>
+                  <div className="slbl" style={{marginBottom:14}}>Анализ услуг</div>
                   {svcList.length === 0 ? (
-                    <div style={{color:'var(--txt3)',fontSize:13}}>Ma'lumot yo'q</div>
+                    <div style={{color:'var(--txt3)',fontSize:13}}>Нет данных</div>
                   ) : (
                     <div style={{display:'flex',flexDirection:'column',gap:11}}>
                       {svcList.map(s => (
                         <div key={s.name}>
                           <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
                             <span style={{fontSize:13.5,fontWeight:500,color:'var(--txt)'}}>{s.name}</span>
-                            <span style={{fontSize:12.5,color:'var(--txt3)'}}>{s.cnt} ta</span>
+                            <span style={{fontSize:12.5,color:'var(--txt3)'}}>{s.cnt}</span>
                           </div>
                           <div className="rbar"><div className="rbar-f" style={{width:`${(s.cnt/maxCnt)*100}%`,background:'var(--inv)'}}/></div>
                         </div>
@@ -105,10 +105,10 @@ export default function PartnerStatsPage() {
 
               <div className="g4">
                 {[
-                  {l:"Jami tushum",         v: `${fmt(totalRev)} so'm`,         c:'var(--green)'},
-                  {l:'Tugallangan buyurtma', v: String(completed.length),         c:'var(--blue)'},
-                  {l:'Jami buyurtma',        v: String(bookings.length),          c:'var(--gold)'},
-                  {l:"Bekor qilingan",       v: String(bookings.filter(b=>b.status==='cancelled').length), c:'var(--red)'},
+                  {l:'Общая выручка',        v: `${fmt(totalRev)} сум`,          c:'var(--green)'},
+                  {l:'Завершённые заказы',   v: String(completed.length),         c:'var(--blue)'},
+                  {l:'Всего заказов',        v: String(bookings.length),          c:'var(--gold)'},
+                  {l:'Отменённые',           v: String(bookings.filter(b=>b.status==='cancelled').length), c:'var(--red)'},
                 ].map((s,i) => (
                   <div key={i} className="scard" style={{textAlign:'center'}}>
                     <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',color:'var(--txt3)',marginBottom:10}}>{s.l}</div>
