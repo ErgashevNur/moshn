@@ -16,6 +16,14 @@ export default function PartnerQueuePage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading]   = useState(true)
   const [acting, setActing]     = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -50,17 +58,18 @@ export default function PartnerQueuePage() {
   return (
     <PartnerShell pendingCount={pendingCount}>
       <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 22px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
+        {/* Header */}
+        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 18px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
           <div style={{flex:1}}>
-            <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
+            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
             <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Очередь</div>
           </div>
-          <button onClick={load} style={{width:34,height:34,borderRadius:9,background:'var(--surf2)',display:'grid',placeItems:'center',border:'none',cursor:'pointer',color:'var(--txt3)'}}>
+          <button onClick={load} style={{width:34,height:34,borderRadius:9,background:'var(--surf2)',display:'grid',placeItems:'center',border:'none',cursor:'pointer',color:'var(--txt3)',flexShrink:0}}>
             <Icon n="refresh" s={16}/>
           </button>
         </div>
 
-        <div style={{flex:1,overflowY:'auto',padding:'20px 22px'}}>
+        <div style={{flex:1,overflowY:'auto',padding: isMobile ? '14px' : '20px 22px'}}>
           <div className="fade-in">
             <div className="slbl">Ожидают подтверждения ({pendingCount})</div>
 
@@ -72,7 +81,7 @@ export default function PartnerQueuePage() {
                 <p style={{marginTop:14,fontSize:14}}>Все заявки рассмотрены</p>
               </div>
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:11}}>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {bookings.map(b => {
                   const name    = b.customer?.fullName || 'Неизвестно'
                   const svcName = b.serviceType?.nameUz || '—'
@@ -83,29 +92,32 @@ export default function PartnerQueuePage() {
 
                   return (
                     <div key={b.id} className="scard">
-                      <div style={{display:'flex',alignItems:'center',gap:13,marginBottom:13}}>
-                        <div style={{width:46,height:46,borderRadius:13,background:'var(--surf2)',display:'grid',placeItems:'center',flexShrink:0}}>
-                          <Icon n="car" s={24}/>
+                      {/* Top row: avatar + name + amount */}
+                      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                        <div style={{width:44,height:44,borderRadius:12,background:'var(--surf2)',display:'grid',placeItems:'center',flexShrink:0}}>
+                          <Icon n="car" s={22}/>
                         </div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:16,fontWeight:600,color:'var(--txt)',marginBottom:3}}>{name}</div>
-                          <div style={{fontSize:13,color:'var(--txt2)'}}>{svcName} · {car}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:15,fontWeight:600,color:'var(--txt)',marginBottom:2}}>{name}</div>
+                          <div style={{fontSize:12.5,color:'var(--txt2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{svcName} · {car}</div>
                         </div>
-                        <div style={{textAlign:'right'}}>
-                          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:17,fontWeight:700,color:'var(--txt)'}}>{fmt(amt)}</div>
-                          <div style={{fontSize:12.5,color:'var(--txt3)',marginTop:2,fontFamily:"'JetBrains Mono',monospace"}}>{time}</div>
+                        <div style={{textAlign:'right',flexShrink:0}}>
+                          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:16,fontWeight:700,color:'var(--txt)'}}>{fmt(amt)}</div>
+                          <div style={{fontSize:12,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{time}</div>
                         </div>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:13,borderTop:'1px solid var(--hair)'}}>
+
+                      {/* Bottom row: plate + buttons */}
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:12,borderTop:'1px solid var(--hair)',gap:8}}>
                         <Plate v={plate}/>
-                        <div style={{display:'flex',gap:9}}>
+                        <div style={{display:'flex',gap:8,flexShrink:0}}>
                           <button disabled={!!acting} onClick={() => onDecline(b.id)}
-                            style={{height:38,padding:'0 16px',borderRadius:999,border:'1.5px solid rgba(229,56,43,.4)',color:'var(--red)',fontSize:13,fontWeight:600,background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',gap:6,opacity:acting?0.5:1}}>
-                            <Icon n="x" s={15}/>{acting===b.id+'_dec'?'…':'Отклонить'}
+                            style={{height:38,padding:'0 14px',borderRadius:999,border:'1.5px solid rgba(229,56,43,.4)',color:'var(--red)',fontSize:13,fontWeight:600,background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',gap:5,opacity:acting?0.5:1,whiteSpace:'nowrap'}}>
+                            <Icon n="x" s={14}/>{acting===b.id+'_dec'?'…':'Отказ'}
                           </button>
                           <button disabled={!!acting} onClick={() => onAccept(b.id)}
-                            style={{height:38,padding:'0 18px',borderRadius:999,background:'var(--green)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,border:'none',opacity:acting?0.5:1}}>
-                            <Icon n="check" s={15}/>{acting===b.id+'_acc'?'…':'Принять'}
+                            style={{height:38,padding:'0 16px',borderRadius:999,background:'var(--green)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:5,border:'none',opacity:acting?0.5:1,whiteSpace:'nowrap'}}>
+                            <Icon n="check" s={14}/>{acting===b.id+'_acc'?'…':'Принять'}
                           </button>
                         </div>
                       </div>

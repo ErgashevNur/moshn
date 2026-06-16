@@ -43,7 +43,12 @@ function normalize(b: any) {
 
 type NB = ReturnType<typeof normalize>
 
-function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () => void; onRate: (id: string, r: number) => void }) {
+function DetailContent({ item, onClose, onRate, isMobile }: {
+  item: NB | null
+  onClose: () => void
+  onRate: (id: string, r: number) => void
+  isMobile?: boolean
+}) {
   const [rating, setRating] = useState(0)
   const [rated, setRated]   = useState(false)
 
@@ -53,12 +58,14 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
       <p style={{fontSize:13,marginTop:4,lineHeight:1.4}}>Выберите заказ</p>
     </div>
   )
+
   const s = SC[item.status] || SC.pending
   return (
     <>
-      <div style={{padding:'17px 20px 13px',borderBottom:'1px solid var(--hair)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      {isMobile && <div className="bsheet-handle"/>}
+      <div style={{padding:'14px 20px 12px',borderBottom:'1px solid var(--hair)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Детали заказа</span>
-        <button onClick={onClose} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={20}/></button>
+        <button onClick={onClose} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer',padding:4}}><Icon n="x" s={20}/></button>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:'16px 20px 20px'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16,flexWrap:'wrap'}}>
@@ -71,12 +78,12 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
         </div>
         <div className="lcard" style={{marginBottom:16}}>
           {[
-            ['Услуга',    item.svcName],
-            ['Время',     item.time],
-            ['Автомобиль',item.car],
-            ['Госномер',  <Plate v={item.plate}/>],
-            ['Цена',      `${fmt(item.amt)} сум`],
-            ['Оплата',    item.paid ? 'Оплачено' : 'Ожидает'],
+            ['Услуга',     item.svcName],
+            ['Время',      item.time],
+            ['Автомобиль', item.car],
+            ['Госномер',   <Plate v={item.plate}/>],
+            ['Цена',       `${fmt(item.amt)} сум`],
+            ['Оплата',     item.paid ? 'Оплачено' : 'Ожидает'],
           ].map(([l,v],i) => (
             <div key={i} className="lrow">
               <span style={{fontSize:12.5,color:'var(--txt3)',flex:1}}>{l}</span>
@@ -96,45 +103,61 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
             </>}
           </div>
         )}
-        <button style={{width:'100%',height:44,borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,border:'none'}}>
+        {/* Phone call — tel: link */}
+        <a href={item.phone ? `tel:${item.phone}` : undefined}
+          style={{
+            display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+            width:'100%', height:44, borderRadius:999,
+            background:'var(--surf2)', color:'var(--txt)',
+            fontSize:14, fontWeight:600,
+            textDecoration:'none',
+            opacity: item.phone ? 1 : 0.4,
+            pointerEvents: item.phone ? 'auto' : 'none',
+          }}>
           <Icon n="phone" s={18}/>Позвонить клиенту
-        </button>
+        </a>
       </div>
     </>
   )
 }
 
-function TodayView({ queue, sel, setSel, loading }: { queue: NB[]; sel: NB|null; setSel: (b:NB|null)=>void; loading: boolean }) {
+function TodayView({ queue, sel, setSel, loading, isMobile }: {
+  queue: NB[]
+  sel: NB|null
+  setSel: (b:NB|null) => void
+  loading: boolean
+  isMobile: boolean
+}) {
   const done   = queue.filter(b => b.status === 'completed').length
   const active = queue.find(b => b.status === 'in_progress')
   const rev    = queue.filter(b => b.paid).reduce((s,b) => s+b.amt, 0)
-  const today  = new Date().toLocaleDateString('uz', { day:'2-digit', month:'long', year:'numeric' })
+  const today  = new Date().toLocaleDateString('ru', { day:'2-digit', month:'long', year:'numeric' })
 
   return (
     <div className="fade-in">
       <div className="g3" style={{marginBottom:18}}>
         {[
-          {label:'Всего заказов',  val: loading ? '…' : String(queue.length),            icon:'cal'    as const, c:'var(--blue)'},
-          {label:'Завершено',      val: loading ? '…' : `${done}/${queue.length}`,        icon:'check'  as const, c:'var(--green)'},
-          {label:'Выручка за сегодня', val: loading ? '…' : `${fmt(rev)} сум`,           icon:'wallet' as const, c:'var(--gold)', mono:true},
+          {label:'Всего заказов',  val: loading ? '…' : String(queue.length),       icon:'cal'    as const, c:'var(--blue)'},
+          {label:'Завершено',      val: loading ? '…' : `${done}/${queue.length}`,  icon:'check'  as const, c:'var(--green)'},
+          {label:'Выручка',        val: loading ? '…' : `${fmt(rev)}`,              icon:'wallet' as const, c:'var(--gold)', mono:true},
         ].map((s,i) => (
           <div key={i} className="scard">
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-              <span style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)'}}>{s.label}</span>
-              <div style={{width:34,height:34,borderRadius:9,background:`color-mix(in srgb,${s.c} 14%,transparent)`,display:'grid',placeItems:'center',color:s.c}}><Icon n={s.icon} s={17} st={2}/></div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+              <span style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)'}}>{s.label}</span>
+              <div style={{width:30,height:30,borderRadius:9,background:`color-mix(in srgb,${s.c} 14%,transparent)`,display:'grid',placeItems:'center',color:s.c}}><Icon n={s.icon} s={15} st={2}/></div>
             </div>
-            <div style={{fontSize:s.mono?15:26,fontWeight:700,letterSpacing:'-.02em',fontFamily:s.mono?"'JetBrains Mono',monospace":'inherit',color:s.c}}>{s.val}</div>
+            <div style={{fontSize:s.mono?14:22,fontWeight:700,letterSpacing:'-.02em',fontFamily:s.mono?"'JetBrains Mono',monospace":'inherit',color:s.c}}>{s.val}</div>
           </div>
         ))}
       </div>
 
       {active && (
-        <div style={{display:'flex',alignItems:'center',gap:12,padding:'11px 15px',borderRadius:13,background:'var(--amberDim)',border:'1px solid rgba(245,158,11,.3)',marginBottom:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:13,background:'var(--amberDim)',border:'1px solid rgba(245,158,11,.3)',marginBottom:14,flexWrap:'wrap'}}>
           <div style={{width:8,height:8,borderRadius:'50%',background:'var(--amber)',flexShrink:0}}/>
-          <span style={{fontSize:13.5,fontWeight:600,color:'var(--amber)'}}>Сейчас в процессе:</span>
-          <span style={{fontSize:13.5,color:'var(--txt)'}}>{active.name} — {active.svcName}</span>
+          <span style={{fontSize:13,fontWeight:600,color:'var(--amber)'}}>Сейчас в процессе:</span>
+          <span style={{fontSize:13,color:'var(--txt)',flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{active.name} — {active.svcName}</span>
           <Plate v={active.plate}/>
-          <div style={{marginLeft:'auto',fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:'var(--txt)'}}>{active.time}</div>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:'var(--txt)'}}>{active.time}</div>
         </div>
       )}
 
@@ -150,15 +173,16 @@ function TodayView({ queue, sel, setSel, loading }: { queue: NB[]; sel: NB|null;
         <div style={{display:'flex',flexDirection:'column',gap:3}}>
           {queue.map(b => {
             const s = SC[b.status] || SC.pending
+            const isActive = sel?.id === b.id
             return (
-              <button key={b.id} onClick={() => setSel(sel?.id===b.id?null:b)}
-                style={{display:'flex',alignItems:'center',gap:11,padding:'10px 11px',borderRadius:12,cursor:'pointer',transition:'background .12s',width:'100%',background:sel?.id===b.id?'var(--surf)':'none',border:'none',textAlign:'left'}}>
-                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'var(--txt3)',fontWeight:600,width:40,flexShrink:0}}>{b.time}</span>
+              <button key={b.id} onClick={() => setSel(isActive ? null : b)}
+                style={{display:'flex',alignItems:'center',gap:11,padding:'11px 12px',borderRadius:12,cursor:'pointer',transition:'background .12s',width:'100%',background:isActive?'var(--surf)':'none',border:'none',textAlign:'left'}}>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'var(--txt3)',fontWeight:600,width:38,flexShrink:0}}>{b.time}</span>
                 <div style={{width:9,height:9,borderRadius:'50%',background:s.dot,flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:600,color:'var(--txt)'}}>{b.name}</div>
                   <div style={{fontSize:12,color:'var(--txt3)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                    {b.svcName} · <span style={{fontFamily:"'JetBrains Mono',monospace"}}>{b.plate}</span> · {b.car}
+                    {b.svcName} · <span style={{fontFamily:"'JetBrains Mono',monospace"}}>{b.plate}</span>
                   </div>
                 </div>
                 <div style={{textAlign:'right',flexShrink:0}}>
@@ -176,24 +200,20 @@ function TodayView({ queue, sel, setSel, loading }: { queue: NB[]; sel: NB|null;
 
 export default function PartnerTodayPage() {
   const router  = useRouter()
-  const [queue, setQueue]     = useState<NB[]>([])
-  const [loading, setLoading] = useState(true)
-  const [sel, setSel]         = useState<NB|null>(null)
+  const [queue, setQueue]       = useState<NB[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [sel, setSel]           = useState<NB|null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
-  const load = useCallback(() => {
-    setLoading(true)
-    partnerApi.get('/service/bookings?limit=100').then(r => {
-      const all: NB[] = (r.data.data?.bookings || []).map(normalize)
-      setQueue(all.filter(b => isToday(b.time ? '' : '') || true).filter((_,i,arr) => {
-        const raw = r.data.data?.bookings[i]
-        return raw && isToday(raw.scheduledAt)
-      }))
-    }).catch(() => {}).finally(() => setLoading(false))
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   useEffect(() => {
     if (!localStorage.getItem('partner_access_token')) { router.push('/partner/login'); return }
-    // Re-fetch with raw data
     setLoading(true)
     partnerApi.get('/service/bookings?limit=100').then(r => {
       const all = (r.data.data?.bookings || [])
@@ -205,28 +225,44 @@ export default function PartnerTodayPage() {
   const now = new Date()
   const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`
 
+  const handleRate = (id: string, r: number) =>
+    setQueue(q => q.map(b => b.id === id ? {...b, rating:r} : b))
+
   return (
     <PartnerShell pendingCount={pending}>
+      {/* ── Main area ──────────────────────────────────────────────────────── */}
       <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 22px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
-          <div style={{flex:1}}>
-            <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
+        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 18px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
             <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Shinmaster Pro</div>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:11}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--txt2)'}}><div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)'}}/>Онлайн</div>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,color:'var(--txt3)',padding:'4px 10px',borderRadius:8,background:'var(--surf2)'}}>{timeStr}</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'var(--txt3)',padding:'4px 9px',borderRadius:8,background:'var(--surf2)'}}>{timeStr}</div>
           </div>
         </div>
-        <div style={{flex:1,overflowY:'auto',padding:'20px 22px'}}>
-          <TodayView queue={queue} sel={sel} setSel={setSel} loading={loading}/>
+        <div style={{flex:1,overflowY:'auto',padding: isMobile ? '16px' : '20px 22px'}}>
+          <TodayView queue={queue} sel={sel} setSel={setSel} loading={loading} isMobile={isMobile}/>
         </div>
       </div>
 
-      <div style={{width:336,background:'var(--bgE)',borderLeft:'1px solid var(--hair)',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <DetailPanel item={sel} onClose={() => setSel(null)}
-          onRate={(id, r) => setQueue(q => q.map(b => b.id===id ? {...b, rating:r} : b))}/>
-      </div>
+      {/* ── Desktop side panel ─────────────────────────────────────────────── */}
+      {!isMobile && (
+        <div style={{width:320,background:'var(--bgE)',borderLeft:'1px solid var(--hair)',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
+          <DetailContent item={sel} onClose={() => setSel(null)} onRate={handleRate}/>
+        </div>
+      )}
+
+      {/* ── Mobile bottom sheet ────────────────────────────────────────────── */}
+      {isMobile && sel && (
+        <>
+          <div className="bsheet-backdrop" onClick={() => setSel(null)}/>
+          <div className="bsheet" style={{bottom:64}}>
+            <DetailContent item={sel} onClose={() => setSel(null)} onRate={handleRate} isMobile/>
+          </div>
+        </>
+      )}
     </PartnerShell>
   )
 }

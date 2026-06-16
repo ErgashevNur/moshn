@@ -72,3 +72,34 @@ body{font-family:"Sora",system-ui,sans-serif;overflow:hidden;height:100vh}
 @keyframes pulse-ring{0%{transform:scale(.75);opacity:.7}100%{transform:scale(2.2);opacity:0}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .fade-in{animation:fade .25s ease}
+
+/* ── Bottom sheet (mobile) ───────────────────────────────────────────────── */
+.bsheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:150;animation:fade .2s ease}
+.bsheet{position:fixed;bottom:0;left:0;right:0;z-index:151;background:var(--bgE);border-top:1px solid var(--hair2);border-radius:20px 20px 0 0;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;animation:sheet-up .28s cubic-bezier(.4,0,.2,1)}
+.bsheet-handle{width:36px;height:4px;border-radius:999px;background:var(--hair2);margin:10px auto 0;flex-shrink:0}
+/* Safe area padding at bottom (above nav bar) */
+.bsheet{padding-bottom:env(safe-area-inset-bottom)}
+
+/* ── Tbl wrap (horizontal scroll on mobile) ─────────────────────────────── */
+.tbl-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+.tbl-wrap .tbl{min-width:640px}
+
+/* ── Tabs scroll on mobile ──────────────────────────────────────────────── */
+.tabs-scroll{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:0;background:var(--surf2);border-radius:999px;padding:4px}
+.tabs-scroll::-webkit-scrollbar{display:none}
+.tabs-scroll .tab{white-space:nowrap;flex-shrink:0}
+
+/* ── Responsive grids ───────────────────────────────────────────────────── */
+@media (max-width:767px){
+  .g4{grid-template-columns:repeat(2,1fr);gap:10px}
+  .g3{grid-template-columns:repeat(2,1fr);gap:10px}
+  .g2{grid-template-columns:1fr;gap:10px}
+  .modal{width:calc(100vw - 32px);max-width:100%;border-radius:18px;padding:20px}
+  .card{padding:15px}
+  .scard{padding:14px}
+  .kpi{padding:14px}
+}
+@media (max-width:480px){
+  .g4{grid-template-columns:repeat(2,1fr);gap:8px}
+  .g3{grid-template-columns:1fr;gap:8px}
+}

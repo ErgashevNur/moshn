@@ -122,19 +122,21 @@ export default function ServicesPage() {
   return (
     <AdminShell title="Управление сервисами">
       <div className="fade-in">
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
-          <div className="tabs">
-            {tabs.map(([k,l]) => (
-              <div key={k} className={`tab ${flt===k?'on':''}`} onClick={() => setFlt(k)}>{l}</div>
-            ))}
+        <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:18}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+            <div className="tabs-scroll" style={{flex:1}}>
+              {tabs.map(([k,l]) => (
+                <div key={k} className={`tab ${flt===k?'on':''}`} onClick={() => setFlt(k)}>{l}</div>
+              ))}
+            </div>
+            <button onClick={openAdd}
+              style={{height:38,padding:'0 14px',borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:7,border:'none',flexShrink:0,whiteSpace:'nowrap'}}>
+              <Icon n="plus" s={16}/>Добавить
+            </button>
           </div>
-          <button onClick={openAdd}
-            style={{height:38,padding:'0 16px',borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:8,border:'none'}}>
-            <Icon n="plus" s={16}/>Добавить сервис
-          </button>
         </div>
 
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card tbl-wrap" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
             <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (

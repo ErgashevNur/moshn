@@ -216,7 +216,8 @@ export default function PartnerShell({ children, pendingCount = 0 }: Props) {
       <PartnerSidebar pendingCount={pendingCount}/>
       <div style={{
         flex:1, display:'flex', minWidth:0, overflow:'hidden',
-        paddingBottom: isMobile ? 64 : 0,
+        /* leave room for fixed bottom nav on mobile */
+        paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom))' : 0,
       }}>
         {children}
       </div>

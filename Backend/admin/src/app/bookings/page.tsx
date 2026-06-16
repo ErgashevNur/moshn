@@ -56,14 +56,16 @@ export default function BookingsPage() {
   return (
     <AdminShell title="Заказы">
       <div className="fade-in">
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
-          <div className="srch" style={{flex:1}}>
+        {/* Search + tabs — stack vertically on mobile */}
+        <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:18}}>
+          <div className="srch">
             <Icon n="search" s={15} col="var(--txt3)"/>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск клиента или сервиса…"
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Клиент или сервис…"
               style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
             {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
           </div>
-          <div className="tabs">
+          {/* Horizontally scrollable tabs */}
+          <div className="tabs-scroll">
             {statusTabs.map(([k,l]) => (
               <div key={k} className={`tab ${st===k?'on':''}`}
                 onClick={() => { setSt(k); load(k === 'all' ? '' : k) }}
@@ -72,7 +74,7 @@ export default function BookingsPage() {
           </div>
         </div>
 
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card tbl-wrap" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
             <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (
