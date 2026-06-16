@@ -42,22 +42,24 @@ export default function UsersPage() {
   return (
     <AdminShell title="Пользователи">
       <div className="fade-in">
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
-          <div className="srch" style={{flex:1}}>
-            <Icon n="search" s={15} col="var(--txt3)"/>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Имя, телефон или email…"
-              style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
-            {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
+        <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:18}}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div className="srch" style={{flex:1}}>
+              <Icon n="search" s={15} col="var(--txt3)"/>
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Имя, телефон или email…"
+                style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
+              {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
+            </div>
+            <span style={{fontSize:13,color:'var(--txt3)',flexShrink:0}}>{list.length} чел.</span>
           </div>
-          <div className="tabs">
+          <div className="tabs-scroll">
             {[['all','Все'],['owner','Клиенты'],['service','Сервисы'],['admin','Администраторы']].map(([k,l]) => (
               <div key={k} className={`tab ${role===k?'on':''}`} onClick={() => setRole(k)} style={{fontSize:12.5,padding:'7px 14px'}}>{l}</div>
             ))}
           </div>
-          <span style={{fontSize:13,color:'var(--txt3)',flexShrink:0}}>{list.length} чел.</span>
         </div>
 
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card tbl-wrap" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
             <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (

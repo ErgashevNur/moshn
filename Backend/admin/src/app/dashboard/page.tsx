@@ -100,7 +100,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card tbl-wrap" style={{padding:0,overflow:'hidden'}}>
           <div style={{padding:'14px 20px',borderBottom:'1px solid var(--hair)'}}>
             <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Топ сервисы (по заказам)</span>
           </div>

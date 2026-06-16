@@ -5,13 +5,16 @@ import Icon from '../ui/Icon'
 import Brand from '../ui/Brand'
 
 const NAV = [
-  { id:'dashboard', icon:'dash'   as const, label:'Дашборд',          href:'/dashboard',  group:0 },
-  { id:'services',  icon:'store'  as const, label:'Сервисы',          href:'/services',   group:0, badge:2 },
-  { id:'bookings',  icon:'list'   as const, label:'Заказы',           href:'/bookings',   group:0 },
-  { id:'users',     icon:'users'  as const, label:'Пользователи',     href:'/users',      group:1 },
-  { id:'finance',   icon:'wallet' as const, label:'Финансы',          href:'/finance',    group:1 },
-  { id:'marketing', icon:'bolt'   as const, label:'Маркетинг',        href:'/marketing',  group:1 },
+  { id:'dashboard', icon:'dash'   as const, label:'Дашборд',      labelShort:'Главная',  href:'/dashboard',  group:0 },
+  { id:'services',  icon:'store'  as const, label:'Сервисы',       labelShort:'Сервисы',  href:'/services',   group:0, badge:2 },
+  { id:'bookings',  icon:'list'   as const, label:'Заказы',        labelShort:'Заказы',   href:'/bookings',   group:0 },
+  { id:'users',     icon:'users'  as const, label:'Пользователи',  labelShort:'Клиенты',  href:'/users',      group:1 },
+  { id:'finance',   icon:'wallet' as const, label:'Финансы',       labelShort:'Финансы',  href:'/finance',    group:1 },
+  { id:'marketing', icon:'bolt'   as const, label:'Маркетинг',     labelShort:'Маркетинг',href:'/marketing',  group:1 },
 ]
+
+// Bottom nav shows only top 5 (marketing dropped)
+const BOTTOM_NAV = NAV.slice(0, 5)
 
 interface Props {
   collapsed: boolean
@@ -64,23 +67,46 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
     if (isMobile) onClose()
   }
 
-  // On mobile: fixed drawer that slides in/out
-  // On desktop: collapsible sidebar (224 ↔ 68)
-  const sideStyle: React.CSSProperties = isMobile ? {
-    position:'fixed', top:0, left:0, bottom:0, width:260, zIndex:201,
-    transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
-    transition:'transform .25s cubic-bezier(.4,0,.2,1)',
-    background:'var(--bgE)', borderRight:'1px solid var(--hair)',
-    display:'flex', flexDirection:'column', flexShrink:0,
-  } : {
-    width: collapsed ? 68 : 224,
-    background:'var(--bgE)', borderRight:'1px solid var(--hair)',
-    display:'flex', flexDirection:'column', flexShrink:0,
-    transition:'width .22s cubic-bezier(.4,0,.2,1)',
-    overflow:'hidden',
+  // ── Mobile: bottom nav bar ──────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <nav style={{
+        position:'fixed', bottom:0, left:0, right:0, height:64,
+        background:'var(--bgE)', borderTop:'1px solid var(--hair)',
+        display:'flex', alignItems:'stretch', zIndex:100,
+        paddingBottom:'env(safe-area-inset-bottom)',
+      }}>
+        {BOTTOM_NAV.map(n => {
+          const active = pathname === n.href || (n.href !== '/dashboard' && pathname.startsWith(n.href))
+          return (
+            <button key={n.id} onClick={() => router.push(n.href)}
+              style={{
+                flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+                justifyContent:'center', gap:3, border:'none', background:'none',
+                color: active ? 'var(--txt)' : 'var(--txt3)',
+                cursor:'pointer', position:'relative', fontSize:9.5,
+                fontWeight: active ? 700 : 500,
+                letterSpacing:'.04em',
+              }}>
+              {active && (
+                <div style={{position:'absolute',top:6,width:20,height:2.5,borderRadius:2,background:'var(--txt)'}}/>
+              )}
+              <div style={{position:'relative'}}>
+                <Icon n={n.icon} s={22}/>
+                {n.badge && n.id==='services' && (
+                  <div style={{position:'absolute',top:-3,right:-5,minWidth:14,height:14,borderRadius:999,background:'var(--amber)',color:'#111',fontSize:8,fontWeight:700,display:'grid',placeItems:'center',padding:'0 3px',border:'2px solid var(--bgE)'}}>{n.badge}</div>
+                )}
+              </div>
+              {n.labelShort}
+            </button>
+          )
+        })}
+      </nav>
+    )
   }
 
-  const showLabel = isMobile || !collapsed
+  // ── Desktop: collapsible sidebar ────────────────────────────────────────
+  const showLabel = !collapsed
 
   const navBtn = (n: typeof NAV[0]) => (
     <button key={n.id} onClick={() => go(n.href)}
@@ -106,64 +132,57 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
   )
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      {isMobile && mobileOpen && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',backdropFilter:'blur(3px)',zIndex:200}}
-          onClick={onClose}/>
-      )}
-
-      <div style={sideStyle}>
-        {/* Brand */}
-        <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 14px',borderBottom:'1px solid var(--hair)',marginBottom:6,flexShrink:0}}>
-          <div style={{width:38,height:38,borderRadius:11,background:'var(--inv)',color:'var(--invT)',display:'grid',placeItems:'center',flexShrink:0}}>
-            <Brand s={22}/>
-          </div>
-          {showLabel && (
-            <div style={{minWidth:0,overflow:'hidden'}}>
-              <div style={{fontSize:15,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',whiteSpace:'nowrap'}}>Shina24</div>
-              <div style={{fontSize:11,color:'var(--txt3)',fontWeight:500}}>Панель администратора</div>
-            </div>
-          )}
+    <div style={{
+      width: collapsed ? 68 : 224,
+      background:'var(--bgE)', borderRight:'1px solid var(--hair)',
+      display:'flex', flexDirection:'column', flexShrink:0,
+      transition:'width .22s cubic-bezier(.4,0,.2,1)',
+      overflow:'hidden',
+    }}>
+      {/* Brand */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 14px',borderBottom:'1px solid var(--hair)',marginBottom:6,flexShrink:0}}>
+        <div style={{width:38,height:38,borderRadius:11,background:'var(--inv)',color:'var(--invT)',display:'grid',placeItems:'center',flexShrink:0}}>
+          <Brand s={22}/>
         </div>
-
-        {/* Nav */}
         {showLabel && (
-          <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Основное</div>
+          <div style={{minWidth:0,overflow:'hidden'}}>
+            <div style={{fontSize:15,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',whiteSpace:'nowrap'}}>Shina24</div>
+            <div style={{fontSize:11,color:'var(--txt3)',fontWeight:500}}>Панель администратора</div>
+          </div>
         )}
-        {!showLabel && <div style={{height:6}}/>}
-        {NAV.filter(n=>n.group===0).map(navBtn)}
-
-        {showLabel
-          ? <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Управление</div>
-          : <div style={{height:10,borderTop:'1px solid var(--hair)',margin:'6px 10px'}}/>
-        }
-        {NAV.filter(n=>n.group===1).map(navBtn)}
-
-        <div style={{flex:1}}/>
-
-        {/* Footer buttons */}
-        <div style={{padding:'8px',borderTop:'1px solid var(--hair)'}}>
-          <button onClick={toggleTheme}
-            style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
-            <Icon n={theme==='dark'?'sun':'moon'} s={17}/>
-            {showLabel && (theme==='dark' ? 'Светлая тема' : 'Тёмная тема')}
-          </button>
-          <button onClick={logout}
-            style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
-            <Icon n="logout" s={17}/>
-            {showLabel && 'Выйти'}
-          </button>
-          {/* Collapse toggle — desktop only */}
-          {!isMobile && (
-            <button onClick={onToggleCollapse}
-              style={{display:'flex',alignItems:'center',justifyContent:collapsed?'center':'flex-start',gap:collapsed?0:10,padding:collapsed?'10px 0':'9px 12px',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt3)',cursor:'pointer',border:'none',background:'none'}}>
-              <Icon n={collapsed?'chevR':'chevL'} s={17}/>
-              {!collapsed && 'Свернуть'}
-            </button>
-          )}
-        </div>
       </div>
-    </>
+
+      {showLabel && (
+        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Основное</div>
+      )}
+      {!showLabel && <div style={{height:6}}/>}
+      {NAV.filter(n=>n.group===0).map(navBtn)}
+
+      {showLabel
+        ? <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',padding:'10px 18px 4px'}}>Управление</div>
+        : <div style={{height:10,borderTop:'1px solid var(--hair)',margin:'6px 10px'}}/>
+      }
+      {NAV.filter(n=>n.group===1).map(navBtn)}
+
+      <div style={{flex:1}}/>
+
+      <div style={{padding:'8px',borderTop:'1px solid var(--hair)'}}>
+        <button onClick={toggleTheme}
+          style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
+          <Icon n={theme==='dark'?'sun':'moon'} s={17}/>
+          {showLabel && (theme==='dark' ? 'Светлая тема' : 'Тёмная тема')}
+        </button>
+        <button onClick={logout}
+          style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
+          <Icon n="logout" s={17}/>
+          {showLabel && 'Выйти'}
+        </button>
+        <button onClick={onToggleCollapse}
+          style={{display:'flex',alignItems:'center',justifyContent:collapsed?'center':'flex-start',gap:collapsed?0:10,padding:collapsed?'10px 0':'9px 12px',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt3)',cursor:'pointer',border:'none',background:'none'}}>
+          <Icon n={collapsed?'chevR':'chevL'} s={17}/>
+          {!collapsed && 'Свернуть'}
+        </button>
+      </div>
+    </div>
   )
 }

@@ -127,7 +127,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
 }
 
 // ── Notifications Panel ──────────────────────────────────────────────────────
-function NotifPanel({ onClose }: { onClose: () => void }) {
+function NotifPanel({ onClose, headerH }: { onClose: () => void; headerH?: number }) {
   const [notifs, setNotifs]   = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [marking, setMarking] = useState(false)
@@ -167,7 +167,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
   return (
     <>
       <div style={{position:'fixed',inset:0,zIndex:900}} onClick={onClose}/>
-      <div style={{position:'absolute',top:48,right:0,width:340,maxWidth:'calc(100vw - 32px)',background:'var(--bgE)',border:'1px solid var(--hair2)',borderRadius:16,boxShadow:'0 20px 60px rgba(0,0,0,.5)',zIndex:901,overflow:'hidden',animation:'rise .18s ease'}}>
+      <div style={{position:'fixed',top:(headerH||56),right:16,width:340,maxWidth:'calc(100vw - 32px)',background:'var(--bgE)',border:'1px solid var(--hair2)',borderRadius:16,boxShadow:'0 20px 60px rgba(0,0,0,.5)',zIndex:901,overflow:'hidden',animation:'rise .18s ease'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'1px solid var(--hair)'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Уведомления</span>
@@ -211,17 +211,26 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
   )
 }
 
+const DARK_T: Record<string,string> = {bg:'#09090a',bgE:'#131316',surf:'#1a1a1e',surf2:'#242429',surf3:'#2e2e34',hair:'rgba(255,255,255,.085)',hair2:'rgba(255,255,255,.14)',txt:'#f4f4f2',txt2:'rgba(244,244,242,.60)',txt3:'rgba(244,244,242,.36)',inv:'#f4f4f2',invT:'#0a0a0b',gold:'#d4a843',goldDim:'rgba(212,168,67,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#30d158',greenDim:'rgba(48,209,88,.16)',amber:'#f59e0b',amberDim:'rgba(245,158,11,.14)',blue:'#3b82f6',blueDim:'rgba(59,130,246,.14)',purple:'#a78bfa',purpleDim:'rgba(167,139,250,.14)'}
+const LIGHT_T: Record<string,string> = {bg:'#f4f3f0',bgE:'#fff',surf:'#fff',surf2:'#ecebe7',surf3:'#e3e2dd',hair:'rgba(20,20,16,.09)',hair2:'rgba(20,20,16,.15)',txt:'#14140f',txt2:'rgba(20,20,15,.58)',txt3:'rgba(20,20,15,.40)',inv:'#14140f',invT:'#f6f5f2',gold:'#c49a1a',goldDim:'rgba(196,154,26,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#1a9e48',greenDim:'rgba(26,158,72,.16)',amber:'#c47d0a',amberDim:'rgba(196,125,10,.13)',blue:'#2563eb',blueDim:'rgba(37,99,235,.13)',purple:'#7c3aed',purpleDim:'rgba(124,58,237,.13)'}
+
+function applyThemeVars(t: string) {
+  const T = t === 'dark' ? DARK_T : LIGHT_T
+  Object.entries(T).forEach(([k,v]) => document.documentElement.style.setProperty(`--${k}`, v))
+  localStorage.setItem('ma_theme', t)
+}
+
 // ── Shell ────────────────────────────────────────────────────────────────────
 export default function AdminShell({ title, children }: { title: string; children: React.ReactNode }) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [nOpen, setNOpen]           = useState(false)
   const [unread, setUnread]         = useState(0)
+  const [theme, setTheme]           = useState('dark')
 
   // Sidebar states
-  const [collapsed, setCollapsed]     = useState(false)
-  const [mobileOpen, setMobileOpen]   = useState(false)
-  const [isMobile, setIsMobile]       = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const [isMobile, setIsMobile]   = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -235,10 +244,19 @@ export default function AdminShell({ title, children }: { title: string; childre
     if (!token) { router.push('/login'); return }
     const saved = localStorage.getItem('ma_collapsed')
     if (saved) setCollapsed(saved === '1')
+    const savedTheme = localStorage.getItem('ma_theme') || 'dark'
+    setTheme(savedTheme)
+    applyThemeVars(savedTheme)
     api.get('/notifications?limit=1').then(r => {
       setUnread(r.data.data?.unread_count ?? 0)
     }).catch(() => {})
   }, [router])
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    applyThemeVars(next)
+  }
 
   const toggleCollapse = () => {
     const next = !collapsed
@@ -250,7 +268,7 @@ export default function AdminShell({ title, children }: { title: string; childre
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true) }
-      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false); setMobileOpen(false) }
+      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -260,23 +278,25 @@ export default function AdminShell({ title, children }: { title: string; childre
     <div style={{display:'flex',height:'100vh',background:'var(--bg)',color:'var(--txt)',overflow:'hidden'}}>
       <AdminSidebar
         collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        mobileOpen={false}
+        onClose={() => {}}
         onToggleCollapse={toggleCollapse}
       />
 
-      <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-        {/* Header */}
-        <div style={{height:60,display:'flex',alignItems:'center',gap:10,padding:'0 16px 0 20px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
-          {/* Hamburger — mobile only */}
-          {isMobile && (
-            <button onClick={() => setMobileOpen(true)}
-              style={{width:36,height:36,borderRadius:9,background:'none',border:'none',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--txt2)',cursor:'pointer',flexShrink:0}}>
-              <Icon n="menu" s={20}/>
-            </button>
-          )}
-
-          <h1 style={{fontSize:17,fontWeight:700,letterSpacing:'-.02em',flex:1,color:'var(--txt)',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</h1>
+      <div style={{
+        flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden',
+        paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom))' : 0,
+      }}>
+        {/* Header — no border on mobile */}
+        <div style={{
+          height:56,
+          display:'flex', alignItems:'center', gap:10,
+          padding:'0 16px 0 20px',
+          borderBottom: isMobile ? 'none' : '1px solid var(--hair)',
+          flexShrink:0,
+          background:'var(--bgE)',
+        }}>
+          <h1 style={{fontSize: isMobile ? 18 : 17, fontWeight:700, letterSpacing:'-.02em', flex:1, color:'var(--txt)', minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{title}</h1>
 
           <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
             {/* Search trigger */}
@@ -295,14 +315,15 @@ export default function AdminShell({ title, children }: { title: string; childre
               {unread > 0 && (
                 <div style={{position:'absolute',top:7,right:7,width:7,height:7,borderRadius:'50%',background:'var(--red)',border:'2px solid var(--bgE)'}}/>
               )}
-              {nOpen && <NotifPanel onClose={() => setNOpen(false)}/>}
+              {nOpen && <NotifPanel onClose={() => setNOpen(false)} headerH={56}/>}
             </div>
 
-            {/* Admin avatar */}
-            <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 10px 5px 5px',borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',cursor:'pointer'}}>
-              <div style={{width:26,height:26,borderRadius:7,background:'var(--surf2)',display:'grid',placeItems:'center',fontSize:12,fontWeight:700,color:'var(--txt2)'}}>A</div>
-              {!isMobile && <><span style={{fontSize:13.5,fontWeight:600,color:'var(--txt)'}}>Admin</span><Icon n="chevD" s={14} col="var(--txt3)"/></>}
-            </div>
+            {/* Theme toggle */}
+            <button onClick={toggleTheme}
+              style={{display:'flex',alignItems:'center',gap:7,height:36,padding:'0 12px',borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',cursor:'pointer',color:'var(--txt2)',fontSize:13,fontWeight:600,flexShrink:0}}>
+              <Icon n={theme==='dark'?'sun':'moon'} s={16} col="var(--txt2)"/>
+              {!isMobile && <span>{theme==='dark'?'Светлая':'Тёмная'}</span>}
+            </button>
           </div>
         </div>
 
