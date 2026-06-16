@@ -8,11 +8,11 @@ import Stars from '@/components/ui/Stars'
 import partnerApi from '@/lib/partnerApi'
 
 const SC: Record<string, {label:string; bg:string; clr:string; dot:string}> = {
-  pending:     {label:'Kutilmoqda',   bg:'var(--blueDim)',   clr:'var(--blue)',  dot:'var(--blue)'},
-  confirmed:   {label:'Tasdiqlangan', bg:'var(--amberDim)',  clr:'var(--amber)', dot:'var(--amber)'},
-  in_progress: {label:'Jarayonda',    bg:'var(--amberDim)',  clr:'var(--amber)', dot:'var(--amber)'},
-  completed:   {label:'Tugadi',       bg:'var(--greenDim)',  clr:'var(--green)', dot:'var(--green)'},
-  cancelled:   {label:'Bekor',        bg:'var(--redDim)',    clr:'var(--red)',   dot:'var(--surf3)'},
+  pending:     {label:'Ожидает',     bg:'var(--blueDim)',   clr:'var(--blue)',  dot:'var(--blue)'},
+  confirmed:   {label:'Подтверждён', bg:'var(--amberDim)',  clr:'var(--amber)', dot:'var(--amber)'},
+  in_progress: {label:'В процессе',  bg:'var(--amberDim)',  clr:'var(--amber)', dot:'var(--amber)'},
+  completed:   {label:'Завершён',    bg:'var(--greenDim)',  clr:'var(--green)', dot:'var(--green)'},
+  cancelled:   {label:'Отменён',     bg:'var(--redDim)',    clr:'var(--red)',   dot:'var(--surf3)'},
 }
 
 function fmt(n: number) { return n.toLocaleString('uz') }
@@ -27,7 +27,7 @@ function isToday(d: string) {
 function normalize(b: any) {
   return {
     id:      b.id,
-    name:    b.customer?.fullName || 'Noma\'lum',
+    name:    b.customer?.fullName || 'Неизвестно',
     phone:   b.customer?.phone || '',
     plate:   b.vehicle?.plate || '—',
     car:     b.vehicle ? `${b.vehicle.make || ''} ${b.vehicle.model || ''}`.trim() || b.vehicle.plate : '—',
@@ -50,20 +50,20 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
   if (!item) return (
     <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--txt3)',gap:12,padding:24,textAlign:'center'}}>
       <Icon n="list" s={42}/>
-      <p style={{fontSize:13,marginTop:4,lineHeight:1.4}}>Buyurtmani tanlang</p>
+      <p style={{fontSize:13,marginTop:4,lineHeight:1.4}}>Выберите заказ</p>
     </div>
   )
   const s = SC[item.status] || SC.pending
   return (
     <>
       <div style={{padding:'17px 20px 13px',borderBottom:'1px solid var(--hair)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Buyurtma tafsiloti</span>
+        <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Детали заказа</span>
         <button onClick={onClose} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={20}/></button>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:'16px 20px 20px'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16,flexWrap:'wrap'}}>
           <span className="chip" style={{background:s.bg,color:s.clr}}>{s.label}</span>
-          {item.paid && <span className="chip" style={{background:'var(--greenDim)',color:'var(--green)'}}>To'langan</span>}
+          {item.paid && <span className="chip" style={{background:'var(--greenDim)',color:'var(--green)'}}>Оплачено</span>}
         </div>
         <div style={{marginBottom:18}}>
           <div style={{fontSize:21,fontWeight:700,marginBottom:4,color:'var(--txt)'}}>{item.name}</div>
@@ -71,12 +71,12 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
         </div>
         <div className="lcard" style={{marginBottom:16}}>
           {[
-            ['Xizmat',   item.svcName],
-            ['Vaqt',     item.time],
-            ['Avtomobil',item.car],
-            ['Davlat raqami', <Plate v={item.plate}/>],
-            ['Narx',     `${fmt(item.amt)} so'm`],
-            ["To'lov",   item.paid ? "To'langan" : 'Kutilmoqda'],
+            ['Услуга',    item.svcName],
+            ['Время',     item.time],
+            ['Автомобиль',item.car],
+            ['Госномер',  <Plate v={item.plate}/>],
+            ['Цена',      `${fmt(item.amt)} сум`],
+            ['Оплата',    item.paid ? 'Оплачено' : 'Ожидает'],
           ].map(([l,v],i) => (
             <div key={i} className="lrow">
               <span style={{fontSize:12.5,color:'var(--txt3)',flex:1}}>{l}</span>
@@ -86,18 +86,18 @@ function DetailPanel({ item, onClose, onRate }: { item: NB | null; onClose: () =
         </div>
         {item.status === 'completed' && (
           <div style={{padding:'13px 15px',borderRadius:14,background:'var(--surf2)',marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:600,marginBottom:9,color:'var(--txt)'}}>Mijozni baholang</div>
+            <div style={{fontSize:13,fontWeight:600,marginBottom:9,color:'var(--txt)'}}>Оцените клиента</div>
             {rated || item.rating ? (
-              <div style={{display:'flex',alignItems:'center',gap:8}}><Stars v={item.rating||rating} sz={18}/><span style={{fontSize:12.5,color:'var(--txt2)'}}>Baholandi</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}><Stars v={item.rating||rating} sz={18}/><span style={{fontSize:12.5,color:'var(--txt2)'}}>Оценено</span></div>
             ) : <>
               <Stars v={rating} sz={22} interactive onChange={setRating}/>
               {rating > 0 && <button onClick={() => { onRate(item.id, rating); setRated(true) }}
-                style={{marginTop:11,width:'100%',height:38,borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:13,fontWeight:600,cursor:'pointer',border:'none'}}>Saqlash</button>}
+                style={{marginTop:11,width:'100%',height:38,borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:13,fontWeight:600,cursor:'pointer',border:'none'}}>Сохранить</button>}
             </>}
           </div>
         )}
         <button style={{width:'100%',height:44,borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,border:'none'}}>
-          <Icon n="phone" s={18}/>Mijozga qo'ng'iroq
+          <Icon n="phone" s={18}/>Позвонить клиенту
         </button>
       </div>
     </>
@@ -114,9 +114,9 @@ function TodayView({ queue, sel, setSel, loading }: { queue: NB[]; sel: NB|null;
     <div className="fade-in">
       <div className="g3" style={{marginBottom:18}}>
         {[
-          {label:'Jami buyurtma',  val: loading ? '…' : String(queue.length),            icon:'cal'    as const, c:'var(--blue)'},
-          {label:'Tugallangan',    val: loading ? '…' : `${done}/${queue.length}`,        icon:'check'  as const, c:'var(--green)'},
-          {label:'Bugungi tushum', val: loading ? '…' : `${fmt(rev)} so'm`,              icon:'wallet' as const, c:'var(--gold)', mono:true},
+          {label:'Всего заказов',  val: loading ? '…' : String(queue.length),            icon:'cal'    as const, c:'var(--blue)'},
+          {label:'Завершено',      val: loading ? '…' : `${done}/${queue.length}`,        icon:'check'  as const, c:'var(--green)'},
+          {label:'Выручка за сегодня', val: loading ? '…' : `${fmt(rev)} сум`,           icon:'wallet' as const, c:'var(--gold)', mono:true},
         ].map((s,i) => (
           <div key={i} className="scard">
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
@@ -131,20 +131,20 @@ function TodayView({ queue, sel, setSel, loading }: { queue: NB[]; sel: NB|null;
       {active && (
         <div style={{display:'flex',alignItems:'center',gap:12,padding:'11px 15px',borderRadius:13,background:'var(--amberDim)',border:'1px solid rgba(245,158,11,.3)',marginBottom:16}}>
           <div style={{width:8,height:8,borderRadius:'50%',background:'var(--amber)',flexShrink:0}}/>
-          <span style={{fontSize:13.5,fontWeight:600,color:'var(--amber)'}}>Hozir jarayonda:</span>
+          <span style={{fontSize:13.5,fontWeight:600,color:'var(--amber)'}}>Сейчас в процессе:</span>
           <span style={{fontSize:13.5,color:'var(--txt)'}}>{active.name} — {active.svcName}</span>
           <Plate v={active.plate}/>
           <div style={{marginLeft:'auto',fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:'var(--txt)'}}>{active.time}</div>
         </div>
       )}
 
-      <div className="slbl">Bugungi jadval — {today}</div>
+      <div className="slbl">Расписание на сегодня — {today}</div>
       {loading ? (
-        <div style={{textAlign:'center',padding:'40px 0',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+        <div style={{textAlign:'center',padding:'40px 0',color:'var(--txt3)'}}>Загрузка…</div>
       ) : queue.length === 0 ? (
         <div style={{textAlign:'center',padding:'40px 0',color:'var(--txt3)'}}>
           <Icon n="cal" s={40}/>
-          <p style={{marginTop:12,fontSize:13}}>Bugun buyurtma yo'q</p>
+          <p style={{marginTop:12,fontSize:13}}>Сегодня нет заказов</p>
         </div>
       ) : (
         <div style={{display:'flex',flexDirection:'column',gap:3}}>
@@ -214,7 +214,7 @@ export default function PartnerTodayPage() {
             <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Shinmaster Pro</div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:11}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--txt2)'}}><div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)'}}/>Onlayn</div>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--txt2)'}}><div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)'}}/>Онлайн</div>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,color:'var(--txt3)',padding:'4px 10px',borderRadius:8,background:'var(--surf2)'}}>{timeStr}</div>
           </div>
         </div>

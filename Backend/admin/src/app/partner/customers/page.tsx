@@ -62,26 +62,26 @@ export default function PartnerCustomersPage() {
         <div style={{height:60,display:'flex',alignItems:'center',padding:'0 22px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
           <div style={{flex:1}}>
             <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
-            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Mijozlar bazasi</div>
+            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>База клиентов</div>
           </div>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 22px'}}>
           <div className="fade-in">
             <div className="srch" style={{marginBottom:16}}>
               <Icon n="search" s={17} col="var(--txt3)"/>
-              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Mijoz ismi yoki telefon…"
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Имя клиента или телефон…"
                 style={{border:'none',background:'none',fontSize:14,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
               {q && <button onClick={() => setQ('')} style={{color:'var(--txt3)',background:'none',border:'none',cursor:'pointer'}}><Icon n="x" s={16}/></button>}
             </div>
 
             {loading ? (
-              <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+              <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Загрузка…</div>
             ) : (
               <>
-                <div className="slbl">{list.length} ta mijoz</div>
+                <div className="slbl">{list.length} клиентов</div>
                 <div style={{display:'flex',flexDirection:'column',gap:2}}>
                   {list.map(c => {
-                    const name  = c.customer?.fullName || 'Noma\'lum'
+                    const name  = c.customer?.fullName || 'Неизвестно'
                     const phone = c.customer?.phone || ''
                     return (
                       <div key={c.id} onClick={() => setSel(sel?.id===c.id ? null : c)}
@@ -95,7 +95,7 @@ export default function PartnerCustomersPage() {
                           <div style={{fontSize:12,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace"}}>{phone}</div>
                         </div>
                         <div style={{textAlign:'right',flexShrink:0}}>
-                          <div style={{fontSize:11.5,color:'var(--txt3)'}}>{c.visitCount} tashrif</div>
+                          <div style={{fontSize:11.5,color:'var(--txt3)'}}>{c.visitCount} посещений</div>
                           <div style={{fontSize:11,color:'var(--txt3)'}}>{fmtDate(c.lastVisitAt)}</div>
                         </div>
                         <div onClick={e => e.stopPropagation()}>
@@ -107,7 +107,7 @@ export default function PartnerCustomersPage() {
                   {list.length === 0 && (
                     <div style={{textAlign:'center',padding:'40px 0',color:'var(--txt3)'}}>
                       <Icon n="users" s={40}/>
-                      <p style={{marginTop:12,fontSize:13}}>{q ? 'Topilmadi' : 'Mijozlar yo\'q'}</p>
+                      <p style={{marginTop:12,fontSize:13}}>{q ? 'Не найдено' : 'Нет клиентов'}</p>
                     </div>
                   )}
                 </div>
@@ -119,11 +119,11 @@ export default function PartnerCustomersPage() {
 
       <div style={{width:336,background:'var(--bgE)',borderLeft:'1px solid var(--hair)',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
         {sel ? (() => {
-          const name  = sel.customer?.fullName || 'Noma\'lum'
+          const name  = sel.customer?.fullName || 'Неизвестно'
           const phone = sel.customer?.phone || '—'
           return <>
             <div style={{padding:'17px 20px 13px',borderBottom:'1px solid var(--hair)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Mijoz profili</span>
+              <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Профиль клиента</span>
               <button onClick={() => setSel(null)} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={20}/></button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:'16px 20px 20px'}}>
@@ -139,10 +139,10 @@ export default function PartnerCustomersPage() {
               </div>
               <div className="lcard" style={{marginBottom:16}}>
                 {[
-                  ["Tashriflar",      `${sel.visitCount} ta`],
-                  ["So'nggi tashrif", fmtDate(sel.lastVisitAt)],
-                  ["VIP holati",      sel.isVip ? 'Ha' : 'Yo\'q'],
-                  ["Eslatma",         sel.notes || '—'],
+                  ['Посещения',        `${sel.visitCount}`],
+                  ['Последнее посещение', fmtDate(sel.lastVisitAt)],
+                  ['VIP статус',       sel.isVip ? 'Да' : 'Нет'],
+                  ['Заметки',          sel.notes || '—'],
                 ].map(([l,v],i) => (
                   <div key={i} className="lrow">
                     <span style={{fontSize:12.5,color:'var(--txt3)',flex:1}}>{l}</span>
@@ -151,14 +151,14 @@ export default function PartnerCustomersPage() {
                 ))}
               </div>
               <button style={{width:'100%',height:44,borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,border:'none'}}>
-                <Icon n="phone" s={18}/>Qo'ng'iroq
+                <Icon n="phone" s={18}/>Позвонить
               </button>
             </div>
           </>
         })() : (
           <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--txt3)',gap:12,padding:24,textAlign:'center'}}>
             <Icon n="users" s={42}/>
-            <p style={{fontSize:13,marginTop:4,lineHeight:1.4}}>Mijozni tanlang</p>
+            <p style={{fontSize:13,marginTop:4,lineHeight:1.4}}>Выберите клиента</p>
           </div>
         )}
       </div>

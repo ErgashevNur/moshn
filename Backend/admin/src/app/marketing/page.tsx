@@ -73,7 +73,7 @@ function BannerPreview({ p, size = 'sm' }: { p: Partial<Promo>; size?: 'sm' | 'l
         fontSize: sm ? 10.5 : 17, fontWeight: 700,
         color: '#fff', lineHeight: 1.25, position: 'relative', zIndex: 1,
       }}>
-        {p.titleUz || 'Banner sarlavhasi'}
+        {p.titleUz || 'Заголовок баннера'}
       </div>
     </div>
   )
@@ -127,17 +127,17 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
         ? await api.put(`/admin/promos/${initial.id}`, payload)
         : await api.post('/admin/promos', payload)
       onSave(r.data.data)
-    } catch { alert('Xatolik yuz berdi') }
+    } catch { alert('Произошла ошибка') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
-    if (!onDelete || !confirm("Bannerni o'chirasizmi?")) return
+    if (!onDelete || !confirm('Удалить баннер?')) return
     setDeleting(true)
     try {
       await api.delete(`/admin/promos/${initial!.id}`)
       onDelete()
-    } catch { alert("O'chirishda xatolik") }
+    } catch { alert('Ошибка при удалении') }
     finally { setDeleting(false) }
   }
 
@@ -146,7 +146,7 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
         <span style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--txt)' }}>
-          {isEdit ? 'Bannerni tahrirlash' : 'Yangi banner'}
+          {isEdit ? 'Редактировать баннер' : 'Новый баннер'}
         </span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--txt3)', cursor: 'pointer' }}>
           <Icon n="x" s={20}/>
@@ -155,7 +155,7 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
 
       {/* live preview */}
       <div style={{ marginBottom: 18 }}>
-        <label style={lbl}>Ko'rinish</label>
+        <label style={lbl}>Предпросмотр</label>
         <BannerPreview p={{ titleUz, badgeUz }} size="lg"/>
       </div>
 
@@ -164,14 +164,14 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
 
         {/* titleUz */}
         <div>
-          <label style={lbl}>Sarlavha (O'zbekcha) *</label>
+          <label style={lbl}>Заголовок (узбекский) *</label>
           <input value={titleUz} onChange={e => setTitleUz(e.target.value)}
             placeholder="Mavsum keldi! Shina almashtirishda chegirma" style={inp}/>
         </div>
 
         {/* titleRu */}
         <div>
-          <label style={lbl}>Sarlavha (Ruscha)</label>
+          <label style={lbl}>Заголовок (русский)</label>
           <input value={titleRu} onChange={e => setTitleRu(e.target.value)}
             placeholder="Сезон пришёл! Скидка на замену шин" style={inp}/>
         </div>
@@ -179,12 +179,12 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
         {/* badge row */}
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <label style={lbl}>Badge (O'zbekcha)</label>
+            <label style={lbl}>Бейдж (узбекский)</label>
             <input value={badgeUz} onChange={e => setBadgeUz(e.target.value)}
               placeholder="-20%" style={inp}/>
           </div>
           <div style={{ flex: 1 }}>
-            <label style={lbl}>Badge (Ruscha)</label>
+            <label style={lbl}>Бейдж (русский)</label>
             <input value={badgeRu} onChange={e => setBadgeRu(e.target.value)}
               placeholder="-20%" style={inp}/>
           </div>
@@ -193,24 +193,24 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
         {/* dates */}
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <label style={lbl}>Boshlanish</label>
+            <label style={lbl}>Начало</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               style={{ ...inp, colorScheme: 'dark' }}/>
-            <p style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 4 }}>Bo'sh = muddatsiz</p>
+            <p style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 4 }}>Пусто = без срока</p>
           </div>
           <div style={{ flex: 1 }}>
-            <label style={lbl}>Tugash</label>
+            <label style={lbl}>Конец</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
               style={{ ...inp, colorScheme: 'dark' }}/>
-            <p style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 4 }}>Bo'sh = muddatsiz</p>
+            <p style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 4 }}>Пусто = без срока</p>
           </div>
         </div>
 
         {/* active toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--surf2)', borderRadius: 12 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt)' }}>Faol holat</div>
-            <div style={{ fontSize: 11.5, color: 'var(--txt3)', marginTop: 2 }}>Ilovada ko'rinadi</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt)' }}>Активный статус</div>
+            <div style={{ fontSize: 11.5, color: 'var(--txt3)', marginTop: 2 }}>Отображается в приложении</div>
           </div>
           <Toggle on={isActive} onChange={() => setIsActive(v => !v)}/>
         </div>
@@ -228,8 +228,8 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
           {saving
-            ? <><span style={{ width: 15, height: 15, borderRadius: '50%', border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', animation: 'spin .7s linear infinite', display: 'inline-block' }}/>Saqlanmoqda…</>
-            : isEdit ? "O'zgarishlarni saqlash" : 'Banner yaratish'
+            ? <><span style={{ width: 15, height: 15, borderRadius: '50%', border: '2px solid rgba(0,0,0,.2)', borderTopColor: '#000', animation: 'spin .7s linear infinite', display: 'inline-block' }}/>Сохранение…</>
+            : isEdit ? 'Сохранить изменения' : 'Создать баннер'
           }
         </button>
         {isEdit && (
@@ -239,7 +239,7 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
               fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
               opacity: deleting ? 0.5 : 1,
             }}>
-            {deleting ? "O'chirilmoqda…" : "Bannerni o'chirish"}
+            {deleting ? 'Удаление…' : 'Удалить баннер'}
           </button>
         )}
       </div>
@@ -272,7 +272,7 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
               {promo.titleUz}
             </span>
             <span className={`badge ${promo.isActive ? 'b-green' : 'b-gray'}`}>
-              {promo.isActive ? 'Faol' : 'Yashirin'}
+              {promo.isActive ? 'Активен' : 'Скрыт'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--txt3)' }}>
@@ -294,8 +294,8 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
       {/* stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
         {([
-          { label: "Ko'rishlar", val: fmtNum(promo.views),  col: 'var(--blue)'  },
-          { label: 'Bosishlar',  val: fmtNum(promo.clicks), col: 'var(--green)' },
+          { label: 'Просмотры', val: fmtNum(promo.views),  col: 'var(--blue)'  },
+          { label: 'Клики',     val: fmtNum(promo.clicks), col: 'var(--green)' },
           { label: 'CTR',        val: calcCTR(promo.views, promo.clicks), col: 'var(--gold)' },
         ] as const).map(s => (
           <div key={s.label} style={{ background: 'var(--surf2)', borderRadius: 10, padding: '9px 8px', textAlign: 'center' }}>
@@ -318,7 +318,7 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
             background: 'var(--surf2)', color: 'var(--txt2)',
             fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: 'none',
           }}>
-          <Icon n="edit" s={13}/>Tahrirlash
+          <Icon n="edit" s={13}/>Редактировать
         </button>
         <Toggle on={promo.isActive} onChange={onToggle}/>
         <div style={{ flex: 1 }}/>
@@ -339,10 +339,10 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
 // ── App Config ────────────────────────────────────────────────────────────────
 const CONFIG_KEY = 'shina24_app_config'
 const DEFAULT_CONFIG = [
-  { key: 'slot_hold',   label: "Slot ushlab turish vaqti",    value: '5 daqiqa',    unit: 'daqiqa' },
-  { key: 'pay_later',   label: '"Keyinroq to\'lash" muddati', value: '14 kun',      unit: 'kun'    },
-  { key: 'installment', label: "Bo'lib to'lash muddati",      value: '3–6 oy',      unit: 'oy'     },
-  { key: 'vip_min',     label: "VIP miqyosi",                 value: '5 ta tashrif',unit: 'tashrif'},
+  { key: 'slot_hold',   label: 'Время удержания слота',      value: '5 минут',    unit: 'минут'  },
+  { key: 'pay_later',   label: '"Оплата позже" — срок',      value: '14 дней',    unit: 'дней'   },
+  { key: 'installment', label: 'Срок рассрочки',             value: '3–6 месяцев',unit: 'месяцев'},
+  { key: 'vip_min',     label: 'VIP порог',                  value: '5 визитов',  unit: 'визитов'},
 ]
 function loadConfig() {
   if (typeof window === 'undefined') return DEFAULT_CONFIG
@@ -375,13 +375,13 @@ function EditModal({ item, onSave, onClose }: {
           <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>{item.label}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--txt3)', cursor: 'pointer' }}><Icon n="x" s={20}/></button>
         </div>
-        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--txt3)', marginBottom: 7 }}>Yangi qiymat</label>
+        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--txt3)', marginBottom: 7 }}>Новое значение</label>
         <input ref={ref} value={val} onChange={e => setVal(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && onSave(val)}
           style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 11, padding: '11px 14px', fontSize: 15, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', marginBottom: 18 }}/>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Bekor</button>
-          <button onClick={() => onSave(val)} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Saqlash</button>
+          <button onClick={onClose} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Отмена</button>
+          <button onClick={() => onSave(val)} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Сохранить</button>
         </div>
       </div>
     </div>
@@ -396,7 +396,7 @@ function RuleModal({ onSave, onClose }: { onSave: (r: any) => void; onClose: () 
   const [msgUz, setMsgUz] = useState('')
   const [msgRu, setMsgRu] = useState('')
   const [saving, setSaving] = useState(false)
-  const months = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr']
+  const months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
 
   const submit = async () => {
     if (!name.trim() || !msgUz.trim()) return
@@ -417,14 +417,14 @@ function RuleModal({ onSave, onClose }: { onSave: (r: any) => void; onClose: () 
     <div className="mbg" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>Yangi mavsum qoidasi</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>Новое сезонное правило</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--txt3)', cursor: 'pointer' }}><Icon n="x" s={20}/></button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {([
-            { l: "Qoida nomi",               v: name,  s: setName,  p: "Qish shinasi eslatmasi" },
-            { l: "O'zbek tili xabari",        v: msgUz, s: setMsgUz, p: "Qishki g'ildiraklarga o'tish vaqti keldi!" },
-            { l: "Rus tili xabari (ixtiyoriy)", v: msgRu, s: setMsgRu, p: "Время перейти на зимние шины!" },
+            { l: 'Название правила',               v: name,  s: setName,  p: 'Напоминание о зимних шинах' },
+            { l: 'Сообщение на узбекском',          v: msgUz, s: setMsgUz, p: "Qishki g'ildiraklarga o'tish vaqti keldi!" },
+            { l: 'Сообщение на русском (необязательно)', v: msgRu, s: setMsgRu, p: 'Время перейти на зимние шины!' },
           ] as const).map(({ l, v, s, p }) => (
             <div key={l}>
               <label style={sl}>{l}</label>
@@ -433,13 +433,13 @@ function RuleModal({ onSave, onClose }: { onSave: (r: any) => void; onClose: () 
           ))}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={sl}>Oy</label>
+              <label style={sl}>Месяц</label>
               <select value={month} onChange={e => setMonth(e.target.value)} style={{ ...si, cursor: 'pointer' }}>
                 {months.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={sl}>Kun</label>
+              <label style={sl}>День</label>
               <select value={day} onChange={e => setDay(e.target.value)} style={{ ...si, cursor: 'pointer' }}>
                 {Array.from({ length: 28 }, (_, i) => <option key={i+1} value={String(i+1)}>{i+1}</option>)}
               </select>
@@ -447,10 +447,10 @@ function RuleModal({ onSave, onClose }: { onSave: (r: any) => void; onClose: () 
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Bekor</button>
+          <button onClick={onClose} style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none' }}>Отмена</button>
           <button onClick={submit} disabled={!name.trim() || !msgUz.trim() || saving}
             style={{ flex: 1, height: 44, borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none', opacity: (!name.trim() || !msgUz.trim() || saving) ? 0.5 : 1 }}>
-            {saving ? 'Saqlanmoqda…' : 'Saqlash'}
+            {saving ? 'Сохранение…' : 'Сохранить'}
           </button>
         </div>
       </div>
@@ -460,17 +460,17 @@ function RuleModal({ onSave, onClose }: { onSave: (r: any) => void; onClose: () 
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
 const TABS = [
-  { k: 'banners',  l: 'Bannerlar',     icon: 'bolt'     as const },
-  { k: 'push',     l: 'Push xabarlar', icon: 'send'     as const },
-  { k: 'seasonal', l: 'Mavsumiy',      icon: 'snow'     as const },
-  { k: 'settings', l: 'Sozlamalar',    icon: 'settings' as const },
+  { k: 'banners',  l: 'Баннеры',           icon: 'bolt'     as const },
+  { k: 'push',     l: 'Push-уведомления', icon: 'send'     as const },
+  { k: 'seasonal', l: 'Сезонные',         icon: 'snow'     as const },
+  { k: 'settings', l: 'Настройки',        icon: 'settings' as const },
 ]
 
 const SEGS = [
-  { k: 'all',      l: 'Hammasi'       },
-  { k: 'vip',      l: 'VIP'           },
-  { k: 'recent',   l: "So'nggi 30 kun"},
-  { k: 'inactive', l: 'Faol emas'     },
+  { k: 'all',      l: 'Все'               },
+  { k: 'vip',      l: 'VIP'              },
+  { k: 'recent',   l: 'Последние 30 дней'},
+  { k: 'inactive', l: 'Неактивные'       },
 ]
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -524,12 +524,12 @@ export default function MarketingPage() {
   }
 
   const deletePromo = async (promo: Promo) => {
-    if (!confirm(`"${promo.titleUz}" bannerni o'chirasizmi?`)) return
+    if (!confirm(`Удалить баннер "${promo.titleUz}"?`)) return
     try {
       await api.delete(`/admin/promos/${promo.id}`)
       setPromos(ps => ps.filter(p => p.id !== promo.id))
       if (selectedPromo?.id === promo.id) setSelectedPromo(null)
-    } catch { alert("O'chirishda xatolik") }
+    } catch { alert('Ошибка при удалении') }
   }
 
   const onPromoSaved = (promo: Promo) => {
@@ -551,7 +551,7 @@ export default function MarketingPage() {
       })
       setSent(true); setPushMsg(''); setPushTitle('')
       setTimeout(() => setSent(false), 3500)
-    } catch { alert("Xabar yuborishda xatolik.") }
+    } catch { alert('Ошибка при отправке сообщения.') }
     finally { setSending(false) }
   }
 
@@ -564,10 +564,10 @@ export default function MarketingPage() {
   }
 
   const sendRuleNow = async (rule: any) => {
-    if (!confirm(`"${rule.name}" bildirishnomasini HOZIR yuborasizmi?`)) return
+    if (!confirm(`Отправить уведомление "${rule.name}" СЕЙЧАС?`)) return
     setRToggling(rule.id + '_send')
-    try { await api.post(`/admin/seasonal-rules/${rule.id}/send`); alert('✅ Yuborildi!') }
-    catch { alert('Yuborishda xatolik') }
+    try { await api.post(`/admin/seasonal-rules/${rule.id}/send`); alert('✅ Отправлено!') }
+    catch { alert('Ошибка при отправке') }
     finally { setRToggling('') }
   }
 
@@ -596,17 +596,17 @@ export default function MarketingPage() {
         <Icon n="bolt" s={26} col="var(--txt3)"/>
       </div>
       <p style={{ fontSize: 13.5, color: 'var(--txt3)', textAlign: 'center', lineHeight: 1.5, maxWidth: 190 }}>
-        Bannerni tanlang yoki yangi banner yarating
+        Выберите баннер или создайте новый
       </p>
       <button onClick={() => { setSelectedPromo(null); setShowNew(true) }}
         style={{ height: 42, padding: '0 18px', borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
-        <Icon n="plus" s={15}/>Yangi banner
+        <Icon n="plus" s={15}/>Новый баннер
       </button>
     </div>
   )
 
   return (
-    <AdminShell title="Marketing">
+    <AdminShell title="Маркетинг">
       <div className="fade-in" style={{ height: '100%' }}>
 
         {/* ── Tab bar ────────────────────────────────────────────────── */}
@@ -635,21 +635,21 @@ export default function MarketingPage() {
             <div style={{ overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', marginBottom: 3 }}>Promo bannerlar</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--txt3)' }}>Ilovaning bosh ekranida ko'rsatiladigan reklama kartochkalari</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', marginBottom: 3 }}>Промо-баннеры</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--txt3)' }}>Рекламные карточки, отображаемые на главном экране приложения</div>
                 </div>
                 <button onClick={() => { setSelectedPromo(null); setShowNew(true) }}
                   style={{ height: 40, padding: '0 16px', borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
-                  <Icon n="plus" s={15}/>Yangi banner
+                  <Icon n="plus" s={15}/>Новый баннер
                 </button>
               </div>
 
               {promosLoading ? (
-                <div style={{ color: 'var(--txt3)', fontSize: 13, padding: '24px 0' }}>Yuklanmoqda…</div>
+                <div style={{ color: 'var(--txt3)', fontSize: 13, padding: '24px 0' }}>Загрузка…</div>
               ) : promos.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--txt3)' }}>
                   <Icon n="bolt" s={36}/>
-                  <p style={{ fontSize: 13, marginTop: 10 }}>Hozircha banner yo'q</p>
+                  <p style={{ fontSize: 13, marginTop: 10 }}>Пока нет баннеров</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -677,8 +677,8 @@ export default function MarketingPage() {
         {tab === 'push' && (
           <div style={{ maxWidth: 480 }}>
             <div className="card">
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, color: 'var(--txt)' }}>Push bildirish yuborish</div>
-              <p style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 16, lineHeight: 1.5 }}>Tanlangan segment bo'yicha xabar yuboring.</p>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, color: 'var(--txt)' }}>Отправить push-уведомление</div>
+              <p style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 16, lineHeight: 1.5 }}>Отправьте сообщение выбранному сегменту.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
                 {SEGS.map(s => (
                   <button key={s.k} onClick={() => setSeg(s.k)}
@@ -691,15 +691,15 @@ export default function MarketingPage() {
                 ))}
               </div>
               <input value={pushTitle} onChange={e => setPushTitle(e.target.value)}
-                placeholder="Sarlavha (ixtiyoriy, default: Shina24)"
+                placeholder="Заголовок (необязательно, по умолчанию: Shina24)"
                 style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 11, padding: '10px 14px', fontSize: 14, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', marginBottom: 10 }}/>
-              <textarea value={pushMsg} onChange={e => setPushMsg(e.target.value)} placeholder="Xabar matni…" rows={3}
+              <textarea value={pushMsg} onChange={e => setPushMsg(e.target.value)} placeholder="Текст сообщения…" rows={3}
                 style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', resize: 'none', marginBottom: 12 }}/>
               <button disabled={!pushMsg.trim() || sending} onClick={handleSend}
                 style={{ width: '100%', height: 46, borderRadius: 999, background: pushMsg.trim() ? 'var(--inv)' : 'var(--surf2)', color: pushMsg.trim() ? 'var(--invT)' : 'var(--txt3)', fontSize: 14, fontWeight: 600, cursor: pushMsg.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', transition: 'all .15s' }}>
-                {sent     ? <><Icon n="check" s={18}/>Yuborildi!</>
-                 : sending ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', animation: 'spin .7s linear infinite', display: 'inline-block' }}/>Yuborilmoqda…</>
-                 : <><Icon n="send" s={18}/>Yuborish ({SEGS.find(s => s.k === seg)?.l})</>}
+                {sent     ? <><Icon n="check" s={18}/>Отправлено!</>
+                 : sending ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', animation: 'spin .7s linear infinite', display: 'inline-block' }}/>Отправка…</>
+                 : <><Icon n="send" s={18}/>Отправить ({SEGS.find(s => s.k === seg)?.l})</>}
               </button>
             </div>
           </div>
@@ -710,19 +710,19 @@ export default function MarketingPage() {
           <div style={{ maxWidth: 520 }}>
             <div className="card">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)' }}>Mavsumiy eslatmalar</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)' }}>Сезонные напоминания</div>
                 <button onClick={() => setShowRule(true)}
                   style={{ height: 32, padding: '0 12px', borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, border: 'none' }}>
-                  <Icon n="plus" s={14}/>Qo'shish
+                  <Icon n="plus" s={14}/>Добавить
                 </button>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 14, lineHeight: 1.5 }}>Avtomatik push — qish/yoz mavsumida.</p>
+              <p style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 14, lineHeight: 1.5 }}>Автоматический push — в зимний/летний сезон.</p>
               {rulesLoading ? (
-                <div style={{ color: 'var(--txt3)', fontSize: 13, padding: '8px 0' }}>Yuklanmoqda…</div>
+                <div style={{ color: 'var(--txt3)', fontSize: 13, padding: '8px 0' }}>Загрузка…</div>
               ) : rules.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--txt3)' }}>
                   <Icon n="snow" s={30}/>
-                  <p style={{ fontSize: 12.5, marginTop: 8 }}>Qoida yo'q. Qo'shish tugmasini bosing.</p>
+                  <p style={{ fontSize: 12.5, marginTop: 8 }}>Нет правил. Нажмите кнопку «Добавить».</p>
                 </div>
               ) : rules.map((rule, i) => (
                 <div key={rule.id} style={{ padding: '12px 14px', borderRadius: 13, background: 'var(--surf2)', marginBottom: i < rules.length - 1 ? 10 : 0 }}>
@@ -731,7 +731,7 @@ export default function MarketingPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 2, color: 'var(--txt)' }}>{rule.name}</div>
                       <div style={{ fontSize: 11.5, color: 'var(--txt3)', marginBottom: 2 }}>
-                        {['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'][rule.sendMonth-1]} {rule.sendDay}-sana
+                        {['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'][rule.sendMonth-1]} {rule.sendDay} числа
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--txt2)', lineHeight: 1.35 }}>{rule.messageUz}</div>
                     </div>
@@ -740,11 +740,11 @@ export default function MarketingPage() {
                   <div style={{ display: 'flex', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--hair)' }}>
                     <button disabled={rToggling === rule.id + '_send'} onClick={() => sendRuleNow(rule)}
                       style={{ flex: 1, height: 32, borderRadius: 999, background: 'var(--greenDim)', color: 'var(--green)', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: rToggling === rule.id + '_send' ? 0.5 : 1 }}>
-                      <Icon n="send" s={13}/>{rToggling === rule.id + '_send' ? 'Yuborilmoqda…' : 'Hozir yuborish'}
+                      <Icon n="send" s={13}/>{rToggling === rule.id + '_send' ? 'Отправка…' : 'Отправить сейчас'}
                     </button>
                     {rule.lastSentAt && (
                       <span style={{ fontSize: 11, color: 'var(--txt3)', alignSelf: 'center' }}>
-                        Oxirgi: {new Date(rule.lastSentAt).toLocaleDateString('uz', { day: '2-digit', month: '2-digit' })}
+                        Последняя: {new Date(rule.lastSentAt).toLocaleDateString('ru', { day: '2-digit', month: '2-digit' })}
                       </span>
                     )}
                   </div>
@@ -758,7 +758,7 @@ export default function MarketingPage() {
         {tab === 'settings' && (
           <div style={{ maxWidth: 520 }}>
             <div className="card">
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--txt)' }}>Ilova konfiguratsiyasi</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--txt)' }}>Конфигурация приложения</div>
               {config.map((item, i) => (
                 <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < config.length - 1 ? '1px solid var(--hair)' : 'none' }}>
                   <span style={{ fontSize: 13.5, color: 'var(--txt2)' }}>{item.label}</span>
@@ -766,7 +766,7 @@ export default function MarketingPage() {
                     <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 600, color: 'var(--txt)' }}>{item.value}</span>
                     <button onClick={() => setEditItem(item)}
                       style={{ height: 28, padding: '0 10px', borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <Icon n="edit" s={12}/>O'zgartirish
+                      <Icon n="edit" s={12}/>Изменить
                     </button>
                   </div>
                 </div>

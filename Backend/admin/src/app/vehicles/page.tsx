@@ -32,25 +32,25 @@ export default function VehiclesPage() {
   useEffect(() => { fetchVehicles() }, [page])
 
   return (
-    <AdminShell title="Avtomobillar">
+    <AdminShell title="Автомобили">
       <div className="space-y-4">
         <form onSubmit={(e) => { e.preventDefault(); setPage(1); fetchVehicles() }} className="flex gap-2">
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Plaka raqami bo'yicha qidirish..." className="inp flex-1" />
-          <button type="submit" className="btn-primary">Qidirish</button>
-          <span className="self-center text-text3 text-sm">{total} ta</span>
+            placeholder="Поиск по номерному знаку..." className="inp flex-1" />
+          <button type="submit" className="btn-primary">Найти</button>
+          <span className="self-center text-text3 text-sm">{total} шт.</span>
         </form>
 
         <div className="card overflow-x-auto">
           <table className="tbl">
             <thead>
               <tr>
-                <th>Plaka</th>
-                <th>Avtomobil</th>
-                <th>Rang / Yil</th>
-                <th>Egasi</th>
-                <th>Telefon</th>
-                <th>Qo'shilgan</th>
+                <th>Номер</th>
+                <th>Автомобиль</th>
+                <th>Цвет / Год</th>
+                <th>Владелец</th>
+                <th>Телефон</th>
+                <th>Добавлен</th>
               </tr>
             </thead>
             <tbody>
@@ -63,7 +63,7 @@ export default function VehiclesPage() {
                   </tr>
                 ))
               ) : vehicles.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text3)' }}>Avtomobil topilmadi</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text3)' }}>Автомобили не найдены</td></tr>
               ) : vehicles.map((v) => (
                 <tr key={v.id}>
                   <td>
@@ -91,9 +91,9 @@ export default function VehiclesPage() {
 
         {total > 20 && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">â† Oldingi</button>
-            <span className="text-text3 text-sm">{page}-sahifa</span>
-            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Keyingi â†’</button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost disabled:opacity-40">← Назад</button>
+            <span className="text-text3 text-sm">Страница {page}</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total} className="btn-ghost disabled:opacity-40">Следующая →</button>
           </div>
         )}
       </div>

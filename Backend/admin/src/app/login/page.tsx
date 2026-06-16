@@ -31,10 +31,10 @@ export default function LoginPage() {
         router.push('/partner')
 
       } else {
-        setError('Sizda kirish huquqi yo\'q')
+        setError('У вас нет прав доступа')
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Login yoki parol noto\'g\'ri')
+      setError(err.response?.data?.message || err.response?.data?.error || 'Неверный логин или пароль')
     } finally {
       setLoading(false)
     }
@@ -48,14 +48,14 @@ export default function LoginPage() {
             <Brand s={30}/>
           </div>
           <p style={{color:'var(--txt)',fontWeight:700,fontSize:24,letterSpacing:'-.03em'}}>Shina24</p>
-          <p style={{color:'var(--txt3)',fontSize:11,fontFamily:"'JetBrains Mono',monospace",marginTop:5,textTransform:'uppercase',letterSpacing:'.12em'}}>Boshqaruv paneli</p>
+          <p style={{color:'var(--txt3)',fontSize:11,fontFamily:"'JetBrains Mono',monospace",marginTop:5,textTransform:'uppercase',letterSpacing:'.12em'}}>Панель управления</p>
         </div>
 
         <div className="card" style={{padding:28}}>
           <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:16}}>
             <div>
               <label style={{display:'block',fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',marginBottom:7}}>
-                Email yoki telefon
+                Email или телефон
               </label>
               <input
                 type="text"
@@ -70,7 +70,7 @@ export default function LoginPage() {
             </div>
             <div>
               <label style={{display:'block',fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)',marginBottom:7}}>
-                Parol
+                Пароль
               </label>
               <input
                 type="password"
@@ -93,7 +93,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               style={{width:'100%',height:48,borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:15,fontWeight:600,cursor:loading?'default':'pointer',border:'none',marginTop:2,opacity:loading?0.65:1,transition:'opacity .15s'}}>
-              {loading ? 'Kirilmoqda…' : 'Kirish'}
+              {loading ? 'Вход…' : 'Войти'}
             </button>
           </form>
 

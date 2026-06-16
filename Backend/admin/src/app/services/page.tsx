@@ -9,12 +9,12 @@ function fmtDate(d: string) {
 }
 
 const SVC_TYPES = [
-  { slug:'tire_change', label:'Shina almashtirish' },
-  { slug:'balancing',   label:'Balans' },
-  { slug:'tire_repair', label:"Vulkanizatsiya" },
-  { slug:'inflation',   label:'Podkachka' },
-  { slug:'disk_repair', label:"Disk ta'miri" },
-  { slug:'storage',     label:'Shina saqlash' },
+  { slug:'tire_change', label:'Замена шины' },
+  { slug:'balancing',   label:'Балансировка' },
+  { slug:'tire_repair', label:'Вулканизация' },
+  { slug:'inflation',   label:'Подкачка' },
+  { slug:'disk_repair', label:'Ремонт диска' },
+  { slug:'storage',     label:'Хранение шин' },
 ]
 
 const EMPTY_FORM = {
@@ -46,7 +46,7 @@ export default function ServicesPage() {
     setLoading(true)
     api.get('/admin/shops?limit=100').then(r => {
       setShops(r.data.data?.shops || r.data.shops || [])
-    }).catch(() => setError('Servislarni yuklashda xatolik')).finally(() => setLoading(false))
+    }).catch(() => setError('Ошибка загрузки сервисов')).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -63,7 +63,7 @@ export default function ServicesPage() {
 
   const handleAdd = async () => {
     if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim() || !form.password.trim()) {
-      setAddErr('Ism, email, telefon va parol majburiy'); return
+      setAddErr('Имя, email, телефон и пароль обязательны'); return
     }
     setAdding(true); setAddErr('')
     try {
@@ -80,7 +80,7 @@ export default function ServicesPage() {
       closeAdd()
       load()
     } catch (e: any) {
-      setAddErr(e.response?.data?.message || 'Xatolik yuz berdi')
+      setAddErr(e.response?.data?.message || 'Произошла ошибка')
     } finally {
       setAdding(false)
     }
@@ -97,10 +97,10 @@ export default function ServicesPage() {
   const pCnt    = mapped.filter(s => s.status === 'pending').length
 
   const tabs = [
-    ['all',       `Hammasi (${mapped.length})`],
-    ['active',    'Faol'],
-    ['pending',   `Kutilmoqda${pCnt > 0 ? ` (${pCnt})` : ''}`],
-    ['suspended', 'Bloklangan'],
+    ['all',       `Все (${mapped.length})`],
+    ['active',    'Активные'],
+    ['pending',   `На проверке${pCnt > 0 ? ` (${pCnt})` : ''}`],
+    ['suspended', 'Заблокированные'],
   ]
 
   const verify = async (id: string, status: string) => {
@@ -115,12 +115,12 @@ export default function ServicesPage() {
   }
 
   const sc = (status: string) =>
-    status === 'active'    ? {l:'Faol',       c:'b-green'} :
-    status === 'pending'   ? {l:'Tekshiruv',  c:'b-amber'} :
-                             {l:'Bloklangan', c:'b-red'}
+    status === 'active'    ? {l:'Активен',      c:'b-green'} :
+    status === 'pending'   ? {l:'На проверке',  c:'b-amber'} :
+                             {l:'Заблокирован', c:'b-red'}
 
   return (
-    <AdminShell title="Servislar boshqaruvi">
+    <AdminShell title="Управление сервисами">
       <div className="fade-in">
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
           <div className="tabs">
@@ -130,25 +130,25 @@ export default function ServicesPage() {
           </div>
           <button onClick={openAdd}
             style={{height:38,padding:'0 16px',borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:8,border:'none'}}>
-            <Icon n="plus" s={16}/>Servis qo&apos;shish
+            <Icon n="plus" s={16}/>Добавить сервис
           </button>
         </div>
 
         <div className="card" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
-            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (
             <div style={{padding:40,textAlign:'center',color:'var(--red)'}}>
-              {error} <button onClick={load} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Qayta urinish</button>
+              {error} <button onClick={load} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Повторить</button>
             </div>
           ) : (
             <table className="tbl">
               <thead>
-                <tr><th>Servis</th><th>Egasi</th><th>Manzil</th><th>Reyting</th><th>Buyurtmalar</th><th>Holat</th><th>Amallar</th></tr>
+                <tr><th>Сервис</th><th>Владелец</th><th>Адрес</th><th>Рейтинг</th><th>Заказы</th><th>Статус</th><th>Действия</th></tr>
               </thead>
               <tbody>
                 {visible.length === 0 ? (
-                  <tr><td colSpan={7} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Servislar topilmadi</td></tr>
+                  <tr><td colSpan={7} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Сервисы не найдены</td></tr>
                 ) : visible.map(s => {
                   const badge = sc(s.status)
                   return (
@@ -171,19 +171,19 @@ export default function ServicesPage() {
                           {s.status === 'pending' && (
                             <button disabled={!!acting} onClick={() => verify(s.id,'verified')}
                               style={{height:30,padding:'0 12px',borderRadius:999,background:'var(--greenDim)',color:'var(--green)',fontSize:12,fontWeight:600,cursor:'pointer',border:'none',opacity:acting?0.5:1}}>
-                              {acting===s.id+'verified'?'…':'Tasdiqlash'}
+                              {acting===s.id+'verified'?'…':'Подтвердить'}
                             </button>
                           )}
                           {s.status === 'active' && (
                             <button disabled={!!acting} onClick={() => verify(s.id,'rejected')}
                               style={{height:30,padding:'0 12px',borderRadius:999,background:'var(--surf2)',color:'var(--txt2)',fontSize:12,fontWeight:600,cursor:'pointer',border:'none',opacity:acting?0.5:1}}>
-                              {acting===s.id+'rejected'?'…':'Bloklash'}
+                              {acting===s.id+'rejected'?'…':'Заблокировать'}
                             </button>
                           )}
                           {s.status === 'suspended' && (
                             <button disabled={!!acting} onClick={() => verify(s.id,'verified')}
                               style={{height:30,padding:'0 12px',borderRadius:999,background:'var(--blueDim)',color:'var(--blue)',fontSize:12,fontWeight:600,cursor:'pointer',border:'none',opacity:acting?0.5:1}}>
-                              {acting===s.id+'verified'?'…':'Faollashtirish'}
+                              {acting===s.id+'verified'?'…':'Активировать'}
                             </button>
                           )}
                         </div>
@@ -207,16 +207,16 @@ export default function ServicesPage() {
             </div>
             <div className="lcard">
               {[
-                ['Egasi',          modal.user?.fullName || '—'],
-                ['Telefon',        modal.phone || '—'],
-                ['Email',          modal.user?.email || '—'],
-                ['Manzil',         modal.address || '—'],
-                ["Qo'shilgan",     fmtDate(modal.createdAt)],
-                ['Buyurtmalar',    `${modal.totalBookings ?? 0} ta`],
-                ['Reyting',        modal.ratingAvg > 0 ? `${modal.ratingAvg.toFixed(1)} ★` : '—'],
-                ['Xizmat turlari', modal.serviceTypes?.join(', ') || '—'],
-                ['Ish vaqti',      modal.workingHours || '—'],
-                ['Holat',          sc(modal.status ?? (modal.verificationStatus === 'verified' ? 'active' : modal.verificationStatus === 'rejected' ? 'suspended' : 'pending')).l],
+                ['Владелец',        modal.user?.fullName || '—'],
+                ['Телефон',         modal.phone || '—'],
+                ['Email',           modal.user?.email || '—'],
+                ['Адрес',           modal.address || '—'],
+                ['Добавлен',        fmtDate(modal.createdAt)],
+                ['Заказы',          `${modal.totalBookings ?? 0}`],
+                ['Рейтинг',         modal.ratingAvg > 0 ? `${modal.ratingAvg.toFixed(1)} ★` : '—'],
+                ['Типы услуг',      modal.serviceTypes?.join(', ') || '—'],
+                ['Часы работы',     modal.workingHours || '—'],
+                ['Статус',          sc(modal.status ?? (modal.verificationStatus === 'verified' ? 'active' : modal.verificationStatus === 'rejected' ? 'suspended' : 'pending')).l],
               ].map(([l,v],i) => (
                 <div key={i} className="lrow">
                   <span style={{fontSize:13,color:'var(--txt3)',flex:1}}>{l}</span>
@@ -233,20 +233,20 @@ export default function ServicesPage() {
         <div className="mbg" onClick={closeAdd}>
           <div className="modal" style={{maxWidth:480,width:'95%',maxHeight:'90vh',overflowY:'auto'}} onClick={e => e.stopPropagation()}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-              <span style={{fontSize:18,fontWeight:700,color:'var(--txt)'}}>Yangi servis qo&apos;shish</span>
+              <span style={{fontSize:18,fontWeight:700,color:'var(--txt)'}}>Добавить новый сервис</span>
               <button onClick={closeAdd} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={22}/></button>
             </div>
 
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <div>
-                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Egasi ismi *</div>
-                  <input style={inp} placeholder="Abdullayev Jasur" value={form.fullName}
+                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Имя владельца *</div>
+                  <input style={inp} placeholder="Иванов Иван" value={form.fullName}
                     onChange={e => setForm(f => ({...f, fullName:e.target.value}))}/>
                 </div>
                 <div>
-                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Servis nomi</div>
-                  <input style={inp} placeholder="Shina24 Yunusobod" value={form.shopName}
+                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Название сервиса</div>
+                  <input style={inp} placeholder="Shina24 Юнусобод" value={form.shopName}
                     onChange={e => setForm(f => ({...f, shopName:e.target.value}))}/>
                 </div>
               </div>
@@ -258,32 +258,32 @@ export default function ServicesPage() {
                     onChange={e => setForm(f => ({...f, email:e.target.value}))}/>
                 </div>
                 <div>
-                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Telefon *</div>
+                  <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Телефон *</div>
                   <input style={inp} placeholder="+998901234567" value={form.phone}
                     onChange={e => setForm(f => ({...f, phone:e.target.value}))}/>
                 </div>
               </div>
 
               <div>
-                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Parol *</div>
-                <input style={inp} type="password" placeholder="Kamida 6 ta belgi" value={form.password}
+                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Пароль *</div>
+                <input style={inp} type="password" placeholder="Минимум 6 символов" value={form.password}
                   onChange={e => setForm(f => ({...f, password:e.target.value}))}/>
               </div>
 
               <div>
-                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Manzil</div>
-                <input style={inp} placeholder="Toshkent, Yunusobod tumani" value={form.address}
+                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Адрес</div>
+                <input style={inp} placeholder="Ташкент, Юнусабадский район" value={form.address}
                   onChange={e => setForm(f => ({...f, address:e.target.value}))}/>
               </div>
 
               <div>
-                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Ish vaqti</div>
+                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Часы работы</div>
                 <input style={inp} placeholder="09:00-18:00" value={form.workingHours}
                   onChange={e => setForm(f => ({...f, workingHours:e.target.value}))}/>
               </div>
 
               <div>
-                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:7}}>Xizmat turlari</div>
+                <div style={{fontSize:12,color:'var(--txt3)',marginBottom:7}}>Типы услуг</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
                   {SVC_TYPES.map(t => {
                     const on = form.serviceTypes.includes(t.slug)
@@ -309,11 +309,11 @@ export default function ServicesPage() {
               <div style={{display:'flex',gap:10,marginTop:4}}>
                 <button onClick={closeAdd} disabled={adding}
                   style={{flex:1,height:42,borderRadius:10,background:'var(--surf2)',color:'var(--txt2)',fontSize:14,fontWeight:600,cursor:'pointer',border:'none',opacity:adding?0.5:1}}>
-                  Bekor qilish
+                  Отмена
                 </button>
                 <button onClick={handleAdd} disabled={adding}
                   style={{flex:2,height:42,borderRadius:10,background:'var(--inv)',color:'var(--invT)',fontSize:14,fontWeight:600,cursor:'pointer',border:'none',opacity:adding?0.7:1}}>
-                  {adding ? 'Saqlanmoqda…' : "Servis qo'shish"}
+                  {adding ? 'Сохранение…' : 'Добавить сервис'}
                 </button>
               </div>
             </div>

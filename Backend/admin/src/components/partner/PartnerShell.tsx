@@ -63,7 +63,7 @@ function Toast({ t, onClose }: { t: WSToast; onClose: () => void }) {
             )}
             {t.booking.totalPrice > 0 && (
               <span style={{fontSize:11.5, background:'var(--surf2)', color:'var(--green)', padding:'2px 8px', borderRadius:6, fontFamily:"'JetBrains Mono',monospace", fontWeight:700}}>
-                {t.booking.totalPrice.toLocaleString('uz')} so'm
+                {t.booking.totalPrice.toLocaleString('uz')} сум
               </span>
             )}
           </div>
@@ -166,18 +166,18 @@ export default function PartnerShell({ children, pendingCount = 0 }: Props) {
     let body  = ''
 
     if (type === 'new_booking' || type === 'booking_created') {
-      title = '🔔 Yangi buyurtma!'
+      title = '🔔 Новый заказ!'
       body  = data.booking?.customer?.fullName
-        ? `${data.booking.customer.fullName} — ${data.booking.serviceType?.nameUz || 'Xizmat'}`
-        : 'Yangi bron keldi'
+        ? `${data.booking.customer.fullName} — ${data.booking.serviceType?.nameUz || 'Услуга'}`
+        : 'Поступил новый заказ'
     } else if (type === 'booking_cancelled') {
-      title = 'Buyurtma bekor qilindi'
-      body  = data.booking?.customer?.fullName || 'Mijoz buyurtmani bekor qildi'
+      title = 'Заказ отменён'
+      body  = data.booking?.customer?.fullName || 'Клиент отменил заказ'
     } else if (type === 'booking_updated') {
-      title = 'Buyurtma yangilandi'
-      body  = data.booking?.customer?.fullName || 'Buyurtma holati o\'zgardi'
+      title = 'Заказ обновлён'
+      body  = data.booking?.customer?.fullName || 'Статус заказа изменился'
     } else if (data.title || data.message) {
-      title = data.title || 'Bildirishnoma'
+      title = data.title || 'Уведомление'
       body  = data.message || data.body || ''
     } else {
       return // noma'lum xabar — ko'rsatma

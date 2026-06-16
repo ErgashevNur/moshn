@@ -5,11 +5,11 @@ import Icon from '@/components/ui/Icon'
 import api from '@/lib/api'
 
 const SC: Record<string, {l:string; c:string}> = {
-  pending:     {l:'Kutilmoqda',   c:'b-blue'},
-  confirmed:   {l:'Tasdiqlangan', c:'b-amber'},
-  in_progress: {l:'Jarayonda',    c:'b-amber'},
-  completed:   {l:'Tugadi',       c:'b-green'},
-  cancelled:   {l:'Bekor',        c:'b-red'},
+  pending:     {l:'Ожидает',       c:'b-blue'},
+  confirmed:   {l:'Подтверждён',  c:'b-amber'},
+  in_progress: {l:'В процессе',   c:'b-amber'},
+  completed:   {l:'Завершён',     c:'b-green'},
+  cancelled:   {l:'Отменён',      c:'b-red'},
 }
 
 function fmt(n: number) { return n.toLocaleString('uz') }
@@ -30,18 +30,18 @@ export default function BookingsPage() {
     const qs = status && status !== 'all' ? `?status=${status}&limit=100` : '?limit=100'
     api.get(`/admin/bookings${qs}`).then(r => {
       setBookings(r.data.data?.bookings || [])
-    }).catch(() => setError('Buyurtmalarni yuklashda xatolik')).finally(() => setLoading(false))
+    }).catch(() => setError('Ошибка загрузки заказов')).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => { load() }, [load])
 
   const statusTabs = [
-    ['all','Hammasi'],
-    ['completed','Tugadi'],
-    ['in_progress','Jarayonda'],
-    ['confirmed','Tasdiqlangan'],
-    ['pending','Kutilmoqda'],
-    ['cancelled','Bekor'],
+    ['all','Все'],
+    ['completed','Завершён'],
+    ['in_progress','В процессе'],
+    ['confirmed','Подтверждён'],
+    ['pending','Ожидает'],
+    ['cancelled','Отменён'],
   ]
 
   const list = bookings.filter(b => {
@@ -54,12 +54,12 @@ export default function BookingsPage() {
   })
 
   return (
-    <AdminShell title="Buyurtmalar">
+    <AdminShell title="Заказы">
       <div className="fade-in">
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
           <div className="srch" style={{flex:1}}>
             <Icon n="search" s={15} col="var(--txt3)"/>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Mijoz yoki servis qidirish…"
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск клиента или сервиса…"
               style={{border:'none',background:'none',fontSize:13.5,color:'var(--txt)',outline:'none',flex:1,fontFamily:'inherit'}}/>
             {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',color:'var(--txt3)',cursor:'pointer'}}><Icon n="x" s={15}/></button>}
           </div>
@@ -74,19 +74,19 @@ export default function BookingsPage() {
 
         <div className="card" style={{padding:0,overflow:'hidden'}}>
           {loading ? (
-            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+            <div style={{padding:40,textAlign:'center',color:'var(--txt3)'}}>Загрузка…</div>
           ) : error ? (
             <div style={{padding:40,textAlign:'center',color:'var(--red)'}}>
-              {error} <button onClick={() => load()} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Qayta urinish</button>
+              {error} <button onClick={() => load()} style={{marginLeft:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13}}>Повторить</button>
             </div>
           ) : (
             <table className="tbl">
               <thead>
-                <tr><th>ID</th><th>Mijoz</th><th>Servis</th><th>Xizmat</th><th>Sana/Vaqt</th><th>Narx</th><th>Holat</th></tr>
+                <tr><th>ID</th><th>Клиент</th><th>Сервис</th><th>Услуга</th><th>Дата/Время</th><th>Цена</th><th>Статус</th></tr>
               </thead>
               <tbody>
                 {list.length === 0 ? (
-                  <tr><td colSpan={7} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Buyurtmalar topilmadi</td></tr>
+                  <tr><td colSpan={7} style={{textAlign:'center',padding:24,color:'var(--txt3)'}}>Заказы не найдены</td></tr>
                 ) : list.map(b => {
                   const s = SC[b.status] || {l: b.status, c:'b-gray'}
                   return (
@@ -111,7 +111,7 @@ export default function BookingsPage() {
 
         {!loading && !error && (
           <div style={{textAlign:'right',marginTop:10,fontSize:12.5,color:'var(--txt3)'}}>
-            Jami: {list.length} ta buyurtma
+            Всего: {list.length} заказов
           </div>
         )}
       </div>

@@ -47,7 +47,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
         <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 18px',borderBottom:'1px solid var(--hair)'}}>
           <Icon n="search" s={18} col="var(--txt3)"/>
           <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Foydalanuvchi, servis, buyurtma qidirish…"
+            placeholder="Пользователь, сервис, заказ…"
             style={{flex:1,background:'none',border:'none',fontSize:15,color:'var(--txt)',outline:'none',fontFamily:'inherit'}}/>
           {loading && <div style={{width:16,height:16,borderRadius:'50%',border:'2px solid var(--hair2)',borderTopColor:'var(--txt2)',animation:'spin .7s linear infinite'}}/>}
           <button onClick={onClose} style={{cursor:'pointer',color:'var(--txt3)',fontSize:12,padding:'3px 8px',borderRadius:7,background:'var(--surf2)',border:'1px solid var(--hair)'}}>Esc</button>
@@ -56,14 +56,14 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
         <div style={{maxHeight:440,overflowY:'auto'}}>
           {!q.trim() ? (
             <div style={{padding:'16px 18px 20px',display:'flex',flexDirection:'column',gap:6}}>
-              <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',marginBottom:6}}>Tezkor havolalar</div>
+              <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',marginBottom:6}}>Быстрые ссылки</div>
               {[
-                ['/dashboard','dash','Dashboard'],
-                ['/services','store','Servislar'],
-                ['/bookings','list','Buyurtmalar'],
-                ['/users','users','Foydalanuvchilar'],
-                ['/finance','wallet','Moliya'],
-                ['/marketing','bolt','Marketing'],
+                ['/dashboard','dash','Дашборд'],
+                ['/services','store','Сервисы'],
+                ['/bookings','list','Заказы'],
+                ['/users','users','Пользователи'],
+                ['/finance','wallet','Финансы'],
+                ['/marketing','bolt','Маркетинг'],
               ].map(([path, ic, label]) => (
                 <button key={path} onClick={() => go(path)}
                   style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:10,background:'none',border:'none',cursor:'pointer',textAlign:'left',color:'var(--txt)',fontSize:14,fontWeight:500,width:'100%'}}
@@ -76,12 +76,12 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
             </div>
           ) : !hasResults && !loading ? (
             <div style={{padding:'28px 18px',textAlign:'center',color:'var(--txt3)',fontSize:14}}>
-              &ldquo;{q}&rdquo; bo&apos;yicha natija topilmadi
+              По запросу &ldquo;{q}&rdquo; ничего не найдено
             </div>
           ) : (
             <div style={{padding:'10px 8px 12px'}}>
               {users.length > 0 && <>
-                <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',padding:'6px 12px 4px'}}>Foydalanuvchilar</div>
+                <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',padding:'6px 12px 4px'}}>Пользователи</div>
                 {users.map(u => (
                   <button key={u.id} onClick={() => go('/users')}
                     style={{display:'flex',alignItems:'center',gap:11,padding:'9px 12px',borderRadius:10,background:'none',border:'none',cursor:'pointer',width:'100%',textAlign:'left'}}
@@ -99,7 +99,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
                 ))}
               </>}
               {shops.length > 0 && <>
-                <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',padding:'10px 12px 4px'}}>Servislar</div>
+                <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--txt3)',padding:'10px 12px 4px'}}>Сервисы</div>
                 {shops.map(s => (
                   <button key={s.id} onClick={() => go('/services')}
                     style={{display:'flex',alignItems:'center',gap:11,padding:'9px 12px',borderRadius:10,background:'none',border:'none',cursor:'pointer',width:'100%',textAlign:'left'}}
@@ -113,7 +113,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
                       <div style={{fontSize:12,color:'var(--txt3)'}}>{s.address}</div>
                     </div>
                     <span className={`badge ${s.verificationStatus==='verified'?'b-green':s.verificationStatus==='pending'?'b-amber':'b-red'}`} style={{fontSize:11}}>
-                      {s.verificationStatus==='verified'?'Faol':s.verificationStatus==='pending'?'Kutilmoqda':'Bloklangan'}
+                      {s.verificationStatus==='verified'?'Активен':s.verificationStatus==='pending'?'На проверке':'Заблокирован'}
                     </span>
                   </button>
                 ))}
@@ -156,10 +156,10 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 
   function fmtAgo(d: string) {
     const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
-    if (s < 60) return `${s}s`
-    if (s < 3600) return `${Math.floor(s/60)} daq`
-    if (s < 86400) return `${Math.floor(s/3600)} soat`
-    return `${Math.floor(s/86400)} kun`
+    if (s < 60) return `${s}с`
+    if (s < 3600) return `${Math.floor(s/60)} мин`
+    if (s < 86400) return `${Math.floor(s/3600)} ч`
+    return `${Math.floor(s/86400)} д`
   }
 
   const unread = notifs.filter(n => !n.isRead).length
@@ -170,14 +170,14 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
       <div style={{position:'absolute',top:48,right:0,width:340,maxWidth:'calc(100vw - 32px)',background:'var(--bgE)',border:'1px solid var(--hair2)',borderRadius:16,boxShadow:'0 20px 60px rgba(0,0,0,.5)',zIndex:901,overflow:'hidden',animation:'rise .18s ease'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'1px solid var(--hair)'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Bildirishnomalar</span>
+            <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>Уведомления</span>
             {unread > 0 && <span style={{fontSize:11,fontWeight:700,background:'var(--red)',color:'#fff',borderRadius:999,padding:'1px 7px'}}>{unread}</span>}
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             {unread > 0 && (
               <button onClick={markAll} disabled={marking}
                 style={{fontSize:12,color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontWeight:600,opacity:marking?0.5:1}}>
-                Barchasini o&apos;qildi
+                Отметить всё прочитанным
               </button>
             )}
             <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--txt3)'}}><Icon n="x" s={18}/></button>
@@ -186,11 +186,11 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
 
         <div style={{maxHeight:400,overflowY:'auto'}}>
           {loading ? (
-            <div style={{padding:'28px',textAlign:'center',color:'var(--txt3)',fontSize:13}}>Yuklanmoqda…</div>
+            <div style={{padding:'28px',textAlign:'center',color:'var(--txt3)',fontSize:13}}>Загрузка…</div>
           ) : notifs.length === 0 ? (
             <div style={{padding:'28px',textAlign:'center',color:'var(--txt3)'}}>
               <Icon n="bell" s={36}/>
-              <p style={{marginTop:10,fontSize:13}}>Bildirishnomalar yo&apos;q</p>
+              <p style={{marginTop:10,fontSize:13}}>Нет уведомлений</p>
             </div>
           ) : notifs.map(n => (
             <button key={n.id} onClick={() => markOne(n.id)}
@@ -283,7 +283,7 @@ export default function AdminShell({ title, children }: { title: string; childre
             <button onClick={() => setSearchOpen(true)}
               style={{display:'flex',alignItems:'center',gap:8,height:34,padding:'0 12px',borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',cursor:'pointer',color:'var(--txt3)',fontSize:13.5}}>
               <Icon n="search" s={14} col="var(--txt3)"/>
-              {!isMobile && <><span>Qidirish…</span><span style={{fontSize:11,background:'var(--surf2)',border:'1px solid var(--hair2)',borderRadius:5,padding:'1px 6px',color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginLeft:6}}>⌘K</span></>}
+              {!isMobile && <><span>Поиск…</span><span style={{fontSize:11,background:'var(--surf2)',border:'1px solid var(--hair2)',borderRadius:5,padding:'1px 6px',color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginLeft:6}}>⌘K</span></>}
             </button>
 
             {/* Notifications bell */}

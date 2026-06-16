@@ -49,7 +49,7 @@ export default function PartnerTerminalPage() {
       await partnerApi.post(`/payments/${selB.id}/pay`, { method })
       setStep('done')
     } catch {
-      alert("To'lovda xatolik. Qayta urinib ko'ring.")
+      alert('Ошибка оплаты. Попробуйте ещё раз.')
     } finally { setPaying(false) }
   }
 
@@ -70,11 +70,11 @@ export default function PartnerTerminalPage() {
             <Icon n="check" s={44} st={2.5}/>
           </div>
         </div>
-        <div style={{fontSize:24,fontWeight:700,marginBottom:8,color:'var(--txt)'}}>To&apos;lov qabul qilindi!</div>
+        <div style={{fontSize:24,fontWeight:700,marginBottom:8,color:'var(--txt)'}}>Оплата принята!</div>
         {selB && <div style={{fontSize:16,color:'var(--txt2)',marginBottom:4}}>{selB.customer?.fullName || '—'}</div>}
-        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,color:'var(--green)',marginBottom:32}}>{fmt(selB.totalPrice || 0)} so&apos;m</div>}
+        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,color:'var(--green)',marginBottom:32}}>{fmt(selB.totalPrice || 0)} сум</div>}
         <button onClick={() => { setStep('select'); setSelB(null); load() }}
-          style={{height:48,padding:'0 28px',borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:15,fontWeight:600,cursor:'pointer',border:'none'}}>Yangi to&apos;lov</button>
+          style={{height:48,padding:'0 28px',borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:15,fontWeight:600,cursor:'pointer',border:'none'}}>Новая оплата</button>
       </div>
     </PartnerShell>
   )
@@ -88,14 +88,14 @@ export default function PartnerTerminalPage() {
             <Icon n="nfc" s={62} col="var(--green)" st={1.4}/>
           </div>
         </div>
-        <div style={{fontSize:22,fontWeight:700,marginBottom:8,color:'var(--txt)'}}>Kartani yaqinlashtiring</div>
-        <div style={{fontSize:14,color:'var(--txt2)',marginBottom:4}}>NFC · Contactless to'lov</div>
-        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:28,fontWeight:700,color:'var(--green)',margin:'12px 0 28px'}}>{fmt(selB.totalPrice || 0)} so'm</div>}
+        <div style={{fontSize:22,fontWeight:700,marginBottom:8,color:'var(--txt)'}}>Приложите карту</div>
+        <div style={{fontSize:14,color:'var(--txt2)',marginBottom:4}}>NFC · Бесконтактная оплата</div>
+        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:28,fontWeight:700,color:'var(--green)',margin:'12px 0 28px'}}>{fmt(selB.totalPrice || 0)} сум</div>}
         <div style={{display:'flex',gap:12}}>
-          <button onClick={() => setStep('select')} style={{height:46,padding:'0 20px',borderRadius:999,border:'1px solid var(--hair2)',color:'var(--txt2)',fontSize:14,fontWeight:600,cursor:'pointer',background:'none'}}>Orqaga</button>
-          <button onClick={getQr} style={{height:46,padding:'0 20px',borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:8,border:'none'}}><Icon n="qr" s={18}/>QR kod</button>
+          <button onClick={() => setStep('select')} style={{height:46,padding:'0 20px',borderRadius:999,border:'1px solid var(--hair2)',color:'var(--txt2)',fontSize:14,fontWeight:600,cursor:'pointer',background:'none'}}>Назад</button>
+          <button onClick={getQr} style={{height:46,padding:'0 20px',borderRadius:999,background:'var(--surf2)',color:'var(--txt)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:8,border:'none'}}><Icon n="qr" s={18}/>QR-код</button>
           <button disabled={paying} onClick={() => pay('card_nfc')} style={{height:46,padding:'0 20px',borderRadius:999,background:'var(--green)',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',border:'none',opacity:paying?0.6:1}}>
-            {paying ? '…' : 'Tasdiqlash ✓'}
+            {paying ? '…' : 'Подтвердить ✓'}
           </button>
         </div>
       </div>
@@ -113,13 +113,13 @@ export default function PartnerTerminalPage() {
             }))}
           </svg>
         </div>
-        <div style={{fontSize:20,fontWeight:700,marginBottom:6,color:'var(--txt)'}}>QR kod orqali to'lash</div>
-        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,marginBottom:4,color:'var(--txt)'}}>{fmt(selB.totalPrice || 0)} so'm</div>}
+        <div style={{fontSize:20,fontWeight:700,marginBottom:6,color:'var(--txt)'}}>Оплата по QR-коду</div>
+        {selB && <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,marginBottom:4,color:'var(--txt)'}}>{fmt(selB.totalPrice || 0)} сум</div>}
         <div style={{fontSize:13,color:'var(--txt3)',marginBottom:28}}>Payme · Click · Uzum Bank</div>
         <div style={{display:'flex',gap:12}}>
-          <button onClick={() => setStep('nfc')} style={{height:46,padding:'0 20px',borderRadius:999,border:'1px solid var(--hair2)',color:'var(--txt2)',fontSize:14,fontWeight:600,cursor:'pointer',background:'none'}}>NFC ga o'tish</button>
+          <button onClick={() => setStep('nfc')} style={{height:46,padding:'0 20px',borderRadius:999,border:'1px solid var(--hair2)',color:'var(--txt2)',fontSize:14,fontWeight:600,cursor:'pointer',background:'none'}}>Перейти к NFC</button>
           <button disabled={paying} onClick={() => pay('card_qr')} style={{height:46,padding:'0 20px',borderRadius:999,background:'var(--inv)',color:'var(--invT)',fontSize:14,fontWeight:600,cursor:'pointer',border:'none',opacity:paying?0.6:1}}>
-            {paying ? '…' : 'Tasdiqlash'}
+            {paying ? '…' : 'Подтвердить'}
           </button>
         </div>
       </div>
@@ -132,19 +132,19 @@ export default function PartnerTerminalPage() {
         <div style={{height:60,display:'flex',alignItems:'center',padding:'0 22px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
           <div style={{flex:1}}>
             <div style={{fontSize:10.5,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
-            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Terminal — To'lov</div>
+            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Терминал — Оплата</div>
           </div>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 22px'}}>
           <div className="fade-in">
-            <div className="slbl">Qaysi buyurtma uchun to'lov?</div>
+            <div className="slbl">За какой заказ оплата?</div>
 
             {loading ? (
-              <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Yuklanmoqda…</div>
+              <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>Загрузка…</div>
             ) : bookings.length === 0 ? (
               <div style={{textAlign:'center',padding:'60px 0',color:'var(--txt3)'}}>
                 <Icon n="card" s={42}/>
-                <p style={{marginTop:14,fontSize:14}}>To'lanmagan buyurtma yo'q</p>
+                <p style={{marginTop:14,fontSize:14}}>Нет неоплаченных заказов</p>
               </div>
             ) : (
               <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:20}}>
@@ -171,7 +171,7 @@ export default function PartnerTerminalPage() {
             )}
 
             <div style={{display:'flex',gap:11}}>
-              {[['nfc',"Karta / NFC",'nfc'],['qr','QR kod','qr']] .map(([k,l,ic]) => (
+              {[['nfc','Карта / NFC','nfc'],['qr','QR-код','qr']] .map(([k,l,ic]) => (
                 <button key={k} disabled={!selB} onClick={() => k === 'qr' ? getQr() : setStep('nfc')}
                   style={{flex:1,height:52,borderRadius:999,background:selB?'var(--inv)':'var(--surf2)',color:selB?'var(--invT)':'var(--txt3)',fontSize:15,fontWeight:600,cursor:selB?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',gap:9,border:'none'}}>
                   <Icon n={ic as any} s={20}/>{l}
