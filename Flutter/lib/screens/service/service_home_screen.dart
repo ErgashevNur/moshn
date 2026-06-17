@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
@@ -6,6 +8,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/booking.dart';
 import '../../services/booking_service.dart';
+import '../../services/push_service.dart';
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -29,9 +33,68 @@ class ServiceHomeScreen extends ConsumerStatefulWidget {
 
 class _ServiceHomeScreenState extends ConsumerState<ServiceHomeScreen> {
   int _filterIndex = 0;
+  StreamSubscription<WsEvent>? _wsSub;
 
   String? get _status =>
       _filterIndex == 0 ? null : _filterStatuses[_filterIndex];
+
+  @override
+  void initState() {
+    super.initState();
+    _wsSub = WsService.instance.events.listen(_onWsEvent);
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  void _onWsEvent(WsEvent event) {
+    if (event.type != 'new_booking') return;
+    // Ro'yxatni refresh qil
+    ref.invalidate(_shopBookingsProvider);
+
+    final customerName = (event.data['customer'] as Map<String, dynamic>?)?['fullName'] as String? ?? 'Mijoz';
+    final serviceTypeName = (event.data['serviceType'] as Map<String, dynamic>?)?['nameUz'] as String? ?? 'Yangi bron';
+
+    // Telefon notification ovozi bilan chiqarish
+    showLocalNotification(
+      title: 'Yangi bron! 🔔',
+      body: '$customerName — $serviceTypeName',
+      id: DateTime.now().millisecondsSinceEpoch & 0x7FFFFFFF,
+    );
+
+    // Ilovada ham banner ko'rsat
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: AppColors.success,
+        duration: const Duration(seconds: 5),
+        content: Row(
+          children: [
+            const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Yangi bron!',
+                      style: AppTypography.labelMedium.copyWith(
+                          color: Colors.white, fontWeight: FontWeight.w700)),
+                  Text('$customerName — $serviceTypeName',
+                      style: AppTypography.labelSmall.copyWith(color: Colors.white)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

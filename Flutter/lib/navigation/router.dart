@@ -8,6 +8,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/otp_screen.dart';
 import '../screens/auth/phone_screen.dart';
+import '../screens/auth/profile_setup_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/role_select_screen.dart';
 import '../screens/auth/welcome_screen.dart';
@@ -41,7 +42,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           loc.startsWith('/login') ||
           loc.startsWith('/register') ||
           loc.startsWith('/role') ||
-          loc == '/role-select';
+          loc == '/role-select' ||
+          loc == '/profile-setup';
 
       if (auth.status == AuthStatus.initial) return null;
 
@@ -51,7 +53,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (auth.status == AuthStatus.authenticated && isAuthRoute) {
         final role = auth.user?.role;
-        if (role == UserRole.none || role == null) return '/role-select';
+        if (role == UserRole.none || role == null) {
+          // role-select va profile-setup ekranlarida qolsin — redirect qilma
+          if (loc == '/role-select' || loc == '/profile-setup') return null;
+          return '/role-select';
+        }
         return role == UserRole.service ? '/service' : '/owner';
       }
 
@@ -71,6 +77,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/role', builder: (_, _) => const RoleSelectScreen()),
       GoRoute(path: '/role-select', builder: (_, _) => const RoleSelectScreen()),
+      GoRoute(
+        path: '/profile-setup',
+        builder: (_, st) {
+          final role = (st.extra as UserRole?) ?? UserRole.owner;
+          return ProfileSetupScreen(role: role);
+        },
+      ),
       GoRoute(
         path: '/register',
         builder: (ctx, st) {

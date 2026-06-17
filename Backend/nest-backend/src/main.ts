@@ -24,8 +24,8 @@ async function bootstrap() {
       // Same-origin yoki server-to-server so'rovlar (origin yo'q)
       if (!origin) return cb(null, true);
       if (allowedOrigins.includes(origin)) return cb(null, true);
-      // ngrok preview domenlarini ham o'tkazib yuborish
-      if (/\.ngrok-free\.app$/.test(origin) || /\.ngrok\.io$/.test(origin)) return cb(null, true);
+      // ngrok barcha domenlarini o'tkazib yuborish
+      if (/\.ngrok-free\.(app|dev)$/.test(origin) || /\.ngrok\.io$/.test(origin) || /\.ngrok\.app$/.test(origin)) return cb(null, true);
       return cb(new Error(`CORS: ${origin} ruxsatsiz`));
     },
     credentials: true,

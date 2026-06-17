@@ -41,6 +41,7 @@ dependencies:
   # Firebase
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.5
+  flutter_local_notifications: ^18.0.1
 
   # Launch URLs / phone / maps
   url_launcher: ^6.3.1
@@ -52,11 +53,12 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
 
-  # Location + map (SOS)
+  # Location + map
   geolocator: ^13.0.1
   geocoding: ^3.0.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  yandex_mapkit: ^3.3.0
 
 dev_dependencies:
   flutter_test:
