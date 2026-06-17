@@ -90,6 +90,17 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
             </button>
           )
         })}
+        {/* Logout button */}
+        <button onClick={logout}
+          style={{
+            flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+            justifyContent:'center', gap:3, border:'none', background:'none',
+            color:'var(--red)', cursor:'pointer', position:'relative', fontSize:9.5,
+            fontWeight:500, letterSpacing:'.04em',
+          }}>
+          <Icon n="logout" s={22} col="var(--red)"/>
+          Выйти
+        </button>
       </nav>
     )
   }
@@ -121,8 +132,8 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
         <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Тема
       </button>
       <button onClick={logout}
-        style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--txt3)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
-        <Icon n="logout" s={20}/>Выйти
+        style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--red)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
+        <Icon n="logout" s={20} col="var(--red)"/>Выйти
       </button>
     </div>
   )

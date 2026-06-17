@@ -173,8 +173,8 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
           {showLabel && (theme==='dark' ? 'Светлая тема' : 'Тёмная тема')}
         </button>
         <button onClick={logout}
-          style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--txt2)',cursor:'pointer',border:'none',background:'none'}}>
-          <Icon n="logout" s={17}/>
+          style={{display:'flex',alignItems:'center',justifyContent:showLabel?'flex-start':'center',gap:showLabel?10:0,padding:showLabel?'9px 12px':'10px 0',width:'100%',borderRadius:11,fontSize:13.5,fontWeight:500,color:'var(--red)',cursor:'pointer',border:'none',background:'none'}}>
+          <Icon n="logout" s={17} col="var(--red)"/>
           {showLabel && 'Выйти'}
         </button>
         <button onClick={onToggleCollapse}

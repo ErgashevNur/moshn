@@ -34,7 +34,7 @@ export default function Icon({ n, s = 18, st = 1.8, col, style }: IconProps) {
     settings: <><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M17 17l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M17 7l1.4-1.4"/></>,
     sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></>,
     moon: <path d="M20 14a8 8 0 11-10-10 6.5 6.5 0 0010 10z"/>,
-    logout: <><path d="M14 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4"/><path d="M10 12H3m0 0l3.5-3.5M3 12l3.5 3.5"/></>,
+    logout: <><path d="M10 4H6a1 1 0 00-1 1v14a1 1 0 001 1h4"/><path d="M14 12h7m0 0l-3.5-3.5M21 12l-3.5 3.5"/></>,
     search: <><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></>,
     check: <path d="M5 12.5l4.5 4.5L19 6.5"/>,
     x: <path d="M6 6l12 12M18 6L6 18"/>,
