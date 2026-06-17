@@ -188,7 +188,10 @@ class _ShopDetailBody extends ConsumerWidget {
                         // Services & prices
                         _SectionLabel(label: 'shop.services_prices'.tr()),
                         const SizedBox(height: 10),
-                        _ServicesCard(serviceTypes: shop.serviceTypes),
+                        _ServicesCard(
+                          serviceTypes: shop.serviceTypes,
+                          servicePrices: shop.servicePrices,
+                        ),
                         const SizedBox(height: 24),
 
                         // Reviews
@@ -569,11 +572,16 @@ class _SectionLabel extends StatelessWidget {
 
 class _ServicesCard extends StatelessWidget {
   final List<String> serviceTypes;
-  const _ServicesCard({required this.serviceTypes});
+  final List<ShopServicePrice> servicePrices;
+  const _ServicesCard({
+    required this.serviceTypes,
+    this.servicePrices = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
     if (serviceTypes.isEmpty) return const SizedBox.shrink();
+    final locale = context.locale.languageCode;
 
     return Container(
       decoration: BoxDecoration(
@@ -586,6 +594,13 @@ class _ServicesCard extends StatelessWidget {
           final i = entry.key;
           final slug = entry.value;
           final isLast = i == serviceTypes.length - 1;
+
+          // Narx diapazoni — slug yoki serviceTypeId bo'yicha topamiz
+          final price = servicePrices.where((p) => p.slug == slug).firstOrNull;
+          final priceText = price != null && (price.priceMin > 0 || price.priceMax > 0)
+              ? _buildPriceText(price)
+              : 'shop.price_on_request'.tr();
+          final hasPrice = price != null && (price.priceMin > 0 || price.priceMax > 0);
 
           return Column(
             children: [
@@ -609,16 +624,19 @@ class _ServicesCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        _labelForSlug(slug, context.locale.languageCode),
+                        _labelForSlug(slug, locale),
                         style: AppTypography.soraSize(14, weight: FontWeight.w500)
                             .copyWith(color: AppColors.text(context)),
                       ),
                     ),
                     Text(
-                      'shop.price_on_request'.tr(),
+                      priceText,
                       style: AppTypography.body.copyWith(
-                        color: AppColors.text3(context),
-                        fontSize: 12,
+                        color: hasPrice
+                            ? AppColors.text(context)
+                            : AppColors.text3(context),
+                        fontSize: hasPrice ? 13 : 12,
+                        fontWeight: hasPrice ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -637,6 +655,17 @@ class _ServicesCard extends StatelessWidget {
         }).toList(),
       ),
     );
+  }
+
+  String _buildPriceText(ShopServicePrice p) {
+    String fmt(int n) => n.toString().replaceAllMapped(
+        RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
+    if (p.priceMin > 0 && p.priceMax > 0) {
+      return '${fmt(p.priceMin)} – ${fmt(p.priceMax)} so\'m';
+    }
+    if (p.priceMin > 0) return '${fmt(p.priceMin)} so\'mdan';
+    if (p.priceMax > 0) return '${fmt(p.priceMax)} so\'mgacha';
+    return '';
   }
 }
 

@@ -5,11 +5,12 @@ import Icon from '../ui/Icon'
 import Brand from '../ui/Brand'
 
 const NAV = [
-  {id:'today',     icon:'cal'   as const, label:'Сегодня',  href:'/partner'},
-  {id:'queue',     icon:'list'  as const, label:'Очередь',  href:'/partner/queue'},
-  {id:'customers', icon:'users' as const, label:'Клиенты',  href:'/partner/customers'},
-  {id:'terminal',  icon:'card'  as const, label:'Терминал', href:'/partner/terminal'},
-  {id:'stats',     icon:'chart' as const, label:'Отчёт',    href:'/partner/stats'},
+  {id:'today',     icon:'cal'    as const, label:'Сегодня',  href:'/partner'},
+  {id:'queue',     icon:'list'   as const, label:'Очередь',  href:'/partner/queue'},
+  {id:'customers', icon:'users'  as const, label:'Клиенты',  href:'/partner/customers'},
+  {id:'prices',    icon:'wallet' as const, label:'Цены',     href:'/partner/prices'},
+  {id:'terminal',  icon:'card'   as const, label:'Терминал', href:'/partner/terminal'},
+  {id:'stats',     icon:'chart'  as const, label:'Отчёт',    href:'/partner/stats'},
 ]
 
 const DARK: Record<string,string> = {bg:'#09090a',bgE:'#131316',surf:'#1a1a1e',surf2:'#242429',surf3:'#2e2e34',hair:'rgba(255,255,255,.085)',hair2:'rgba(255,255,255,.14)',txt:'#f4f4f2',txt2:'rgba(244,244,242,.60)',txt3:'rgba(244,244,242,.36)',inv:'#f4f4f2',invT:'#0a0a0b',gold:'#d4a843',goldDim:'rgba(212,168,67,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#30d158',greenDim:'rgba(48,209,88,.16)',amber:'#f59e0b',amberDim:'rgba(245,158,11,.15)',blue:'#3b82f6',blueDim:'rgba(59,130,246,.15)'}
