@@ -41,7 +41,10 @@ export class ShopsService {
   async findById(id: string) {
     const shop = await this.prisma.shopProfile.findUnique({
       where: { id },
-      include: { user: true },
+      include: {
+        user: true,
+        servicePrices: { include: { serviceType: true }, where: { isActive: true } },
+      },
     });
     if (!shop) throw new NotFoundException('Servis topilmadi');
     return shop;
@@ -115,6 +118,26 @@ export class ShopsService {
       where: { isActive: true },
       orderBy: { nameUz: 'asc' },
     });
+  }
+
+  async getServicePrices(shopId: string) {
+    return this.prisma.shopServicePrice.findMany({
+      where: { shopId },
+      include: { serviceType: true },
+      orderBy: { serviceType: { nameUz: 'asc' } },
+    });
+  }
+
+  async upsertServicePrices(shopId: string, prices: { serviceTypeId: string; priceMin: number; priceMax: number }[]) {
+    const ops = prices.map((p) =>
+      this.prisma.shopServicePrice.upsert({
+        where: { shopId_serviceTypeId: { shopId, serviceTypeId: p.serviceTypeId } },
+        update: { priceMin: p.priceMin, priceMax: p.priceMax, isActive: true },
+        create: { shopId, serviceTypeId: p.serviceTypeId, priceMin: p.priceMin, priceMax: p.priceMax },
+        include: { serviceType: true },
+      }),
+    );
+    return Promise.all(ops);
   }
 
   private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {

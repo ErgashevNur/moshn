@@ -53,9 +53,10 @@ model ShopProfile {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  user          User           @relation(fields: [userId], references: [id])
-  bookings      Booking[]      @relation("BookingShop")
-  customerCards CustomerCard[] @relation("CustomerCardShop")
+  user          User               @relation(fields: [userId], references: [id])
+  bookings      Booking[]          @relation("BookingShop")
+  customerCards CustomerCard[]     @relation("CustomerCardShop")
+  servicePrices ShopServicePrice[] @relation("ShopPrices")
 
   @@map("shop_profiles")
 }
@@ -87,9 +88,42 @@ model ServiceType {
   basePrice Int      @default(0) @map("base_price")
   isActive  Boolean  @default(true) @map("is_active")
 
-  bookings Booking[] @relation("BookingServiceType")
+  bookings      Booking[]          @relation("BookingServiceType")
+  shopPrices    ShopServicePrice[] @relation("ServiceTypePrices")
 
   @@map("service_types")
+}
+
+model Promo {
+  id        String    @id @default(uuid()) @db.Uuid
+  badgeUz   String    @default("") @map("badge_uz")
+  badgeRu   String    @default("") @map("badge_ru")
+  titleUz   String    @map("title_uz")
+  titleRu   String    @map("title_ru")
+  isActive  Boolean   @default(true) @map("is_active")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("promos")
+}
+
+model ShopServicePrice {
+  id            String   @id @default(uuid()) @db.Uuid
+  shopId        String   @map("shop_id") @db.Uuid
+  serviceTypeId String   @map("service_type_id") @db.Uuid
+  priceMin      Int      @default(0) @map("price_min")
+  priceMax      Int      @default(0) @map("price_max")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shop        ShopProfile @relation("ShopPrices", fields: [shopId], references: [id])
+  serviceType ServiceType @relation("ServiceTypePrices", fields: [serviceTypeId], references: [id])
+
+  @@unique([shopId, serviceTypeId])
+  @@map("shop_service_prices")
 }
 
 model Booking {

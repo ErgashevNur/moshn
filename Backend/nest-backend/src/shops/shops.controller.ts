@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from '../common/decorators/user.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -110,5 +110,34 @@ export class ShopsController {
   ) {
     const shop = await this.svc.findByUserId(userId);
     return { data: await this.svc.updateCustomerCard(shop.id, customerId, { isVip: body.is_vip, notes: body.notes }) };
+  }
+
+  // ── Xizmat narxlari ────────────────────────────────────────────────────────
+
+  @Get('shops/:id/prices')
+  @ApiOperation({ summary: 'Servis narxlari (ommaviy)' })
+  async getShopPrices(@Param('id') id: string) {
+    return { data: await this.svc.getServicePrices(id) };
+  }
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Get('service/prices')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: "O'z narxlarimni ko'rish [service]" })
+  async getMyPrices(@User('user_id') userId: string) {
+    const shop = await this.svc.findByUserId(userId);
+    return { data: await this.svc.getServicePrices(shop.id) };
+  }
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Put('service/prices')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Xizmat narxlarini belgilash [service]' })
+  async upsertMyPrices(
+    @User('user_id') userId: string,
+    @Body() body: { prices: { serviceTypeId: string; priceMin: number; priceMax: number }[] },
+  ) {
+    const shop = await this.svc.findByUserId(userId);
+    return { data: await this.svc.upsertServicePrices(shop.id, body.prices) };
   }
 }
