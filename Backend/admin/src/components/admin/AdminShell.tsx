@@ -228,6 +228,12 @@ export default function AdminShell({ title, children }: { title: string; childre
   const [unread, setUnread]         = useState(0)
   const [theme, setTheme]           = useState('dark')
 
+  const logout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    router.push('/login')
+  }
+
   // Sidebar states
   const [collapsed, setCollapsed] = useState(false)
   const [isMobile, setIsMobile]   = useState(false)
@@ -324,6 +330,14 @@ export default function AdminShell({ title, children }: { title: string; childre
               <Icon n={theme==='dark'?'sun':'moon'} s={16} col="var(--txt2)"/>
               {!isMobile && <span>{theme==='dark'?'Светлая':'Тёмная'}</span>}
             </button>
+
+            {/* Logout — mobile only */}
+            {isMobile && (
+              <button onClick={logout}
+                style={{width:36,height:36,borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',display:'grid',placeItems:'center',color:'var(--red)',cursor:'pointer',flexShrink:0}}>
+                <Icon n="logout" s={17} col="var(--red)"/>
+              </button>
+            )}
           </div>
         </div>
 
