@@ -8,6 +8,7 @@ import '../../services/booking_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_plate.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -250,15 +251,25 @@ class _BookingCard extends StatelessWidget {
                           _StatusBadge(status: booking.status),
                         ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _subtitle(serviceType?.nameFor(context.locale.languageCode), vehicle?.plate),
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.text3(context),
-                          fontSize: 12.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (serviceType != null) ...[
+                            Text(
+                              serviceType.nameFor(context.locale.languageCode),
+                              style: AppTypography.body.copyWith(
+                                color: AppColors.text3(context),
+                                fontSize: 12.5,
+                              ),
+                            ),
+                            if (vehicle?.plate != null &&
+                                vehicle!.plate.isNotEmpty)
+                              const SizedBox(width: 8),
+                          ],
+                          if (vehicle?.plate != null &&
+                              vehicle!.plate.isNotEmpty)
+                            MPlate(plate: vehicle.plate),
+                        ],
                       ),
                     ],
                   ),
@@ -331,14 +342,6 @@ class _BookingCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _subtitle(String? service, String? plate) {
-    final parts = <String>[
-      if (service != null && service.isNotEmpty) service,
-      if (plate != null && plate.isNotEmpty) plate,
-    ];
-    return parts.join(' · ');
   }
 
   String _smartDate(BuildContext context, DateTime dt) {

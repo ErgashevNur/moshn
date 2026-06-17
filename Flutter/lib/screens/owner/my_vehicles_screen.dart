@@ -11,6 +11,7 @@ import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_plate.dart';
 
 final _vehiclesProvider = FutureProvider.autoDispose<List<Vehicle>>((ref) {
   return VehicleService().getVehicles();
@@ -192,7 +193,7 @@ class _CarCard extends StatelessWidget {
           // Plate
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.md),
-            child: Center(child: _UzPlate(plate: vehicle.plate)),
+            child: Center(child: MPlate(plate: vehicle.plate, large: true)),
           ),
 
           // Tire info row
@@ -302,91 +303,6 @@ class _StripePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
-// ── UZ Plate widget ─────────────────────────────────────────────────────────
-
-class _UzPlate extends StatelessWidget {
-  final String plate;
-  const _UzPlate({required this.plate});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 46,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0x26000000)),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x33000000), offset: Offset(0, 2), blurRadius: 6),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(
-              plate.toUpperCase(),
-              style: AppTypography.mono.copyWith(
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111111),
-                letterSpacing: 2.5,
-              ),
-            ),
-          ),
-          // UZ flag strip
-          SizedBox(
-            width: 34,
-            child: Column(
-              children: const [
-                Expanded(child: ColoredBox(color: Color(0xFF1EB8E7))),
-                SizedBox(height: 1.5, child: ColoredBox(color: Colors.white)),
-                Expanded(child: ColoredBox(color: Colors.white)),
-                SizedBox(height: 1.5, child: ColoredBox(color: Colors.white)),
-                Expanded(child: ColoredBox(color: Color(0xFF2BB55F))),
-              ],
-            ),
-          ),
-          // "UZ" label overlay
-          SizedBox(
-            width: 0,
-            child: OverflowBox(
-              maxWidth: 34,
-              alignment: Alignment.centerLeft,
-              child: Transform.translate(
-                offset: const Offset(-34, 0),
-                child: SizedBox(
-                  width: 34,
-                  child: Center(
-                    child: Text(
-                      'UZ',
-                      style: AppTypography.eyebrow.copyWith(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        shadows: const [
-                          Shadow(
-                              color: Color(0x66000000),
-                              offset: Offset(0, 1),
-                              blurRadius: 2),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ── Feature Grid ─────────────────────────────────────────────────────────────
