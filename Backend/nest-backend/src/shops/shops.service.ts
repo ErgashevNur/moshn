@@ -128,12 +128,12 @@ export class ShopsService {
     });
   }
 
-  async upsertServicePrices(shopId: string, prices: { serviceTypeId: string; priceMin: number; priceMax: number }[]) {
+  async upsertServicePrices(shopId: string, prices: { serviceTypeId: string; priceMin: number; priceMax: number; currency?: string }[]) {
     const ops = prices.map((p) =>
       this.prisma.shopServicePrice.upsert({
         where: { shopId_serviceTypeId: { shopId, serviceTypeId: p.serviceTypeId } },
-        update: { priceMin: p.priceMin, priceMax: p.priceMax, isActive: true },
-        create: { shopId, serviceTypeId: p.serviceTypeId, priceMin: p.priceMin, priceMax: p.priceMax },
+        update: { priceMin: p.priceMin, priceMax: p.priceMax, currency: p.currency ?? 'UZS', isActive: true },
+        create: { shopId, serviceTypeId: p.serviceTypeId, priceMin: p.priceMin, priceMax: p.priceMax, currency: p.currency ?? 'UZS' },
         include: { serviceType: true },
       }),
     );

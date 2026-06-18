@@ -66,4 +66,12 @@ export class PromosService {
     if (!promo) throw new NotFoundException('Promo topilmadi');
     return this.prisma.promo.delete({ where: { id } });
   }
+
+  async incrementViews(id: string) {
+    await this.prisma.promo.update({ where: { id }, data: { views: { increment: 1 } } }).catch(() => null);
+  }
+
+  async incrementClicks(id: string) {
+    await this.prisma.promo.update({ where: { id }, data: { clicks: { increment: 1 } } }).catch(() => null);
+  }
 }

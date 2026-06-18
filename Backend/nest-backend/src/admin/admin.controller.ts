@@ -125,9 +125,21 @@ export class AdminController {
 
   @Post('notifications/broadcast')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Barcha foydalanuvchilarga push yuborish' })
-  async broadcast(@Body('title') title: string, @Body('body') body: string) {
-    await this.svc.broadcast(title, body);
+  @ApiOperation({ summary: "Foydalanuvchilarga (yoki segmentga) push yuborish" })
+  async broadcast(@Body('title') title: string, @Body('body') body: string, @Body('segment') segment?: string) {
+    await this.svc.broadcast(title, body, segment);
     return { data: { message: 'Bildirishnoma yuborildi' } };
+  }
+
+  @Get('config')
+  @ApiOperation({ summary: 'Ilova konfiguratsiyasi (slot hold, VIP chegarasi va h.k.)' })
+  async getConfig() {
+    return { data: await this.svc.getConfig() };
+  }
+
+  @Put('config/:key')
+  @ApiOperation({ summary: 'Bitta konfiguratsiya qiymatini yangilash' })
+  async setConfig(@Param('key') key: string, @Body('value') value: string) {
+    return { data: await this.svc.setConfig(key, value) };
   }
 }

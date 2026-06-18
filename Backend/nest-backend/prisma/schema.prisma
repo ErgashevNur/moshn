@@ -103,10 +103,20 @@ model Promo {
   isActive  Boolean   @default(true) @map("is_active")
   startDate DateTime? @map("start_date")
   endDate   DateTime? @map("end_date")
+  views     Int       @default(0)
+  clicks    Int       @default(0)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
   @@map("promos")
+}
+
+model AppConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
 }
 
 model ShopServicePrice {
@@ -115,6 +125,7 @@ model ShopServicePrice {
   serviceTypeId String   @map("service_type_id") @db.Uuid
   priceMin      Int      @default(0) @map("price_min")
   priceMax      Int      @default(0) @map("price_max")
+  currency      String   @default("UZS") @map("currency") @db.VarChar(10)
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
