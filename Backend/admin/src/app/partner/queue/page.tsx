@@ -84,6 +84,7 @@ export default function PartnerQueuePage() {
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {bookings.map(b => {
                   const name    = b.customer?.fullName || 'Неизвестно'
+                  const phone   = b.customer?.phone || ''
                   const svcName = b.serviceType?.nameUz || '—'
                   const car     = b.vehicle ? `${b.vehicle.make || ''} ${b.vehicle.model || ''}`.trim() || b.vehicle.plate : '—'
                   const plate   = b.vehicle?.plate || '—'
@@ -105,8 +106,16 @@ export default function PartnerQueuePage() {
                           </div>
                           {/* Xizmat turi */}
                           <div style={{fontSize:12.5,color:'var(--txt2)',marginBottom:2}}>{svcName}</div>
-                          {/* Mijoz ismi (ikkinchi darajali) */}
-                          <div style={{fontSize:12,color:'var(--txt3)'}}>{name}</div>
+                          {/* Mijoz ismi va telefon raqami (ikkinchi darajali) */}
+                          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                            <span style={{fontSize:12,color:'var(--txt3)'}}>{name}</span>
+                            {phone && (
+                              <a href={`tel:${phone}`} onClick={e => e.stopPropagation()}
+                                style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:12,fontWeight:600,color:'var(--blue)',textDecoration:'none',fontFamily:"'JetBrains Mono',monospace"}}>
+                                <Icon n="phone" s={11} col="var(--blue)"/>{phone}
+                              </a>
+                            )}
+                          </div>
                         </div>
                         <div style={{textAlign:'right',flexShrink:0}}>
                           <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:16,fontWeight:700,color:'var(--txt)'}}>{fmt(amt)} <span style={{fontSize:11,fontWeight:500,color:'var(--txt3)'}}>so'm</span></div>
