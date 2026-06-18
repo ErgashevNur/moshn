@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import axios from 'axios'
 import PartnerSidebar from './PartnerSidebar'
 import Icon from '../ui/Icon'
 
@@ -94,6 +95,26 @@ function usePartnerWS(onMessage: (data: any) => void) {
     if (mountedRef.current) return   // StrictMode ikkinchi chaqiruvini bloklash
     mountedRef.current = true
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v1'
+
+    // Token muddati tugaganda — yangi token olib qayta ulanamiz;
+    // refresh ham ishlamasa — login sahifasiga chiqaramiz.
+    const refreshAndReconnect = async () => {
+      const refreshToken = localStorage.getItem('partner_refresh_token')
+      if (!refreshToken) { window.location.href = '/partner/login'; return }
+      try {
+        const res = await axios.post(`${apiUrl}/auth/refresh`, { refresh_token: refreshToken })
+        const { access_token, refresh_token } = res.data.data
+        localStorage.setItem('partner_access_token', access_token)
+        localStorage.setItem('partner_refresh_token', refresh_token)
+        if (mountedRef.current) connect()
+      } catch {
+        localStorage.removeItem('partner_access_token')
+        localStorage.removeItem('partner_refresh_token')
+        window.location.href = '/partner/login'
+      }
+    }
+
     const connect = () => {
       const token = localStorage.getItem('partner_access_token')
       if (!token) return
@@ -102,7 +123,6 @@ function usePartnerWS(onMessage: (data: any) => void) {
       const s = wsRef.current?.readyState
       if (s === WebSocket.OPEN || s === WebSocket.CONNECTING) return
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v1'
       const wsBase = apiUrl.replace(/^https/, 'wss').replace(/^http/, 'ws')
       const url    = `${wsBase}/ws?token=${token}`
 
@@ -116,9 +136,14 @@ function usePartnerWS(onMessage: (data: any) => void) {
           try { onMsgRef.current(JSON.parse(e.data)) } catch {}
         }
 
-        ws.onclose = () => {
+        ws.onclose = (ev) => {
           if (!mountedRef.current) return
-          retryRef.current = setTimeout(connect, 5000)
+          // 1008 — backend token yo'q/yaroqsiz deb ulanishni rad etdi (ws.gateway.ts)
+          if (ev.code === 1008) {
+            refreshAndReconnect()
+          } else {
+            retryRef.current = setTimeout(connect, 5000)
+          }
         }
 
         ws.onerror = () => ws.close()
