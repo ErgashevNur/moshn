@@ -142,7 +142,7 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
       {/* Brand */}
       <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 14px',borderBottom:'1px solid var(--hair)',marginBottom:6,flexShrink:0}}>
         <div style={{width:38,height:38,borderRadius:11,background:'var(--inv)',color:'var(--invT)',display:'grid',placeItems:'center',flexShrink:0}}>
-          <Brand s={22}/>
+          <Brand s={22} theme={theme as 'dark' | 'light'}/>
         </div>
         {showLabel && (
           <div style={{minWidth:0,overflow:'hidden'}}>
