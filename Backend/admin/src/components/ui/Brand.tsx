@@ -1,12 +1,17 @@
 'use client'
-export default function Brand({ s = 26 }: { s?: number }) {
+
+// Asosiy brend belgisi (shina/g'ildirak). `theme` qaysi rangda chiqishini
+// belgilaydi — bu komponent har doim "inverse" foni (var(--inv)) ustida
+// chiqadi, shuning uchun fon rangiga qarama-qarshi rangli variant tanlanadi.
+export default function Brand({ s = 26, theme = 'dark' }: { s?: number; theme?: 'dark' | 'light' }) {
+  // dark tema -> var(--inv) yorug' (oq-kulrang) -> belgi qora rangda bo'lishi kerak
+  // light tema -> var(--inv) qora -> belgi oq rangda bo'lishi kerak
+  const src = theme === 'dark'
+    ? '/logos/shina24-mark-transparent.png'
+    : '/logos/shina24-mark-white.png'
+
   return (
-    <svg width={s} height={s} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="21" stroke="currentColor" strokeWidth="2.4"/>
-      <circle cx="24" cy="24" r="8" stroke="currentColor" strokeWidth="2.4"/>
-      <g stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-        <path d="M24 3v8M24 37v8M3 24h8M37 24h8"/>
-      </g>
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="Shina24" width={s} height={s} style={{ width: s, height: s, objectFit: 'contain' }} />
   )
 }

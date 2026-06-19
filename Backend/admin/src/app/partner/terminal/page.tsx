@@ -158,31 +158,33 @@ export default function PartnerTerminalPage() {
               <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:20}}>
                 {bookings.map(b => (
                   <div key={b.id} className="scard" onClick={() => setSelB(b)}
-                    style={{cursor:'pointer',borderColor:selB?.id===b.id?'var(--txt3)':'var(--hair)'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      <div style={{width:42,height:42,borderRadius:12,background:'var(--surf2)',display:'grid',placeItems:'center',flexShrink:0}}><Icon n="car" s={22}/></div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:15,fontWeight:600,color:'var(--txt)'}}>{b.customer?.fullName || '—'}</div>
-                        <div style={{fontSize:13,color:'var(--txt2)'}}>{b.serviceType?.nameUz || '—'} · {fmtTime(b.scheduledAt)}</div>
+                    style={{cursor:'pointer',borderColor:selB?.id===b.id?'var(--txt3)':'var(--hair)',background:isMobile&&selB?.id===b.id?'var(--surf2)':undefined}}>
+                    <div style={{display:'flex',alignItems:'center',gap: isMobile ? 9 : 12}}>
+                      <div style={{width: isMobile ? 36 : 42,height: isMobile ? 36 : 42,borderRadius:12,background:'var(--surf2)',display:'grid',placeItems:'center',flexShrink:0}}><Icon n="car" s={isMobile ? 18 : 22}/></div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize: isMobile ? 14 : 15,fontWeight:600,color:'var(--txt)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{b.customer?.fullName || '—'}</div>
+                        <div style={{fontSize: isMobile ? 12 : 13,color:'var(--txt2)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{b.serviceType?.nameUz || '—'} · {fmtTime(b.scheduledAt)}</div>
                       </div>
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:17,fontWeight:700,color:'var(--txt)'}}>{fmt(b.totalPrice || 0)}</div>
-                        <Plate v={b.vehicle?.plate || '—'}/>
+                      <div style={{textAlign:'right',flexShrink:0}}>
+                        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize: isMobile ? 14.5 : 17,fontWeight:700,color:'var(--txt)',marginBottom:isMobile?3:0}}>{fmt(b.totalPrice || 0)}</div>
+                        <Plate v={b.vehicle?.plate || '—'} sm={isMobile}/>
                       </div>
-                      <div style={{width:22,height:22,borderRadius:'50%',border:`2px solid ${selB?.id===b.id?'var(--txt)':'var(--hair2)'}`,display:'grid',placeItems:'center',flexShrink:0}}>
-                        {selB?.id===b.id && <div style={{width:11,height:11,borderRadius:'50%',background:'var(--txt)'}}/>}
-                      </div>
+                      {!isMobile && (
+                        <div style={{width:22,height:22,borderRadius:'50%',border:`2px solid ${selB?.id===b.id?'var(--txt)':'var(--hair2)'}`,display:'grid',placeItems:'center',flexShrink:0}}>
+                          {selB?.id===b.id && <div style={{width:11,height:11,borderRadius:'50%',background:'var(--txt)'}}/>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div style={{display:'flex',gap:11}}>
+            <div style={{display:'flex',gap: isMobile ? 8 : 11}}>
               {[['nfc','Карта / NFC','nfc'],['qr','QR-код','qr']] .map(([k,l,ic]) => (
                 <button key={k} disabled={!selB} onClick={() => k === 'qr' ? getQr() : setStep('nfc')}
-                  style={{flex:1,height:52,borderRadius:999,background:selB?'var(--inv)':'var(--surf2)',color:selB?'var(--invT)':'var(--txt3)',fontSize:15,fontWeight:600,cursor:selB?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',gap:9,border:'none'}}>
-                  <Icon n={ic as any} s={20}/>{l}
+                  style={{flex:1,height: isMobile ? 48 : 52,borderRadius:999,background:selB?'var(--inv)':'var(--surf2)',color:selB?'var(--invT)':'var(--txt3)',fontSize: isMobile ? 13.5 : 15,fontWeight:600,cursor:selB?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',gap: isMobile ? 7 : 9,border:'none',whiteSpace:'nowrap'}}>
+                  <Icon n={ic as any} s={isMobile ? 17 : 20}/>{l}
                 </button>
               ))}
             </div>

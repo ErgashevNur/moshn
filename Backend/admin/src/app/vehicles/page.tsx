@@ -1,6 +1,7 @@
 ﻿'use client'
 import { useEffect, useState } from 'react'
 import AdminShell from '@/components/admin/AdminShell'
+import Plate from '@/components/ui/Plate'
 import api from '@/lib/api'
 
 interface Vehicle {
@@ -67,9 +68,7 @@ export default function VehiclesPage() {
               ) : vehicles.map((v) => (
                 <tr key={v.id}>
                   <td>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, letterSpacing: '0.1em', background: 'var(--surface2)', padding: '3px 8px', borderRadius: 6 }}>
-                      {v.plate}
-                    </span>
+                    <Plate v={v.plate} />
                   </td>
                   <td>
                     <p className="text-text font-medium">{v.make} {v.model}</p>

@@ -5,6 +5,7 @@ class ShopServicePrice {
   final String nameRu;
   final int priceMin;
   final int priceMax;
+  final String currency;
 
   ShopServicePrice({
     required this.serviceTypeId,
@@ -13,6 +14,7 @@ class ShopServicePrice {
     required this.nameRu,
     required this.priceMin,
     required this.priceMax,
+    this.currency = 'UZS',
   });
 
   factory ShopServicePrice.fromJson(Map<String, dynamic> j) {
@@ -24,7 +26,17 @@ class ShopServicePrice {
       nameRu:   (st['nameRu'] ?? st['name_ru'] ?? '') as String,
       priceMin: ((j['priceMin'] ?? j['price_min'] ?? 0) as num).toInt(),
       priceMax: ((j['priceMax'] ?? j['price_max'] ?? 0) as num).toInt(),
+      currency: (j['currency'] ?? 'UZS') as String,
     );
+  }
+
+  String get _symbol {
+    switch (currency) {
+      case 'USD': return '\$';
+      case 'EUR': return '€';
+      case 'RUB': return '₽';
+      default:    return 'сўм';
+    }
   }
 
   String rangeText(String locale) {
@@ -32,9 +44,9 @@ class ShopServicePrice {
     final mx = priceMax;
     String fmt(int n) => n.toString().replaceAllMapped(
         RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
-    if (mn > 0 && mx > 0) return '${fmt(mn)} – ${fmt(mx)} so\'m';
-    if (mn > 0) return 'от ${fmt(mn)} so\'m';
-    if (mx > 0) return 'до ${fmt(mx)} so\'m';
+    if (mn > 0 && mx > 0) return '${fmt(mn)} – ${fmt(mx)} $_symbol';
+    if (mn > 0) return 'от ${fmt(mn)} $_symbol';
+    if (mx > 0) return 'до ${fmt(mx)} $_symbol';
     return '';
   }
 }

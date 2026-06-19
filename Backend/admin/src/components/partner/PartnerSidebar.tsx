@@ -110,7 +110,7 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
   return (
     <div style={{width:72,background:'var(--bgE)',borderRight:'1px solid var(--hair)',display:'flex',flexDirection:'column',alignItems:'center',padding:'12px 0',gap:2,flexShrink:0,zIndex:2}}>
       <div style={{width:44,height:44,borderRadius:13,background:'var(--inv)',color:'var(--invT)',display:'grid',placeItems:'center',marginBottom:14,flexShrink:0}}>
-        <Brand s={28}/>
+        <Brand s={28} theme={theme as 'dark' | 'light'}/>
       </div>
 
       {NAV.map(n => (

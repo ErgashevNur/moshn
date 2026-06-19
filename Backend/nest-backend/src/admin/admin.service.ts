@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AppConfigService } from '../app-config/app-config.service';
 import { AuthService } from '../auth/auth.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,6 +10,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly notifSvc: NotificationsService,
     private readonly authSvc: AuthService,
+    private readonly configSvc: AppConfigService,
   ) {}
 
   async getStats() {
@@ -164,7 +166,16 @@ export class AdminService {
     await this.prisma.seasonalRule.update({ where: { id }, data: { lastSentAt: new Date() } });
   }
 
-  async broadcast(title: string, body: string) {
-    await this.notifSvc.broadcastToAll(title, body);
+  async broadcast(title: string, body: string, segment?: string) {
+    await this.notifSvc.broadcastToSegment(segment ?? 'all', title, body);
+  }
+
+  async getConfig() {
+    return this.configSvc.getAll();
+  }
+
+  async setConfig(key: string, value: string) {
+    await this.configSvc.set(key, value);
+    return this.configSvc.getAll();
   }
 }

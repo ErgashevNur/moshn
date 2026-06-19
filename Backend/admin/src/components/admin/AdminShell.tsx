@@ -225,6 +225,7 @@ export default function AdminShell({ title, children }: { title: string; childre
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [nOpen, setNOpen]           = useState(false)
+  const [moreOpen, setMoreOpen]     = useState(false)
   const [unread, setUnread]         = useState(0)
   const [theme, setTheme]           = useState('dark')
 
@@ -274,7 +275,7 @@ export default function AdminShell({ title, children }: { title: string; childre
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true) }
-      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false) }
+      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false); setMoreOpen(false) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -331,12 +332,32 @@ export default function AdminShell({ title, children }: { title: string; childre
               {!isMobile && <span>{theme==='dark'?'Светлая':'Тёмная'}</span>}
             </button>
 
-            {/* Logout — mobile only */}
+            {/* Burger menu — mobile only: Marketing + Logout */}
             {isMobile && (
-              <button onClick={logout}
-                style={{width:36,height:36,borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',display:'grid',placeItems:'center',color:'var(--red)',cursor:'pointer',flexShrink:0}}>
-                <Icon n="logout" s={17} col="var(--red)"/>
-              </button>
+              <div style={{position:'relative'}}>
+                <button onClick={() => setMoreOpen(o => !o)}
+                  style={{width:36,height:36,borderRadius:9,background:'var(--surf)',border:'1px solid var(--hair)',display:'grid',placeItems:'center',color:'var(--txt2)',cursor:'pointer',flexShrink:0}}>
+                  <Icon n="menu" s={17}/>
+                </button>
+                {moreOpen && (
+                  <>
+                    <div style={{position:'fixed',inset:0,zIndex:899}} onClick={() => setMoreOpen(false)}/>
+                    <div style={{position:'absolute',top:44,right:0,width:180,background:'var(--bgE)',border:'1px solid var(--hair2)',borderRadius:14,boxShadow:'0 20px 60px rgba(0,0,0,.5)',overflow:'hidden',zIndex:900,animation:'rise .18s ease'}}>
+                      <button onClick={() => { setMoreOpen(false); router.push('/marketing') }}
+                        style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'11px 14px',background:'none',border:'none',cursor:'pointer',textAlign:'left',color:'var(--txt)',fontSize:14,fontWeight:500}}>
+                        <Icon n="bolt" s={16} col="var(--txt3)"/>
+                        Маркетинг
+                      </button>
+                      <div style={{height:1,background:'var(--hair)'}}/>
+                      <button onClick={() => { setMoreOpen(false); logout() }}
+                        style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'11px 14px',background:'none',border:'none',cursor:'pointer',textAlign:'left',color:'var(--red)',fontSize:14,fontWeight:500}}>
+                        <Icon n="logout" s={16} col="var(--red)"/>
+                        Выйти
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
