@@ -1,18 +1,19 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/booking.dart';
+import '../../models/vehicle.dart';
 import '../../services/booking_service.dart';
 import '../../services/push_service.dart';
 import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_plate.dart';
 import '../../widgets/section_card.dart';
 
 final _shopBookingsProvider =
@@ -233,31 +234,37 @@ class _BookingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  booking.customer?.name ?? '—',
-                  style: AppTypography.titleSmall,
+                // Mashina markasi + raqami (asosiy)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _carName(booking.vehicle),
+                        style: AppTypography.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (booking.vehicle?.plate != null &&
+                        booking.vehicle!.plate.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      MPlate(plate: booking.vehicle!.plate),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
+                // Xizmat turi
                 Text(
                   booking.serviceType?.nameFor(context.locale.languageCode) ?? '—',
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(CupertinoIcons.car_detailed,
-                        size: 12, color: AppColors.text3(context)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        booking.vehicle?.plate ?? '—',
-                        style: AppTypography.labelMedium
-                            .copyWith(color: AppColors.text3(context)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                // Mijoz ismi (ikkinchi darajali)
+                Text(
+                  booking.customer?.name ?? '—',
+                  style: AppTypography.labelSmall
+                      .copyWith(color: AppColors.text3(context)),
                 ),
               ],
             ),
@@ -282,6 +289,15 @@ class _BookingCard extends StatelessWidget {
 
   String _formatTime(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+  String _carName(Vehicle? vehicle) {
+    if (vehicle == null) return '—';
+    final parts = [
+      if (vehicle.make.isNotEmpty) vehicle.make,
+      if (vehicle.model.isNotEmpty) vehicle.model,
+    ];
+    return parts.isNotEmpty ? parts.join(' ') : vehicle.plate;
+  }
 }
 
 class _StatusDot extends StatelessWidget {

@@ -248,12 +248,13 @@ function BannerForm({ initial, onSave, onClose, onDelete }: {
 }
 
 // ── Banner List Card ──────────────────────────────────────────────────────────
-function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
+function BannerCard({ promo, selected, onClick, onToggle, onDelete, isMobile }: {
   promo: Promo
   selected: boolean
   onClick: () => void
   onToggle: () => void
   onDelete: () => void
+  isMobile?: boolean
 }) {
   return (
     <div onClick={onClick} style={{
@@ -264,14 +265,14 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
       padding: 14,
     }}>
       {/* top row */}
-      <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
-        <BannerPreview p={promo} size="sm"/>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 10 : 14, marginBottom: 12 }}>
+        <BannerPreview p={promo} size={isMobile ? 'lg' : 'sm'}/>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', lineHeight: 1.3 }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, color: 'var(--txt)', lineHeight: 1.3 }}>
               {promo.titleUz}
             </span>
-            <span className={`badge ${promo.isActive ? 'b-green' : 'b-gray'}`}>
+            <span className={`badge ${promo.isActive ? 'b-green' : 'b-gray'}`} style={{ flexShrink: 0 }}>
               {promo.isActive ? 'Активен' : 'Скрыт'}
             </span>
           </div>
@@ -337,27 +338,13 @@ function BannerCard({ promo, selected, onClick, onToggle, onDelete }: {
 }
 
 // ── App Config ────────────────────────────────────────────────────────────────
-const CONFIG_KEY = 'shina24_app_config'
+// Qiymatlar backendda saqlanadi (/admin/config) — bu faqat label/unit metadata.
 const DEFAULT_CONFIG = [
   { key: 'slot_hold',   label: 'Время удержания слота',      value: '5 минут',    unit: 'минут'  },
   { key: 'pay_later',   label: '"Оплата позже" — срок',      value: '14 дней',    unit: 'дней'   },
   { key: 'installment', label: 'Срок рассрочки',             value: '3–6 месяцев',unit: 'месяцев'},
-  { key: 'vip_min',     label: 'VIP порог',                  value: '5 визитов',  unit: 'визитов'},
+  { key: 'vip_min',     label: 'VIP порог (шт. визитов до автo-VIP)', value: '5 визитов', unit: 'визитов'},
 ]
-function loadConfig() {
-  if (typeof window === 'undefined') return DEFAULT_CONFIG
-  try {
-    const s = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null')
-    if (!s) return DEFAULT_CONFIG
-    return DEFAULT_CONFIG.map(d => ({ ...d, value: s[d.key] ?? d.value }))
-  } catch { return DEFAULT_CONFIG }
-}
-function saveConfig(key: string, value: string) {
-  try {
-    const s = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}')
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...s, [key]: value }))
-  } catch {}
-}
 
 // ── Edit Config Modal ─────────────────────────────────────────────────────────
 function EditModal({ item, onSave, onClose }: {
@@ -476,6 +463,13 @@ const SEGS = [
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MarketingPage() {
   const [tab, setTab] = useState('banners')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // banners
   const [promos,        setPromos]        = useState<Promo[]>([])
@@ -500,7 +494,14 @@ export default function MarketingPage() {
   const [config,    setConfig]    = useState(DEFAULT_CONFIG)
   const [editItem,  setEditItem]  = useState<typeof DEFAULT_CONFIG[0] | null>(null)
 
-  useEffect(() => { setConfig(loadConfig()) }, [])
+  useEffect(() => {
+    api.get('/admin/config')
+      .then(r => {
+        const data = r.data.data || {}
+        setConfig(c => c.map(item => ({ ...item, value: data[item.key] ?? item.value })))
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     api.get('/admin/promos')
@@ -548,6 +549,7 @@ export default function MarketingPage() {
       await api.post('/admin/notifications/broadcast', {
         title: pushTitle.trim() || 'Shina24',
         body: pushMsg.trim(),
+        segment: seg,
       })
       setSent(true); setPushMsg(''); setPushTitle('')
       setTimeout(() => setSent(false), 3500)
@@ -571,10 +573,13 @@ export default function MarketingPage() {
     finally { setRToggling('') }
   }
 
-  const onConfigSave = (key: string, value: string) => {
-    saveConfig(key, value)
-    setConfig(c => c.map(x => x.key === key ? { ...x, value } : x))
-    setEditItem(null)
+  const onConfigSave = async (key: string, value: string) => {
+    try {
+      const r = await api.put(`/admin/config/${key}`, { value })
+      const data = r.data.data || {}
+      setConfig(c => c.map(x => ({ ...x, value: data[x.key] ?? x.value })))
+      setEditItem(null)
+    } catch { alert('Не удалось сохранить настройку') }
   }
 
   // right panel for banners tab
@@ -610,14 +615,14 @@ export default function MarketingPage() {
       <div className="fade-in" style={{ height: '100%' }}>
 
         {/* ── Tab bar ────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--hair)', marginBottom: 22 }}>
+        <div className="scroll-x" style={{ display: 'flex', borderBottom: '1px solid var(--hair)', marginBottom: 22 }}>
           {TABS.map(t => (
             <button key={t.k} onClick={() => setTab(t.k)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                padding: '0 18px', height: 44,
+                display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, whiteSpace: 'nowrap',
+                padding: isMobile ? '0 13px' : '0 18px', height: 44,
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 13.5, fontWeight: 600,
+                fontSize: isMobile ? 12.5 : 13.5, fontWeight: 600,
                 color: tab === t.k ? 'var(--txt)' : 'var(--txt3)',
                 borderBottom: `2px solid ${tab === t.k ? 'var(--txt)' : 'transparent'}`,
                 transition: 'color .15s, border-color .15s',
@@ -630,16 +635,16 @@ export default function MarketingPage() {
 
         {/* ── Bannerlar ──────────────────────────────────────────────── */}
         {tab === 'banners' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 370px', gap: 18, height: 'calc(100vh - 164px)' }}>
+          <div style={isMobile ? {} : { display: 'grid', gridTemplateColumns: '1fr 370px', gap: 18, height: 'calc(100vh - 164px)' }}>
             {/* left: list */}
-            <div style={{ overflowY: 'auto' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div>
+            <div style={isMobile ? {} : { overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'flex-start', justifyContent: 'space-between', gap: isMobile ? 12 : 0, marginBottom: 16 }}>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', marginBottom: 3 }}>Промо-баннеры</div>
                   <div style={{ fontSize: 12.5, color: 'var(--txt3)' }}>Рекламные карточки, отображаемые на главном экране приложения</div>
                 </div>
                 <button onClick={() => { setSelectedPromo(null); setShowNew(true) }}
-                  style={{ height: 40, padding: '0 16px', borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+                  style={{ height: 40, padding: '0 16px', borderRadius: 999, background: 'var(--inv)', color: 'var(--invT)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, flexShrink: 0, width: isMobile ? '100%' : 'auto' }}>
                   <Icon n="plus" s={15}/>Новый баннер
                 </button>
               </div>
@@ -655,7 +660,7 @@ export default function MarketingPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {promos.map(p => (
                     <BannerCard
-                      key={p.id} promo={p}
+                      key={p.id} promo={p} isMobile={isMobile}
                       selected={selectedPromo?.id === p.id}
                       onClick={() => { setSelectedPromo(p); setShowNew(false) }}
                       onToggle={() => togglePromo(p)}
@@ -666,10 +671,24 @@ export default function MarketingPage() {
               )}
             </div>
 
-            {/* right: detail/form panel */}
-            <div style={{ background: 'var(--surf)', border: '1px solid var(--hair)', borderRadius: 18, padding: 22, overflowY: 'auto' }}>
-              {rightPanel}
-            </div>
+            {/* right: detail/form panel — desktop only, mobile renders as full-screen overlay below */}
+            {!isMobile && (
+              <div style={{ background: 'var(--surf)', border: '1px solid var(--hair)', borderRadius: 18, padding: 22, overflowY: 'auto' }}>
+                {rightPanel}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Mobile: form/detail full-screen overlay ──────────────────── */}
+        {isMobile && tab === 'banners' && (showNew || selectedPromo) && (
+          <div className="fade-in" style={{
+            position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg)',
+            display: 'flex', flexDirection: 'column',
+            padding: '16px 16px calc(16px + env(safe-area-inset-bottom))',
+            paddingTop: 'calc(16px + env(safe-area-inset-top))',
+          }}>
+            {rightPanel}
           </div>
         )}
 
@@ -696,10 +715,10 @@ export default function MarketingPage() {
               <textarea value={pushMsg} onChange={e => setPushMsg(e.target.value)} placeholder="Текст сообщения…" rows={3}
                 style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', resize: 'none', marginBottom: 12 }}/>
               <button disabled={!pushMsg.trim() || sending} onClick={handleSend}
-                style={{ width: '100%', height: 46, borderRadius: 999, background: pushMsg.trim() ? 'var(--inv)' : 'var(--surf2)', color: pushMsg.trim() ? 'var(--invT)' : 'var(--txt3)', fontSize: 14, fontWeight: 600, cursor: pushMsg.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', transition: 'all .15s' }}>
+                style={{ width: '100%', height: 46, borderRadius: 999, background: pushMsg.trim() ? 'var(--inv)' : 'var(--surf2)', color: pushMsg.trim() ? 'var(--invT)' : 'var(--txt3)', fontSize: isMobile ? 13 : 14, fontWeight: 600, cursor: pushMsg.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', transition: 'all .15s', whiteSpace: 'nowrap', padding: '0 12px' }}>
                 {sent     ? <><Icon n="check" s={18}/>Отправлено!</>
                  : sending ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', animation: 'spin .7s linear infinite', display: 'inline-block' }}/>Отправка…</>
-                 : <><Icon n="send" s={18}/>Отправить ({SEGS.find(s => s.k === seg)?.l})</>}
+                 : <><Icon n="send" s={18}/>{isMobile ? 'Отправить' : `Отправить (${SEGS.find(s => s.k === seg)?.l})`}</>}
               </button>
             </div>
           </div>
@@ -737,13 +756,13 @@ export default function MarketingPage() {
                     </div>
                     <Toggle on={rule.isActive} onChange={() => toggleRule(rule)}/>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--hair)' }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--hair)' }}>
                     <button disabled={rToggling === rule.id + '_send'} onClick={() => sendRuleNow(rule)}
-                      style={{ flex: 1, height: 32, borderRadius: 999, background: 'var(--greenDim)', color: 'var(--green)', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: rToggling === rule.id + '_send' ? 0.5 : 1 }}>
+                      style={{ flex: isMobile ? undefined : 1, height: 32, borderRadius: 999, background: 'var(--greenDim)', color: 'var(--green)', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, whiteSpace: 'nowrap', opacity: rToggling === rule.id + '_send' ? 0.5 : 1 }}>
                       <Icon n="send" s={13}/>{rToggling === rule.id + '_send' ? 'Отправка…' : 'Отправить сейчас'}
                     </button>
                     {rule.lastSentAt && (
-                      <span style={{ fontSize: 11, color: 'var(--txt3)', alignSelf: 'center' }}>
+                      <span style={{ fontSize: 11, color: 'var(--txt3)', alignSelf: isMobile ? 'flex-start' : 'center' }}>
                         Последняя: {new Date(rule.lastSentAt).toLocaleDateString('ru', { day: '2-digit', month: '2-digit' })}
                       </span>
                     )}
@@ -760,9 +779,9 @@ export default function MarketingPage() {
             <div className="card">
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--txt)' }}>Конфигурация приложения</div>
               {config.map((item, i) => (
-                <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < config.length - 1 ? '1px solid var(--hair)' : 'none' }}>
-                  <span style={{ fontSize: 13.5, color: 'var(--txt2)' }}>{item.label}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div key={item.key} style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < config.length - 1 ? '1px solid var(--hair)' : 'none' }}>
+                  <span style={{ flex: '1 1 140px', minWidth: 0, fontSize: 13.5, color: 'var(--txt2)' }}>{item.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
                     <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 600, color: 'var(--txt)' }}>{item.value}</span>
                     <button onClick={() => setEditItem(item)}
                       style={{ height: 28, padding: '0 10px', borderRadius: 999, background: 'var(--surf2)', color: 'var(--txt2)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>

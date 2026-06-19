@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/user.dart';
@@ -13,6 +12,7 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/m_button.dart';
+import '../../widgets/plate_input.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   final UserRole role;
@@ -34,6 +34,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   bool _loading = false;
 
   bool get _isOwner => widget.role == UserRole.owner;
+
+  @override
+  void initState() {
+    super.initState();
+    _plateCtrl.addListener(() {
+      if (_plateError != null) setState(() => _plateError = null);
+    });
+  }
 
   @override
   void dispose() {
@@ -236,23 +244,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         label: 'Mashina ma\'lumotlari',
                       ),
                       const SizedBox(height: 14),
-                      AppTextField(
-                        controller: _plateCtrl,
-                        placeholder: 'Davlat raqami  (01A123BC)',
-                        icon: CupertinoIcons.creditcard,
-                        errorText: _plateError,
-                        textCapitalization: TextCapitalization.characters,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[A-Za-z0-9]')),
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        onChanged: (_) {
-                          if (_plateError != null) {
-                            setState(() => _plateError = null);
-                          }
-                        },
-                      ),
+                      PlateInput(controller: _plateCtrl),
+                      if (_plateError != null) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            _plateError!,
+                            style: AppTypography.labelSmall
+                                .copyWith(color: AppColors.danger),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,

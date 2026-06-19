@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { AppConfigService } from '../app-config/app-config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ShopsService } from '../shops/shops.service';
@@ -18,6 +19,7 @@ export class BookingsService {
     private readonly notifSvc: NotificationsService,
     private readonly wsHub: WsHub,
     private readonly shopSvc: ShopsService,
+    private readonly configSvc: AppConfigService,
   ) {}
 
   async create(customerId: string, data: {
@@ -172,10 +174,18 @@ export class BookingsService {
 
     const card = await this.prisma.customerCard.findFirst({ where: { shopId: shop.id, customerId: b.customerId } });
     if (card) {
-      await this.prisma.customerCard.update({
+      const updatedCard = await this.prisma.customerCard.update({
         where: { id: card.id },
         data: { visitCount: { increment: 1 }, lastVisitAt: now },
       });
+
+      // Admin "VIP chegarasi" sozlamasiga yetganda — avtomatik VIP belgilanadi
+      if (!updatedCard.isVip) {
+        const vipMin = await this.configSvc.getNumber('vip_min', 5);
+        if (updatedCard.visitCount >= vipMin) {
+          await this.prisma.customerCard.update({ where: { id: card.id }, data: { isVip: true } });
+        }
+      }
     }
 
     this.notifSvc.sendToUser(

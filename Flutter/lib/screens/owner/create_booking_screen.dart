@@ -13,6 +13,7 @@ import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_plate.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -572,22 +573,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.sm, vertical: 3),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: AppColors.hairline2(context)),
-                                  borderRadius: BorderRadius.circular(
-                                      AppSpacing.r_xs),
-                                ),
-                                child: Text(
-                                  v.plate,
-                                  style: AppTypography.mono.copyWith(
-                                      fontSize: 11,
-                                      color: AppColors.text2(context)),
-                                ),
-                              ),
+                              MPlate(plate: v.plate),
                               const SizedBox(width: AppSpacing.md),
                               _RadioDot(
                                   selected: sel,

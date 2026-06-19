@@ -9,6 +9,7 @@ import '../../services/booking_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_plate.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/section_card.dart';
 
@@ -110,47 +111,99 @@ class _CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final v = booking.vehicle;
+    final carLabel = v != null
+        ? ([if (v.make.isNotEmpty) v.make, if (v.model.isNotEmpty) v.model]
+                .join(' ')
+                .trim()
+                .isNotEmpty
+            ? '${v.make} ${v.model}'.trim()
+            : v.plate)
+        : '—';
+
     return SectionCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 50, height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.inverseBg(context).withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(CupertinoIcons.person_fill, size: 26),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(booking.customer?.name ?? '—',
-                    style: AppTypography.titleSmall),
-                const SizedBox(height: 2),
-                Text(
-                  booking.customer?.phone ?? '—',
-                  style: AppTypography.labelSmall
-                      .copyWith(color: AppColors.text3(context)),
+          // ── Mashina (asosiy) ──────────────────────────────
+          Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.inverseBg(context).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-            decoration: BoxDecoration(
-              color: _statusColor(booking.status).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-            ),
-            child: Text(
-              _statusText(booking.status),
-              style: AppTypography.labelMedium.copyWith(
-                color: _statusColor(booking.status),
-                fontWeight: FontWeight.w600,
+                child: const Icon(CupertinoIcons.car_detailed, size: 22),
               ),
-            ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(carLabel, style: AppTypography.titleSmall),
+                    if (v?.plate != null && v!.plate.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      MPlate(plate: v.plate),
+                    ],
+                  ],
+                ),
+              ),
+              // Status chip
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: _statusColor(booking.status).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                ),
+                child: Text(
+                  _statusText(booking.status),
+                  style: AppTypography.labelMedium.copyWith(
+                    color: _statusColor(booking.status),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // ── Ajratgich ──────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: Container(height: 0.5, color: AppColors.hairline(context)),
+          ),
+          // ── Mijoz (ikkinchi darajali) ──────────────────────
+          Row(
+            children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.surface2(context),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(CupertinoIcons.person,
+                    size: 18, color: AppColors.text3(context)),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(booking.customer?.name ?? '—',
+                        style: AppTypography.labelMedium
+                            .copyWith(fontWeight: FontWeight.w600)),
+                    if (booking.customer?.phone != null) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        booking.customer!.phone,
+                        style: AppTypography.labelSmall
+                            .copyWith(color: AppColors.text3(context)),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

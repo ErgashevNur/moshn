@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +9,7 @@ import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/plate_input.dart';
 import '../../widgets/primary_button.dart';
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
@@ -144,12 +144,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _label('vehicle.plate'.tr()),
-                  AppTextField(
-                    controller: _plate,
-                    placeholder: 'vehicle.plate_hint'.tr(),
-                    icon: CupertinoIcons.creditcard,
-                    textCapitalization: TextCapitalization.characters,
-                  ),
+                  PlateInput(controller: _plate),
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [

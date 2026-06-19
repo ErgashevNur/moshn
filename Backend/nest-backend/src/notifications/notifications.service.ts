@@ -60,6 +60,60 @@ export class NotificationsService implements OnModuleInit {
     await this.broadcastFcmToAll(title, body);
   }
 
+  // ─── Segment bo'yicha broadcast (marketing push) ────────────────────────────
+
+  async broadcastToSegment(segment: string, title: string, body: string) {
+    if (!segment || segment === 'all') {
+      return this.broadcastToAll(title, body);
+    }
+
+    const userIds = await this.resolveSegmentUserIds(segment);
+    if (!userIds.length) return;
+
+    await this.prisma.notification.createMany({
+      data: userIds.map((id) => ({ userId: id, title, body, type: 'broadcast', referenceId: '' })),
+      skipDuplicates: true,
+    });
+    await this.pushToUserIds(userIds, title, body, { type: 'broadcast', referenceId: '' });
+  }
+
+  private async resolveSegmentUserIds(segment: string): Promise<string[]> {
+    const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    if (segment === 'vip') {
+      const cards = await this.prisma.customerCard.findMany({
+        where: { isVip: true },
+        select: { customerId: true },
+        distinct: ['customerId'],
+      });
+      return cards.map((c) => c.customerId);
+    }
+
+    if (segment === 'recent') {
+      const bookings = await this.prisma.booking.findMany({
+        where: { createdAt: { gte: THIRTY_DAYS_AGO } },
+        select: { customerId: true },
+        distinct: ['customerId'],
+      });
+      return bookings.map((b) => b.customerId);
+    }
+
+    if (segment === 'inactive') {
+      const [owners, recentBookings] = await Promise.all([
+        this.prisma.user.findMany({ where: { role: 'owner' }, select: { id: true } }),
+        this.prisma.booking.findMany({
+          where: { createdAt: { gte: THIRTY_DAYS_AGO } },
+          select: { customerId: true },
+          distinct: ['customerId'],
+        }),
+      ]);
+      const recentIds = new Set(recentBookings.map((b) => b.customerId));
+      return owners.map((o) => o.id).filter((id) => !recentIds.has(id));
+    }
+
+    return [];
+  }
+
   // ─── Mavsum bildirshnomasi ───────────────────────────────────────────────────
 
   async broadcastSeasonal(rule: { id: string; name: string; messageUz: string; messageRu: string }) {

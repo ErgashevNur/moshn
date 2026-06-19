@@ -88,6 +88,8 @@ body{font-family:"Sora",system-ui,sans-serif;overflow:hidden;height:100vh}
 .tabs-scroll{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:0;background:var(--surf2);border-radius:999px;padding:4px}
 .tabs-scroll::-webkit-scrollbar{display:none}
 .tabs-scroll .tab{white-space:nowrap;flex-shrink:0}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.scroll-x::-webkit-scrollbar{display:none}
 
 /* ── Responsive grids ───────────────────────────────────────────────────── */
 @media (max-width:767px){

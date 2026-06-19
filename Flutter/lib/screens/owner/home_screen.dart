@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/promo.dart';
 import '../../models/service_type.dart';
 import '../../models/shop.dart';
 import '../../services/notification_service.dart';
+import '../../services/promo_service.dart';
 import '../../services/shop_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
@@ -37,6 +39,10 @@ final selectedServiceTypeProvider = StateProvider<String?>((ref) => null);
 final shopsProvider = FutureProvider.autoDispose<List<Shop>>((ref) {
   final type = ref.watch(selectedServiceTypeProvider);
   return ShopService().getShops(serviceType: type);
+});
+
+final activePromosProvider = FutureProvider.autoDispose<List<Promo>>((ref) {
+  return PromoService().getActive();
 });
 
 // ── Responsive helper ──────────────────────────────────────────────────────────
@@ -81,10 +87,11 @@ class OwnerHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user       = ref.watch(authProvider).user;
-    final typesAsync = ref.watch(serviceTypesProvider);
-    final shopsAsync = ref.watch(shopsProvider);
-    final selected   = ref.watch(selectedServiceTypeProvider);
+    final user        = ref.watch(authProvider).user;
+    final typesAsync  = ref.watch(serviceTypesProvider);
+    final shopsAsync  = ref.watch(shopsProvider);
+    final selected    = ref.watch(selectedServiceTypeProvider);
+    final promosAsync = ref.watch(activePromosProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -159,9 +166,18 @@ class OwnerHomeScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: r.isSmall ? 16 : 24),
 
-                  // Promo banner
-                  _PromoBanner(r: r),
-                  SizedBox(height: r.isSmall ? 20 : 28),
+                  // Promo banner(lar) — backenddan kelgan faol promolar bo'lsagina ko'rinadi
+                  promosAsync.maybeWhen(
+                    data: (promos) => promos.isEmpty
+                        ? const SizedBox.shrink()
+                        : Column(
+                            children: [
+                              _PromoCarousel(promos: promos, r: r),
+                              SizedBox(height: r.isSmall ? 20 : 28),
+                            ],
+                          ),
+                    orElse: () => const SizedBox.shrink(),
+                  ),
 
                   // Section header
                   Row(
@@ -413,69 +429,157 @@ class _ServiceTypeGrid extends StatelessWidget {
   }
 }
 
-// ── Promo banner ───────────────────────────────────────────────────────────────
+// ── Promo carousel (bir nechta faol banner bo'lsa) ───────────────────────────────
 
-class _PromoBanner extends StatelessWidget {
+class _PromoCarousel extends StatefulWidget {
+  final List<Promo> promos;
   final _R r;
-  const _PromoBanner({required this.r});
+  const _PromoCarousel({required this.promos, required this.r});
+
+  @override
+  State<_PromoCarousel> createState() => _PromoCarouselState();
+}
+
+class _PromoCarouselState extends State<_PromoCarousel> {
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(minHeight: r.isSmall ? 96 : 116),
-      decoration: BoxDecoration(
-        color: AppColors.inverseBg(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_xl),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSpacing.r_xl),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -28, right: -20,
-              child: Container(
-                width: 120, height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.inverseText(context).withAlpha(20),
-                ),
+    final promos = widget.promos;
+    final r      = widget.r;
+
+    if (promos.length == 1) {
+      return _PromoBanner(promo: promos.first, r: r);
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: r.isSmall ? 96 : 116,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: promos.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, i) => _PromoBanner(promo: promos[i], r: r),
+          ),
+        ),
+        SizedBox(height: r.isSmall ? 8 : 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(promos.length, (i) {
+            final active = i == _page;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 18 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                color: active
+                    ? AppColors.text(context)
+                    : AppColors.text3(context),
               ),
-            ),
-            Positioned(
-              bottom: -40, right: 60,
-              child: Container(
-                width: 90, height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.inverseText(context).withAlpha(13),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.isSmall ? 16 : 20,
-                  vertical: r.isSmall ? 16 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  MTag(label: 'home.promo_tag'.tr(), variant: MTagVariant.gold),
-                  const SizedBox(height: 10),
-                  Text(
-                    'home.promo_text'.tr(),
-                    style: AppTypography.soraSize(
-                            r.isSmall ? 16 : 19,
-                            weight: FontWeight.w700)
-                        .copyWith(
-                      color: AppColors.inverseText(context),
-                      height: 1.25,
-                    ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Promo banner ───────────────────────────────────────────────────────────────
+
+class _PromoBanner extends StatefulWidget {
+  final Promo promo;
+  final _R r;
+  const _PromoBanner({required this.promo, required this.r});
+
+  @override
+  State<_PromoBanner> createState() => _PromoBannerState();
+}
+
+class _PromoBannerState extends State<_PromoBanner> {
+  @override
+  void initState() {
+    super.initState();
+    // Banner ekranga chiqdi — bir martalik "view" hisoblanadi
+    PromoService().trackView(widget.promo.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r        = widget.r;
+    final promo    = widget.promo;
+    final locale   = context.locale.languageCode;
+    final badge    = promo.badgeFor(locale);
+    final title    = promo.titleFor(locale);
+
+    return GestureDetector(
+      onTap: () => PromoService().trackClick(promo.id),
+      child: Container(
+        width: double.infinity,
+        constraints: BoxConstraints(minHeight: r.isSmall ? 96 : 116),
+        decoration: BoxDecoration(
+          color: AppColors.inverseBg(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_xl),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.r_xl),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -28, right: -20,
+                child: Container(
+                  width: 120, height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.inverseText(context).withAlpha(20),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              Positioned(
+                bottom: -40, right: 60,
+                child: Container(
+                  width: 90, height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.inverseText(context).withAlpha(13),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: r.isSmall ? 16 : 20,
+                    vertical: r.isSmall ? 16 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (badge.isNotEmpty)
+                      MTag(label: badge, variant: MTagVariant.gold),
+                    if (badge.isNotEmpty) const SizedBox(height: 10),
+                    Text(
+                      title,
+                      style: AppTypography.soraSize(
+                              r.isSmall ? 16 : 19,
+                              weight: FontWeight.w700)
+                          .copyWith(
+                        color: AppColors.inverseText(context),
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
