@@ -15,7 +15,7 @@ export default function DownloadCTA() {
         className="max-w-3xl mx-auto text-center bg-white/[.03] backdrop-blur-xl border border-white/[.08] rounded-3xl px-6 sm:px-12 py-12 sm:py-16 shadow-[0_0_60px_rgba(212,168,67,.06)]"
       >
         <h2 className="text-[28px] sm:text-[38px] font-extrabold tracking-tight mb-4">
-          Shina24'ni hoziroq <span className="text-gold">yuklab oling</span>
+          Shina24&apos;ni hoziroq <span className="text-gold">yuklab oling</span>
         </h2>
         <p className="text-[15px] sm:text-[16px] text-txt2 leading-relaxed mb-9 max-w-lg mx-auto">
           Mijoz sifatida bron qiling yoki shinomontaj sifatida o‘z servisingizni ro‘yxatga oling — bitta ilovada ikki rol.
