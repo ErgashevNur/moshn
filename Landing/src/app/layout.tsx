@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Sora } from 'next/font/google'
 import './globals.css'
+import { I18nProvider } from '@/lib/i18n'
 
 const sora = Sora({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-sora' })
 
@@ -16,7 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="uz">
-      <body className={`${sora.variable} font-sora`}>{children}</body>
+      <body className={`${sora.variable} font-sora`}>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   )
 }

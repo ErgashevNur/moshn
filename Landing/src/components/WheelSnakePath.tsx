@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, useAnimationFrame, useMotionValue, useScroll, useTransform, type MotionValue } from 'framer-motion'
+import { motion, useAnimationFrame, useMotionValue, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import WheelImage from './WheelImage'
+import Icon from './Icon'
+import { useI18n } from '@/lib/i18n'
 
 const APK_URL = process.env.NEXT_PUBLIC_APK_URL || 'https://shina24.uz/media/shina24-v1.1.0.apk'
 
@@ -25,35 +27,14 @@ type Stop = {
   title: string
   desc: string
   cta?: boolean
+  ctaBtn?: string
 }
-
-const STOPS: Stop[] = [
-  {
-    tag: '01 — TANLASH',
-    title: 'Xizmat turini tanlang',
-    desc: 'Podkachka, perezobuvka, disk ta’miri — kerakli xizmatni bosh ekranda darhol tanlaysiz.',
-  },
-  {
-    tag: '02 — BRON',
-    title: 'Navbatsiz bron qiling',
-    desc: 'Xaritadan eng yaqin servisni topib, qulay sana va vaqtni tanlaysiz — sizni kutadi.',
-  },
-  {
-    tag: '03 — TO‘LOV',
-    title: 'QR orqali to‘g‘ridan to‘lang',
-    desc: 'Xizmatdan so‘ng QR kod yoki naqd to‘lov, xohlasangiz ustaga tip qoldirasiz.',
-  },
-  {
-    tag: null,
-    title: 'Ilovani hoziroq yuklab oling',
-    desc: 'Mijoz sifatida bron qiling yoki shinomontaj sifatida ro‘yxatga oling — bitta ilovada ikki rol.',
-    cta: true,
-  },
-]
 
 type Waypoint = { x: number; y: number; frac: number }
 
 export default function WheelSnakePath() {
+  const { t } = useI18n()
+  const STOPS = t.journey
   const sectionRef = useRef<HTMLDivElement>(null)
   const mainPathRef = useRef<SVGPathElement>(null)
   const prefixRefs = [
@@ -70,11 +51,20 @@ export default function WheelSnakePath() {
   const spinRef = useRef(0)
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] })
-  const routeOffset = useTransform(scrollYProgress, (p) => 1 - p)
+  // Spring-smoothed progress drives both the route reveal and the wheel,
+  // so scroll feels weighted and glides instead of snapping frame-to-frame.
+  const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.5, restDelta: 0.0005 })
+  const routeOffset = useTransform(progress, (p) => 1 - p)
 
   const wx = useMotionValue(0)
   const wy = useMotionValue(0)
   const wrotate = useMotionValue(0)
+  // Spin speed → motion blur, so a fast scroll smears the tread like a real spinning wheel.
+  const wblur = useMotionValue(0)
+  const wfilter = useTransform(wblur, (b) => `blur(${b.toFixed(2)}px)`)
+  // Faster spin = the wheel presses harder + the contact shadow stretches/softens.
+  const shadowScaleX = useTransform(wblur, [0, 6], [1, 1.18])
+  const shadowOpacity = useTransform(wblur, [0, 6], [0.55, 0.28])
 
   useEffect(() => {
     const measure = () => {
@@ -99,7 +89,7 @@ export default function WheelSnakePath() {
 
   useAnimationFrame(() => {
     if (!mainPathRef.current || totalLenRef.current === 0 || size.w === 0) return
-    const p = scrollYProgress.get()
+    const p = progress.get()
     const len = p * totalLenRef.current
     const pt = mainPathRef.current.getPointAtLength(len)
     const px = (pt.x / VB_W) * size.w
@@ -111,10 +101,14 @@ export default function WheelSnakePath() {
     lastLenRef.current = len
     spinRef.current += delta * SPIN_PER_UNIT
     wrotate.set(spinRef.current)
+
+    // Ease the blur toward the current spin speed for a soft attack/decay.
+    const target = Math.min(6, Math.abs(delta) * 5.5)
+    wblur.set(wblur.get() + (target - wblur.get()) * 0.18)
   })
 
   return (
-    <section ref={sectionRef} id="xizmat-yoli" className="relative h-[320vh] sm:h-[420vh]">
+    <section ref={sectionRef} id="xizmat-yoli" className="relative h-[240vh] sm:h-[300vh]">
       <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="routeGrad" x1="0" y1="0" x2="0" y2="1">
@@ -139,10 +133,29 @@ export default function WheelSnakePath() {
         ))}
       </svg>
 
+      {/* Outer wrapper translates along the path; inner layers handle spin/blur so the
+          glow halo and ground shadow stay upright while the tread rotates. */}
       <motion.div
-        style={{ x: wx, y: wy, rotate: wrotate, position: 'absolute', left: 0, top: 0, width: WHEEL_SIZE, height: WHEEL_SIZE }}
+        style={{ x: wx, y: wy, position: 'absolute', left: 0, top: 0, width: WHEEL_SIZE, height: WHEEL_SIZE }}
       >
-        <WheelImage size={WHEEL_SIZE} src="/images/wheel-3d.png" objectPosition="50% 50%" />
+        <motion.div
+          className="absolute rounded-[50%] bg-black/70 blur-md"
+          style={{
+            width: WHEEL_SIZE * 0.82,
+            height: WHEEL_SIZE * 0.2,
+            left: WHEEL_SIZE * 0.09,
+            top: WHEEL_SIZE * 0.86,
+            scaleX: shadowScaleX,
+            opacity: shadowOpacity,
+          }}
+        />
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ boxShadow: '0 0 55px 8px rgba(212,168,67,.22)' }}
+        />
+        <motion.div style={{ rotate: wrotate, filter: wfilter, width: WHEEL_SIZE, height: WHEEL_SIZE }}>
+          <WheelImage size={WHEEL_SIZE} src="/images/wheel-3d.png" objectPosition="50% 50%" />
+        </motion.div>
       </motion.div>
 
       {waypoints.map((wp, i) => {
@@ -152,7 +165,7 @@ export default function WheelSnakePath() {
         const py = (wp.y / VB_H) * size.h
         const isCenter = wp.x > 42 && wp.x < 58
         const side: 'left' | 'right' | 'center' = isCenter ? 'center' : wp.x < 50 ? 'right' : 'left'
-        return <WaypointMarker key={i} scrollYProgress={scrollYProgress} px={px} py={py} frac={wp.frac} stop={stop} side={side} />
+        return <WaypointMarker key={i} scrollYProgress={progress} px={px} py={py} frac={wp.frac} stop={stop} side={side} />
       })}
     </section>
   )
@@ -175,13 +188,31 @@ function WaypointMarker({
 }) {
   const winIn = stop.cta ? 0.05 : 0.07
   const winOut = 0.05
-  const fade = 0.025
+  const fade = 0.03
   const start = Math.max(0, frac - winIn)
   const end = Math.min(1, frac + (stop.cta ? 0.2 : winOut))
 
-  const opacityFade = useTransform(scrollYProgress, [start, start + fade, end - fade, end], [0, 1, 1, 0])
-  const opacityHold = useTransform(scrollYProgress, [start, start + fade, 1], [0, 1, 1])
-  const opacity = stop.cta ? opacityHold : opacityFade
+  // Fade in once and stay — info remains visible even after the wheel scrolls past.
+  const opacity = useTransform(scrollYProgress, [start, start + fade, 1], [0, 1, 1])
+  // `end` is no longer used for visibility, but kept for readability of the stop window.
+  void end
+
+  // Entrance: slides up and de-blurs as the wheel reaches the stop.
+  const enterY = useTransform(scrollYProgress, [start, start + fade], [34, 0])
+  const enterScale = useTransform(scrollYProgress, [start, start + fade], [0.96, 1])
+  const enterBlur = useTransform(scrollYProgress, [start, start + fade * 0.8], [9, 0])
+  const enterFilter = useTransform(enterBlur, (b) => `blur(${b.toFixed(2)}px)`)
+
+  // Staggered per-line reveal so tag → title → desc cascade in.
+  const tagY = useTransform(scrollYProgress, [start, start + fade], [16, 0])
+  const tagO = useTransform(scrollYProgress, [start, start + fade * 0.7], [0, 1])
+  const titleY = useTransform(scrollYProgress, [start + fade * 0.25, start + fade * 1.25], [20, 0])
+  const titleO = useTransform(scrollYProgress, [start + fade * 0.25, start + fade], [0, 1])
+  const descY = useTransform(scrollYProgress, [start + fade * 0.5, start + fade * 1.5], [22, 0])
+  const descO = useTransform(scrollYProgress, [start + fade * 0.5, start + fade * 1.2], [0, 1])
+
+  // Marker dot pulses in just before the text.
+  const dotScale = useTransform(scrollYProgress, [start - fade, start, start + fade], [0, 1.25, 1])
 
   const alignClass = side === 'left' ? 'items-start text-left' : side === 'right' ? 'items-end text-right' : 'items-center text-center'
   const textTop = stop.cta ? py + 46 : py
@@ -189,37 +220,49 @@ function WaypointMarker({
 
   return (
     <>
-      <div
-        className="absolute w-3 h-3 rounded-full bg-gold shadow-[0_0_18px_4px_rgba(212,168,67,.45)]"
-        style={{ left: px, top: py, transform: 'translate(-50%,-50%)' }}
-      />
       <motion.div
+        className="absolute w-3 h-3 rounded-full bg-gold shadow-[0_0_18px_4px_rgba(212,168,67,.45)]"
+        style={{ left: px, top: py, x: '-50%', y: '-50%', scale: dotScale }}
+      />
+      <div
         style={{
-          opacity,
           top: textTop,
           position: 'absolute',
           ...(side === 'left' ? { left: '6%' } : side === 'right' ? { right: '6%' } : { left: '50%' }),
           transform: textTransform,
         }}
-        className={`flex flex-col ${alignClass} max-w-[270px] sm:max-w-[340px] px-4`}
       >
-        {stop.tag && <span className="text-gold text-[11px] font-bold uppercase tracking-[.14em] mb-2">{stop.tag}</span>}
-        <h3 className="text-[20px] sm:text-[26px] font-extrabold leading-tight tracking-tight">{stop.title}</h3>
-        <p className="text-[13.5px] sm:text-[14.5px] text-txt2 leading-relaxed mt-2">{stop.desc}</p>
-        {stop.cta && (
-          <div
-            className="flex flex-wrap gap-3 mt-3"
-            style={{ justifyContent: side === 'center' ? 'center' : side === 'left' ? 'flex-start' : 'flex-end' }}
-          >
-            <a
-              href={APK_URL}
-              className="h-[44px] px-5 rounded-full bg-gold text-bg font-bold text-[12.5px] sm:text-[14px] flex items-center whitespace-nowrap hover:brightness-110 transition-all"
+        <motion.div
+          style={{ opacity, y: enterY, scale: enterScale, filter: enterFilter }}
+          className={`flex flex-col ${alignClass} max-w-[78vw] xs:max-w-[330px] sm:max-w-[440px] px-4`}
+        >
+          {stop.tag && (
+            <motion.span style={{ y: tagY, opacity: tagO }} className="text-gold text-[13px] sm:text-[14px] font-bold uppercase tracking-[.14em] mb-2.5">
+              {stop.tag}
+            </motion.span>
+          )}
+          <motion.h3 style={{ y: titleY, opacity: titleO }} className="text-[26px] sm:text-[36px] font-extrabold leading-[1.1] tracking-tight">
+            {stop.title}
+          </motion.h3>
+          <motion.p style={{ y: descY, opacity: descO }} className="text-[15.5px] sm:text-[18px] text-txt2 leading-relaxed mt-3">
+            {stop.desc}
+          </motion.p>
+          {stop.cta && (
+            <div
+              className="flex flex-wrap gap-3 mt-3"
+              style={{ justifyContent: side === 'center' ? 'center' : side === 'left' ? 'flex-start' : 'flex-end' }}
             >
-              ⬇ Android uchun yuklab olish
-            </a>
-          </div>
-        )}
-      </motion.div>
+              <a
+                href={APK_URL}
+                className="h-[46px] px-5 rounded-full bg-gold text-bg font-bold text-[13px] sm:text-[14px] flex items-center gap-2 whitespace-nowrap hover:brightness-110 transition-all"
+              >
+                <Icon name="download" size={18} />
+                {stop.ctaBtn}
+              </a>
+            </div>
+          )}
+        </motion.div>
+      </div>
     </>
   )
 }
