@@ -189,13 +189,12 @@ class _PhoneScreenState extends State<PhoneScreen> {
                             border:
                                 Border.all(color: AppColors.hairline(context)),
                           ),
-                          child: Center(
-                            child: Text(
-                              '+998',
-                              style: AppTypography.mono.copyWith(
-                                color: AppColors.text(context),
-                                fontSize: 15,
-                              ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '+998',
+                            style: AppTypography.mono.copyWith(
+                              color: AppColors.text(context),
+                              fontSize: 17,
                             ),
                           ),
                         ),
@@ -209,6 +208,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                               controller: _controller,
                               keyboardType: TextInputType.phone,
                               inputFormatters: [_PhoneFormatter()],
+                              textAlignVertical: TextAlignVertical.center,
                               style: AppTypography.mono.copyWith(
                                 color: AppColors.text(context),
                                 fontSize: 17,
@@ -222,7 +222,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                 filled: true,
                                 fillColor: AppColors.surface(context),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 0),
+                                    horizontal: 16, vertical: 16),
                                 border: OutlineInputBorder(
                                   borderRadius:
                                       BorderRadius.circular(AppSpacing.r_md),

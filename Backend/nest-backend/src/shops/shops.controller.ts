@@ -67,6 +67,14 @@ export class ShopsController {
     return { data: await this.svc.findByUserId(userId) };
   }
 
+  @UseGuards(JwtGuard)
+  @Post('service/profile')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Servis profili yaratish — ro\'yxatdan o\'tish paytida [service]' })
+  async createProfile(@User('user_id') userId: string, @Body() body: any) {
+    return { data: await this.svc.createProfile(userId, body) };
+  }
+
   @UseGuards(JwtGuard, ServiceRoleGuard)
   @Put('service/profile')
   @ApiBearerAuth('JWT')

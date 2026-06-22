@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../models/shop.dart';
 import '../../services/shop_service.dart';
@@ -10,6 +12,7 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/section_card.dart';
+import 'home_screen.dart' show serviceTypesProvider;
 
 final _shopProvider = FutureProvider.autoDispose.family<Shop, String>(
   (ref, id) => ShopService().getShop(id),
@@ -79,20 +82,57 @@ class _Header extends StatelessWidget {
   final Shop shop;
   const _Header({required this.shop});
 
+  bool get _validCoords => shop.latitude != 0 || shop.longitude != 0;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          height: 180,
-          decoration: BoxDecoration(
-            color: AppColors.inverseBg(context).withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          ),
-          child: const Center(
-            child: Text('🔧', style: TextStyle(fontSize: 64)),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: SizedBox(
+            width: double.infinity,
+            height: 180,
+            child: _validCoords
+                ? IgnorePointer(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(shop.latitude, shop.longitude),
+                        initialZoom: 15,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'uz.moshn.moshn',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(shop.latitude, shop.longitude),
+                              width: 36,
+                              height: 36,
+                              child: const Icon(
+                                CupertinoIcons.location_solid,
+                                color: Color(0xFFE5382B),
+                                size: 36,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                : Container(
+                    color: AppColors.inverseBg(context).withValues(alpha: 0.06),
+                    child: const Center(
+                      child: Text('🔧', style: TextStyle(fontSize: 64)),
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -128,7 +168,7 @@ class _Header extends StatelessWidget {
                   BorderRadius.circular(AppSpacing.radiusFull),
             ),
             child: Text(
-              'Hali tasdiqlanmagan',
+              'Не подтверждён',
               style: AppTypography.labelMedium
                   .copyWith(color: AppColors.gold),
             ),
@@ -150,7 +190,7 @@ class _InfoSection extends StatelessWidget {
         children: [
           _Row(
             icon: CupertinoIcons.location,
-            label: 'Manzil',
+            label: 'Адрес',
             value: shop.address,
           ),
           const Padding(
@@ -159,7 +199,7 @@ class _InfoSection extends StatelessWidget {
           ),
           _Row(
             icon: CupertinoIcons.clock,
-            label: 'Ish vaqti',
+            label: 'Часы работы',
             value: shop.workingHours,
           ),
           if (shop.phone.isNotEmpty) ...[
@@ -169,7 +209,7 @@ class _InfoSection extends StatelessWidget {
             ),
             _Row(
               icon: CupertinoIcons.phone,
-              label: 'Telefon',
+              label: 'Телефон',
               value: shop.phone,
             ),
           ],
@@ -210,41 +250,47 @@ class _Row extends StatelessWidget {
   }
 }
 
-class _ServiceTypesSection extends StatelessWidget {
+class _ServiceTypesSection extends ConsumerWidget {
   final Shop shop;
   const _ServiceTypesSection({required this.shop});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (shop.serviceTypes.isEmpty) return const SizedBox.shrink();
+
+    final locale = context.locale.languageCode;
+    final typesAsync = ref.watch(serviceTypesProvider);
+    final typeMap = typesAsync.valueOrNull != null
+        ? { for (final t in typesAsync.valueOrNull!) t.slug: t }
+        : <String, dynamic>{};
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Xizmatlar', style: AppTypography.titleMedium),
+        Text('owner.services_prices'.tr(), style: AppTypography.titleMedium),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: shop.serviceTypes
-              .map(
-                (t) => Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.inverseBg(context)
-                        .withValues(alpha: 0.08),
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusFull),
-                  ),
-                  child: Text(
-                    t,
-                    style: AppTypography.labelSmall.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+          children: shop.serviceTypes.map((slug) {
+            final label = typeMap[slug] != null
+                ? typeMap[slug]!.nameFor(locale)
+                : slug;
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.inverseBg(context).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+              ),
+              child: Text(
+                label,
+                style: AppTypography.labelSmall.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-              )
-              .toList(),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

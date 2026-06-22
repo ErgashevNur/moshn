@@ -204,6 +204,8 @@ export default function PartnerTodayPage() {
   const [loading, setLoading]   = useState(true)
   const [sel, setSel]           = useState<NB|null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [burgerOpen, setBurgerOpen] = useState(false)
+  const [shopName, setShopName] = useState('Shinomontaj')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -219,28 +221,74 @@ export default function PartnerTodayPage() {
       const all = (r.data.data?.bookings || [])
       setQueue(all.filter((b:any) => isToday(b.scheduledAt)).map(normalize))
     }).catch(() => {}).finally(() => setLoading(false))
+    partnerApi.get('/service/profile').then(r => {
+      const name = r.data?.data?.shopName || r.data?.shopName
+      if (name) setShopName(name)
+    }).catch(() => {})
   }, [router])
 
   const pending = queue.filter(b => b.status === 'pending').length
-  const now = new Date()
-  const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`
 
   const handleRate = (id: string, r: number) =>
     setQueue(q => q.map(b => b.id === id ? {...b, rating:r} : b))
+
+  const logout = () => {
+    localStorage.removeItem('partner_access_token')
+    localStorage.removeItem('partner_refresh_token')
+    router.push('/partner/login')
+  }
 
   return (
     <PartnerShell pendingCount={pending}>
       {/* ── Main area ──────────────────────────────────────────────────────── */}
       <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 18px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
+        <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 18px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)',position:'relative'}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
-            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Shinmaster Pro</div>
+            <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{shopName}</div>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--txt2)'}}><div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)'}}/>Онлайн</div>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'var(--txt3)',padding:'4px 9px',borderRadius:8,background:'var(--surf2)'}}>{timeStr}</div>
-          </div>
+          {/* Burger button — only on mobile (desktop uses sidebar) */}
+          {isMobile && (
+            <>
+              <button
+                onClick={() => setBurgerOpen(o => !o)}
+                style={{width:38,height:38,borderRadius:10,background:'var(--surf2)',border:'none',display:'grid',placeItems:'center',cursor:'pointer',color:'var(--txt)',flexShrink:0}}>
+                <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                  <rect y="0"  width="18" height="2" rx="1" fill="currentColor"/>
+                  <rect y="6"  width="18" height="2" rx="1" fill="currentColor"/>
+                  <rect y="12" width="18" height="2" rx="1" fill="currentColor"/>
+                </svg>
+              </button>
+              {burgerOpen && (
+                <>
+                  <div onClick={() => setBurgerOpen(false)} style={{position:'fixed',inset:0,zIndex:200}}/>
+                  <div style={{
+                    position:'absolute', top:52, right:16, zIndex:201,
+                    background:'var(--surf)', border:'1px solid var(--hair2)',
+                    borderRadius:16, minWidth:180, overflow:'hidden',
+                    boxShadow:'0 8px 32px rgba(0,0,0,.45)',
+                    animation:'fade .15s ease',
+                  }}>
+                    {[
+                      {icon:'chart',  label:'Hisobot', href:'/partner/stats'},
+                      {icon:'wallet', label:'Narxlar', href:'/partner/prices'},
+                    ].map((item, i) => (
+                      <button key={i} onClick={() => { setBurgerOpen(false); router.push(item.href) }}
+                        style={{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'13px 16px',background:'none',border:'none',cursor:'pointer',color:'var(--txt)',fontSize:14,fontWeight:600,textAlign:'left',borderBottom:'1px solid var(--hair)'}}>
+                        <Icon n={item.icon as any} s={18}/>
+                        {item.label}
+                      </button>
+                    ))}
+                    <button onClick={() => { setBurgerOpen(false); logout() }}
+                      style={{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'13px 16px',background:'none',border:'none',cursor:'pointer',color:'var(--red)',fontSize:14,fontWeight:600,textAlign:'left'}}>
+                      <Icon n="logout" s={18} col="var(--red)"/>
+                      Chiqish
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
         <div style={{flex:1,overflowY:'auto',padding: isMobile ? '16px' : '20px 22px'}}>
           <TodayView queue={queue} sel={sel} setSel={setSel} loading={loading} isMobile={isMobile}/>

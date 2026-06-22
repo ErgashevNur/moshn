@@ -133,10 +133,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (msg is List && msg.isNotEmpty) return msg.join(', ');
       }
       if (e.response?.statusCode == 409) {
-        return 'Bu davlat raqami allaqachon ro\'yxatda';
+        return 'Этот номер уже зарегистрирован';
       }
     }
-    return 'Mashina saqlanmadi — garajdan qo\'shib oling';
+    return 'Авто не сохранено — добавьте из гаража';
   }
 
   @override

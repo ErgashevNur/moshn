@@ -28,12 +28,12 @@ class StatusChip extends StatelessWidget {
 
   static (Color, String) _style(String s) {
     switch (s) {
-      case 'pending':   return (AppColors.gold, 'Kutilmoqda');
-      case 'confirmed': return (AppColors.success, 'Tasdiqlandi');
-      case 'in_progress': return (const Color(0xFF0A84FF), 'Jarayonda');
-      case 'completed': return (AppColors.success, 'Bajarildi');
-      case 'cancelled': return (AppColors.danger, 'Bekor');
-      case 'verified':  return (AppColors.success, 'Tasdiqlangan');
+      case 'pending':   return (AppColors.gold, 'Ожидает');
+      case 'confirmed': return (AppColors.success, 'Подтверждено');
+      case 'in_progress': return (const Color(0xFF0A84FF), 'В процессе');
+      case 'completed': return (AppColors.success, 'Выполнено');
+      case 'cancelled': return (AppColors.danger, 'Отменено');
+      case 'verified':  return (AppColors.success, 'Подтверждён');
       default:          return (const Color(0xFF8E8E93), s);
     }
   }
