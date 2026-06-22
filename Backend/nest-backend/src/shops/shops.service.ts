@@ -12,7 +12,7 @@ export class ShopsService {
     limit: number;
     skip: number;
   }) {
-    const where: any = { verificationStatus: 'verified' };
+    const where: any = { verificationStatus: { in: ['verified', 'pending'] } };
     if (filter.serviceType) {
       where.serviceTypes = { has: filter.serviceType };
     }
@@ -59,14 +59,43 @@ export class ShopsService {
     return shop;
   }
 
+  async createProfile(userId: string, data: Record<string, any>) {
+    const existing = await this.prisma.shopProfile.findUnique({ where: { userId } });
+    if (existing) {
+      return this.updateProfile(userId, data);
+    }
+
+    return this.prisma.shopProfile.create({
+      data: {
+        userId,
+        shopName:     data.shopName     ?? data.shop_name     ?? '',
+        address:      data.address      ?? '',
+        latitude:     Number(data.latitude  ?? 0),
+        longitude:    Number(data.longitude ?? 0),
+        phone:        data.phone        ?? '',
+        workingHours: data.workingHours ?? data.working_hours ?? '09:00-18:00',
+        serviceTypes: data.serviceTypes ?? data.service_types ?? [],
+        verificationStatus: 'pending',
+      },
+      include: { user: true },
+    });
+  }
+
   async updateProfile(userId: string, data: Record<string, any>) {
     const shop = await this.prisma.shopProfile.findUnique({ where: { userId } });
     if (!shop) throw new NotFoundException('Servis profili topilmadi');
 
-    const allowed = ['shopName', 'address', 'latitude', 'longitude', 'phone', 'workingHours', 'serviceTypes'];
+    const allowed: Record<string, string> = {
+      shopName: 'shopName', shop_name: 'shopName',
+      address: 'address',
+      latitude: 'latitude', longitude: 'longitude',
+      phone: 'phone',
+      workingHours: 'workingHours', working_hours: 'workingHours',
+      serviceTypes: 'serviceTypes', service_types: 'serviceTypes',
+    };
     const update: Record<string, any> = {};
-    for (const key of allowed) {
-      if (data[key] !== undefined) update[key] = data[key];
+    for (const [key, mapped] of Object.entries(allowed)) {
+      if (data[key] !== undefined) update[mapped] = data[key];
     }
 
     return this.prisma.shopProfile.update({ where: { id: shop.id }, data: update, include: { user: true } });

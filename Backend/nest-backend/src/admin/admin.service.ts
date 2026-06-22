@@ -178,4 +178,89 @@ export class AdminService {
     await this.configSvc.set(key, value);
     return this.configSvc.getAll();
   }
+
+  // ── Super Admin: O'chirish ─────────────────────────────────────────────────
+
+  async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { shop: true },
+    });
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+    return user;
+  }
+
+  async getShopById(id: string) {
+    const shop = await this.prisma.shopProfile.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+    if (!shop) throw new NotFoundException('Servis topilmadi');
+    return shop;
+  }
+
+  async deleteUser(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.fCMToken.deleteMany({ where: { userId: id } });
+      await tx.notification.deleteMany({ where: { userId: id } });
+      await tx.customerCard.deleteMany({ where: { customerId: id } });
+      await tx.review.deleteMany({ where: { authorId: id } });
+
+      const shop = await tx.shopProfile.findUnique({ where: { userId: id } });
+      if (shop) {
+        await tx.customerCard.deleteMany({ where: { shopId: shop.id } });
+        await tx.shopServicePrice.deleteMany({ where: { shopId: shop.id } });
+        const shopBookings = await tx.booking.findMany({ where: { shopId: shop.id }, select: { id: true } });
+        const shopBIds = shopBookings.map((b) => b.id);
+        if (shopBIds.length) {
+          await tx.review.deleteMany({ where: { bookingId: { in: shopBIds } } });
+          await tx.tip.deleteMany({ where: { bookingId: { in: shopBIds } } });
+          await tx.payment.deleteMany({ where: { bookingId: { in: shopBIds } } });
+          await tx.booking.deleteMany({ where: { shopId: shop.id } });
+        }
+        await tx.shopProfile.delete({ where: { id: shop.id } });
+      }
+
+      const custBookings = await tx.booking.findMany({ where: { customerId: id }, select: { id: true } });
+      const custBIds = custBookings.map((b) => b.id);
+      if (custBIds.length) {
+        await tx.review.deleteMany({ where: { bookingId: { in: custBIds } } });
+        await tx.tip.deleteMany({ where: { bookingId: { in: custBIds } } });
+        await tx.payment.deleteMany({ where: { bookingId: { in: custBIds } } });
+        await tx.booking.deleteMany({ where: { customerId: id } });
+      }
+
+      await tx.vehicle.deleteMany({ where: { ownerId: id } });
+      await tx.user.delete({ where: { id } });
+    });
+
+    return { message: `Foydalanuvchi "${user.fullName}" (${user.phone}) o'chirildi` };
+  }
+
+  async deleteShop(id: string) {
+    const shop = await this.prisma.shopProfile.findUnique({ where: { id }, include: { user: true } });
+    if (!shop) throw new NotFoundException('Servis topilmadi');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.customerCard.deleteMany({ where: { shopId: id } });
+      await tx.shopServicePrice.deleteMany({ where: { shopId: id } });
+
+      const bookings = await tx.booking.findMany({ where: { shopId: id }, select: { id: true } });
+      const bIds = bookings.map((b) => b.id);
+      if (bIds.length) {
+        await tx.review.deleteMany({ where: { bookingId: { in: bIds } } });
+        await tx.tip.deleteMany({ where: { bookingId: { in: bIds } } });
+        await tx.payment.deleteMany({ where: { bookingId: { in: bIds } } });
+        await tx.booking.deleteMany({ where: { shopId: id } });
+      }
+
+      await tx.shopProfile.delete({ where: { id } });
+      await tx.user.update({ where: { id: shop.userId }, data: { role: '' } });
+    });
+
+    return { message: `Servis "${shop.shopName}" o'chirildi (Foydalanuvchi saqlanib qoldi)` };
+  }
 }

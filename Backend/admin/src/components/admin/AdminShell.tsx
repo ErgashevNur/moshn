@@ -211,6 +211,200 @@ function NotifPanel({ onClose, headerH }: { onClose: () => void; headerH?: numbe
   )
 }
 
+// ── Delete Overlay ───────────────────────────────────────────────────────────
+type DelTab = 'user' | 'shop'
+
+function DeleteOverlay({ onClose }: { onClose: () => void }) {
+  const [tab, setTab]         = useState<DelTab>('user')
+  const [q, setQ]             = useState('')
+  const [items, setItems]     = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [confirm, setConfirm] = useState<any>(null)   // entity to delete
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast]     = useState<{ok:boolean,msg:string}|null>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  const load = useCallback(async (tab: DelTab, search: string) => {
+    setLoading(true)
+    try {
+      if (tab === 'user') {
+        const r = await api.get(`/admin/users?search=${encodeURIComponent(search)}&limit=30`)
+        setItems(r.data.data?.users || [])
+      } else {
+        const r = await api.get(`/admin/shops?limit=50`)
+        const all: any[] = r.data.data?.shops || []
+        setItems(search ? all.filter(s =>
+          s.shopName?.toLowerCase().includes(search.toLowerCase()) ||
+          s.address?.toLowerCase().includes(search.toLowerCase()) ||
+          s.user?.phone?.includes(search)
+        ) : all)
+      }
+    } finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => {
+    load(tab, '')
+    setTimeout(() => searchRef.current?.focus(), 80)
+  }, [load, tab])
+
+  useEffect(() => {
+    const t = setTimeout(() => load(tab, q), 350)
+    return () => clearTimeout(t)
+  }, [q, tab, load])
+
+  const handleTabChange = (t: DelTab) => {
+    setTab(t); setQ(''); setConfirm(null); setToast(null); setItems([])
+  }
+
+  const doDelete = async () => {
+    if (!confirm) return
+    setDeleting(true)
+    try {
+      const ep = tab === 'user' ? `/admin/users/${confirm.id}` : `/admin/shops/${confirm.id}`
+      const r = await api.delete(ep)
+      setToast({ ok: true, msg: r.data.data?.message || 'O\'chirildi' })
+      setItems(prev => prev.filter(i => i.id !== confirm.id))
+      setConfirm(null)
+    } catch (e: any) {
+      setToast({ ok: false, msg: e?.response?.data?.message || 'Xatolik yuz berdi' })
+    } finally { setDeleting(false) }
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.72)',backdropFilter:'blur(6px)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:60}}
+      onClick={onClose}>
+      <div style={{width:'100%',maxWidth:620,background:'var(--bgE)',borderRadius:20,border:'1px solid rgba(229,56,43,.4)',boxShadow:'0 32px 80px rgba(0,0,0,.6)',overflow:'hidden',animation:'rise .2s ease',margin:'0 16px',display:'flex',flexDirection:'column',maxHeight:'calc(100vh - 80px)'}}
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 18px',borderBottom:'1px solid var(--hair)',background:'var(--redDim)',flexShrink:0}}>
+          <div style={{width:30,height:30,borderRadius:8,background:'var(--red)',display:'grid',placeItems:'center',flexShrink:0}}>
+            <Icon n="trash" s={15} col="#fff"/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14.5,fontWeight:700,color:'var(--txt)'}}>Super Admin — O&apos;chirish</div>
+            <div style={{fontSize:11.5,color:'var(--txt3)'}}>Ro&apos;yxatdan tanlang — ID shart emas</div>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--txt3)',padding:4,display:'grid',placeItems:'center'}}>
+            <Icon n="x" s={18}/>
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{display:'flex',borderBottom:'1px solid var(--hair)',background:'var(--surf)',flexShrink:0}}>
+          {([['user','users','Mijozlar'],['shop','store','Servislar']] as const).map(([t,ic,label]) => (
+            <button key={t} onClick={() => handleTabChange(t)}
+              style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px 0',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:tab===t?700:500,color:tab===t?'var(--txt)':'var(--txt3)',borderBottom:tab===t?'2px solid var(--red)':'2px solid transparent',transition:'all .15s'}}>
+              <Icon n={ic} s={14} col={tab===t?'var(--red)':'var(--txt3)'}/>
+              {label}
+              {items.length > 0 && tab===t && <span style={{fontSize:11,background:'var(--surf2)',border:'1px solid var(--hair2)',borderRadius:999,padding:'1px 7px',color:'var(--txt3)'}}>{items.length}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--hair)',background:'var(--surf)',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,height:36,borderRadius:10,border:'1px solid var(--hair2)',background:'var(--bgE)',padding:'0 12px'}}>
+            <Icon n="search" s={14} col="var(--txt3)"/>
+            <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)}
+              placeholder={tab==='user' ? 'Ism, telefon raqami…' : 'Servis nomi, manzil…'}
+              style={{flex:1,background:'none',border:'none',fontSize:13.5,color:'var(--txt)',outline:'none',fontFamily:'inherit'}}/>
+            {loading && <div style={{width:14,height:14,borderRadius:'50%',border:'2px solid var(--hair2)',borderTopColor:'var(--red)',animation:'spin .7s linear infinite',flexShrink:0}}/>}
+            {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--txt3)',padding:0,display:'grid',placeItems:'center'}}><Icon n="x" s={14}/></button>}
+          </div>
+        </div>
+
+        {/* Toast */}
+        {toast && (
+          <div style={{padding:'10px 16px',background:toast.ok?'var(--greenDim)':'var(--redDim)',borderBottom:'1px solid var(--hair)',fontSize:13,color:toast.ok?'var(--green)':'var(--red)',fontWeight:600,flexShrink:0,display:'flex',alignItems:'center',gap:8}}>
+            {toast.ok ? '✓' : '✗'} {toast.msg}
+            <button onClick={() => setToast(null)} style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',color:'inherit',opacity:.6}}><Icon n="x" s={14}/></button>
+          </div>
+        )}
+
+        {/* Confirm banner */}
+        {confirm && (
+          <div style={{padding:'12px 16px',background:'var(--amberDim)',borderBottom:'1px solid rgba(245,158,11,.3)',flexShrink:0}}>
+            <div style={{fontSize:13,fontWeight:600,color:'var(--amber)',marginBottom:8}}>
+              ⚠️ &quot;{tab==='user'?confirm.fullName:confirm.shopName}&quot; ni o&apos;chirishni tasdiqlaysizmi?
+            </div>
+            <div style={{fontSize:11.5,color:'var(--txt3)',marginBottom:10,fontFamily:"'JetBrains Mono',monospace",wordBreak:'break-all'}}>ID: {confirm.id}</div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={doDelete} disabled={deleting}
+                style={{height:34,padding:'0 16px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6,opacity:deleting?.6:1}}>
+                {deleting
+                  ? <><div style={{width:13,height:13,borderRadius:'50%',border:'2px solid rgba(255,255,255,.4)',borderTopColor:'#fff',animation:'spin .7s linear infinite'}}/> O&apos;chirilmoqda…</>
+                  : <><Icon n="trash" s={13} col="#fff"/> Ha, o&apos;chir</>}
+              </button>
+              <button onClick={() => setConfirm(null)} disabled={deleting}
+                style={{height:34,padding:'0 14px',borderRadius:8,border:'1px solid var(--hair2)',background:'var(--surf)',color:'var(--txt2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Bekor
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* List */}
+        <div style={{overflowY:'auto',flex:1}}>
+          {!loading && items.length === 0 ? (
+            <div style={{padding:'36px',textAlign:'center',color:'var(--txt3)',fontSize:13}}>
+              {q ? `"${q}" bo'yicha hech narsa topilmadi` : 'Ma\'lumot yo\'q'}
+            </div>
+          ) : tab === 'user' ? (
+            items.map(u => (
+              <div key={u.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',borderBottom:'1px solid var(--hair)',background:confirm?.id===u.id?'var(--amberDim)':'none',transition:'background .12s'}}>
+                <div style={{width:36,height:36,borderRadius:'50%',background:'var(--surf2)',display:'grid',placeItems:'center',fontSize:14,fontWeight:700,color:'var(--txt2)',flexShrink:0}}>
+                  {(u.fullName||'?')[0].toUpperCase()}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                    <span style={{fontSize:13.5,fontWeight:600,color:'var(--txt)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.fullName||'—'}</span>
+                    <span style={{fontSize:11,padding:'1px 7px',borderRadius:5,background:'var(--surf2)',color:'var(--txt3)',flexShrink:0}}>{u.role||'none'}</span>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace"}}>{u.phone}</div>
+                  <div style={{fontSize:10.5,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginTop:1,opacity:.6}}>{u.id}</div>
+                </div>
+                <button
+                  onClick={() => setConfirm(confirm?.id===u.id ? null : u)}
+                  style={{width:32,height:32,borderRadius:8,border:'1px solid',borderColor:confirm?.id===u.id?'var(--red)':'var(--hair2)',background:confirm?.id===u.id?'var(--redDim)':'none',display:'grid',placeItems:'center',cursor:'pointer',flexShrink:0,transition:'all .15s'}}
+                  title="O'chirish">
+                  <Icon n="trash" s={15} col={confirm?.id===u.id?'var(--red)':'var(--txt3)'}/>
+                </button>
+              </div>
+            ))
+          ) : (
+            items.map(s => (
+              <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',borderBottom:'1px solid var(--hair)',background:confirm?.id===s.id?'var(--amberDim)':'none',transition:'background .12s'}}>
+                <div style={{width:36,height:36,borderRadius:10,background:'var(--surf2)',display:'grid',placeItems:'center',flexShrink:0}}>
+                  <Icon n="store" s={17} col="var(--txt3)"/>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                    <span style={{fontSize:13.5,fontWeight:600,color:'var(--txt)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.shopName||'—'}</span>
+                    <span style={{fontSize:11,padding:'1px 7px',borderRadius:5,flexShrink:0,
+                      background:s.verificationStatus==='verified'?'var(--greenDim)':s.verificationStatus==='pending'?'var(--amberDim)':'var(--redDim)',
+                      color:s.verificationStatus==='verified'?'var(--green)':s.verificationStatus==='pending'?'var(--amber)':'var(--red)'}}>
+                      {s.verificationStatus==='verified'?'Aktiv':s.verificationStatus==='pending'?'Kutmoqda':'Rad'}
+                    </span>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--txt3)'}}>{s.user?.phone||s.address||'—'}</div>
+                  <div style={{fontSize:10.5,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginTop:1,opacity:.6}}>{s.id}</div>
+                </div>
+                <button
+                  onClick={() => setConfirm(confirm?.id===s.id ? null : s)}
+                  style={{width:32,height:32,borderRadius:8,border:'1px solid',borderColor:confirm?.id===s.id?'var(--red)':'var(--hair2)',background:confirm?.id===s.id?'var(--redDim)':'none',display:'grid',placeItems:'center',cursor:'pointer',flexShrink:0,transition:'all .15s'}}
+                  title="O'chirish">
+                  <Icon n="trash" s={15} col={confirm?.id===s.id?'var(--red)':'var(--txt3)'}/>
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const DARK_T: Record<string,string> = {bg:'#09090a',bgE:'#131316',surf:'#1a1a1e',surf2:'#242429',surf3:'#2e2e34',hair:'rgba(255,255,255,.085)',hair2:'rgba(255,255,255,.14)',txt:'#f4f4f2',txt2:'rgba(244,244,242,.60)',txt3:'rgba(244,244,242,.36)',inv:'#f4f4f2',invT:'#0a0a0b',gold:'#d4a843',goldDim:'rgba(212,168,67,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#30d158',greenDim:'rgba(48,209,88,.16)',amber:'#f59e0b',amberDim:'rgba(245,158,11,.14)',blue:'#3b82f6',blueDim:'rgba(59,130,246,.14)',purple:'#a78bfa',purpleDim:'rgba(167,139,250,.14)'}
 const LIGHT_T: Record<string,string> = {bg:'#f4f3f0',bgE:'#fff',surf:'#fff',surf2:'#ecebe7',surf3:'#e3e2dd',hair:'rgba(20,20,16,.09)',hair2:'rgba(20,20,16,.15)',txt:'#14140f',txt2:'rgba(20,20,15,.58)',txt3:'rgba(20,20,15,.40)',inv:'#14140f',invT:'#f6f5f2',gold:'#c49a1a',goldDim:'rgba(196,154,26,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#1a9e48',greenDim:'rgba(26,158,72,.16)',amber:'#c47d0a',amberDim:'rgba(196,125,10,.13)',blue:'#2563eb',blueDim:'rgba(37,99,235,.13)',purple:'#7c3aed',purpleDim:'rgba(124,58,237,.13)'}
 
@@ -224,6 +418,7 @@ function applyThemeVars(t: string) {
 export default function AdminShell({ title, children }: { title: string; children: React.ReactNode }) {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [nOpen, setNOpen]           = useState(false)
   const [moreOpen, setMoreOpen]     = useState(false)
   const [unread, setUnread]         = useState(0)
@@ -275,7 +470,8 @@ export default function AdminShell({ title, children }: { title: string; childre
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true) }
-      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false); setMoreOpen(false) }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Delete') { e.preventDefault(); setDeleteOpen(true) }
+      if (e.key === 'Escape') { setSearchOpen(false); setNOpen(false); setMoreOpen(false); setDeleteOpen(false) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -332,6 +528,17 @@ export default function AdminShell({ title, children }: { title: string; childre
               {!isMobile && <span>{theme==='dark'?'Светлая':'Тёмная'}</span>}
             </button>
 
+            {/* Super delete */}
+            <button
+              onClick={() => setDeleteOpen(true)}
+              title="O'chirish (Ctrl+Shift+Del)"
+              style={{width:36,height:36,borderRadius:9,background:'var(--redDim)',border:'1px solid rgba(229,56,43,.35)',display:'grid',placeItems:'center',color:'var(--red)',cursor:'pointer',flexShrink:0,transition:'background .15s'}}
+              onMouseEnter={e=>(e.currentTarget.style.background='rgba(229,56,43,.22)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='var(--redDim)')}
+            >
+              <Icon n="trash" s={16} col="var(--red)"/>
+            </button>
+
             {/* Burger menu — mobile only: Marketing + Logout */}
             {isMobile && (
               <div style={{position:'relative'}}>
@@ -369,6 +576,7 @@ export default function AdminShell({ title, children }: { title: string; childre
       </div>
 
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)}/>}
+      {deleteOpen && <DeleteOverlay onClose={() => setDeleteOpen(false)}/>}
     </div>
   )
 }

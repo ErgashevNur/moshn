@@ -116,7 +116,7 @@ Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) a
                                 setModalState(() => saving = false);
                                 ScaffoldMessenger.of(ctx).showSnackBar(
                                   SnackBar(
-                                    content: Text('Xatolik: ${e.toString().split('\n').first}'),
+                                    content: Text('Ошибка: ${e.toString().split('\n').first}'),
                                     backgroundColor: AppColors.danger,
                                     behavior: SnackBarBehavior.floating,
                                   ),

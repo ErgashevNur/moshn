@@ -14,15 +14,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await initLocalNotifications();
-  // Hybrid Composition ba'zi qurilmalarda qora ekran ko'rsatadi — Virtual Display ishlatamiz
-  AndroidYandexMap.useAndroidViewSurface = false;
+  AndroidYandexMap.useAndroidViewSurface = true;
 
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('uz'), Locale('ru')],
       path: 'assets/translations',
-      fallbackLocale: const Locale('uz'),
-      startLocale: const Locale('uz'),
+      fallbackLocale: const Locale('ru'),
+      startLocale: const Locale('ru'),
       child: const ProviderScope(child: MoshnApp()),
     ),
   );
