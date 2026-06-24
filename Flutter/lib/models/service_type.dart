@@ -24,8 +24,23 @@ class ServiceType {
         basePrice: ((json['basePrice'] ?? json['base_price'] ?? 0) as num).toInt(),
       );
 
-  String get name => nameUz;
+  static const _emojiMap = {
+    'balance':       '⚖️',
+    'disk_repair':   '🔩',
+    'tire_inflate':  '💨',
+    'tire_change':   '🔄',
+    'tire_storage':  '📦',
+    'vulcanize':     '🔥',
+    'podkachka':     '💨',
+    'perezobuvka':   '🔄',
+    'vulkanizatsiya':'🔥',
+    'balancing':     '⚖️',
+  };
+
+  String get emoji => _emojiMap[icon] ?? _emojiMap[slug] ?? '🛞';
+
+  String get name => nameRu.isNotEmpty ? nameRu : nameUz;
 
   String nameFor(String locale) =>
-      locale == 'ru' && nameRu.isNotEmpty ? nameRu : nameUz;
+      nameRu.isNotEmpty ? nameRu : nameUz;
 }

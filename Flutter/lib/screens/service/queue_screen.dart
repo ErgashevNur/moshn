@@ -137,7 +137,7 @@ class _QueueCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  booking.serviceType?.nameUz ?? '—',
+                  booking.serviceType?.name ?? '—',
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),

@@ -204,8 +204,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'role': 'owner',
         'full_name': _fullNameCtrl.text.trim(),
       });
-      final userData    = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
-      final updatedUser = User.fromJson(userData);
+      final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+      final accessToken  = payload['access_token']  as String?;
+      final refreshToken = payload['refresh_token'] as String?;
+      if (accessToken != null && refreshToken != null) {
+        await ApiClient.instance.saveTokens(access: accessToken, refresh: refreshToken);
+      }
+      final userMap     = (payload['user'] ?? payload) as Map<String, dynamic>;
+      final updatedUser = User.fromJson(userMap);
       ref.read(authProvider.notifier).setAuthenticated(updatedUser);
 
       try {
@@ -807,12 +813,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (type.icon.isNotEmpty) ...[
-                          Text(type.icon, style: const TextStyle(fontSize: 18)),
-                          const SizedBox(width: 8),
-                        ],
+                        Text(type.emoji, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
                         Text(
-                          type.nameUz,
+                          type.nameRu.isNotEmpty ? type.nameRu : type.nameUz,
                           style: AppTypography.labelMedium.copyWith(
                             color: selected
                                 ? AppColors.inverseText(context)
