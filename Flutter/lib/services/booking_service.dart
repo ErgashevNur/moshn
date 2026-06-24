@@ -43,7 +43,7 @@ class BookingService {
     await _dio.put('/bookings/$id/cancel', data: {'reason': reason});
   }
 
-  // --- Service roli uchun ---
+  // --- Для роли сервиса ---
 
   Future<List<Booking>> getShopBookings({String? status}) async {
     final params = <String, dynamic>{};
@@ -73,7 +73,7 @@ class BookingService {
     await _dio.put('/service/bookings/$id/cancel', data: {'reason': reason});
   }
 
-  // --- To'lov ---
+  // --- Оплата ---
 
   Future<Payment> generateQR(String bookingId) async {
     final resp = await _dio.post('/payments/$bookingId/qr');

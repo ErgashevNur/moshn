@@ -132,23 +132,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   String _errMsg(Object e) {
     if (e is DioException) {
-      // Ulanish / timeout xatosi
+      // Ошибка подключения / таймаут
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
-        return 'Server bilan ulanishda xatolik. Internet yoki WiFi ulanishingizni tekshiring.';
+        return 'Ошибка подключения к серверу. Проверьте интернет или Wi-Fi.';
       }
-      // Backend qaytargan xabar
+      // Сообщение, возвращённое backend'ом
       final data = e.response?.data;
       if (data is Map<String, dynamic>) {
         final msg = data['message'];
         if (msg is String && msg.isNotEmpty) return msg;
         if (msg is List && msg.isNotEmpty) return msg.join(', ');
       }
-      if (e.response?.statusCode == 401) return 'Email yoki parol noto\'g\'ri';
-      if (e.response?.statusCode == 400) return 'Ma\'lumotlar noto\'g\'ri';
-      if (e.response?.statusCode == 409) return 'Bu foydalanuvchi allaqachon mavjud';
+      if (e.response?.statusCode == 401) return 'Неверный email или пароль';
+      if (e.response?.statusCode == 400) return 'Неверные данные';
+      if (e.response?.statusCode == 409) return 'Этот пользователь уже существует';
     }
     return e.toString();
   }

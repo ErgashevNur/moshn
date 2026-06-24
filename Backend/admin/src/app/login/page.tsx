@@ -125,7 +125,7 @@ export default function LoginPage() {
   // ── Step 1: Send OTP ───────────────────────────────────────────────────────
   const sendOtp = async () => {
     const digits = rawDigits(phone)
-    if (digits.length !== 9) { setError('To\'liq telefon raqamini kiriting'); return }
+    if (digits.length !== 9) { setError('Введите полный номер телефона'); return }
     setLoading(true); setError('')
     try {
       await api.post('/auth/send-otp', { phone: `+998${digits}` })
@@ -133,13 +133,13 @@ export default function LoginPage() {
       setStep('otp')
       setResendKey(k => k + 1)
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'OTP yuborishda xatolik')
+      setError(e?.response?.data?.message || 'Ошибка при отправке кода')
     } finally { setLoading(false) }
   }
 
   // ── Step 2: Verify OTP ─────────────────────────────────────────────────────
   const verifyOtp = async () => {
-    if (otp.length !== 6) { setError('6 raqamli kodni kiriting'); return }
+    if (otp.length !== 6) { setError('Введите 6-значный код'); return }
     setLoading(true); setError('')
     try {
       const digits = rawDigits(phone)
@@ -156,17 +156,17 @@ export default function LoginPage() {
         localStorage.setItem('partner_user', JSON.stringify(user))
         router.push('/partner')
       } else {
-        setError('Bu raqam uchun kirish huquqi yo\'q')
+        setError('У этого номера нет доступа для входа')
         tokensRef.current = null
       }
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Kod noto\'g\'ri')
+      setError(e?.response?.data?.message || 'Неверный код')
     } finally { setLoading(false) }
   }
 
   // ── Step 3: Admin password ─────────────────────────────────────────────────
   const checkPassword = () => {
-    if (password !== 'Admin123!') { setError('Parol noto\'g\'ri'); return }
+    if (password !== 'Admin123!') { setError('Неверный пароль'); return }
     const t = tokensRef.current!
     localStorage.setItem('access_token', t.access)
     localStorage.setItem('refresh_token', t.refresh)
@@ -218,7 +218,7 @@ export default function LoginPage() {
           </div>
           <p style={{ color: 'var(--txt)', fontWeight: 700, fontSize: 22, letterSpacing: '-.03em' }}>Shina24</p>
           <p style={{ color: 'var(--txt3)', fontSize: 11, fontFamily: "'JetBrains Mono',monospace", marginTop: 4, textTransform: 'uppercase', letterSpacing: '.12em' }}>
-            {step === 'phone' ? 'Kirish' : step === 'otp' ? 'Tasdiqlash' : 'Admin paroli'}
+            {step === 'phone' ? 'Вход' : step === 'otp' ? 'Подтверждение' : 'Пароль администратора'}
           </p>
         </div>
 
@@ -239,7 +239,7 @@ export default function LoginPage() {
           {step === 'phone' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label style={label}>Telefon raqam</label>
+                <label style={label}>Номер телефона</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ height: 48, width: 80, borderRadius: 12, background: 'var(--surf)', border: '1px solid var(--hair2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--txt)', fontFamily: "'JetBrains Mono',monospace", flexShrink: 0 }}>
                     +998
@@ -261,7 +261,7 @@ export default function LoginPage() {
               {error && <div style={{ background: 'var(--redDim)', border: '1px solid rgba(229,56,43,.25)', borderRadius: 11, padding: '11px 14px', color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
               <button onClick={sendOtp} disabled={loading || rawDigits(phone).length !== 9} style={{ ...btn(), opacity: (loading || rawDigits(phone).length !== 9) ? 0.5 : 1 }}>
-                {loading ? 'Yuborilmoqda…' : 'SMS kod yuborish'}
+                {loading ? 'Отправка…' : 'Отправить SMS-код'}
               </button>
             </div>
           )}
@@ -270,7 +270,7 @@ export default function LoginPage() {
           {step === 'otp' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 13.5, color: 'var(--txt2)', marginBottom: 4 }}>Kod yuborildi:</p>
+                <p style={{ fontSize: 13.5, color: 'var(--txt2)', marginBottom: 4 }}>Код отправлен:</p>
                 <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', fontFamily: "'JetBrains Mono',monospace" }}>
                   +998 {phone}
                 </p>
@@ -282,19 +282,19 @@ export default function LoginPage() {
 
               <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--txt3)' }}>
                 {countdown > 0 ? (
-                  <span>Qayta yuborish: 0:{String(countdown).padStart(2, '0')}</span>
+                  <span>Повторная отправка: 0:{String(countdown).padStart(2, '0')}</span>
                 ) : (
                   <button onClick={resend} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt)', fontSize: 13, fontWeight: 600, textDecoration: 'underline' }}>
-                    Qayta yuborish
+                    Отправить повторно
                   </button>
                 )}
               </div>
 
               <button onClick={verifyOtp} disabled={loading || otp.length !== 6} style={{ ...btn(), opacity: (loading || otp.length !== 6) ? 0.5 : 1 }}>
-                {loading ? 'Tekshirilmoqda…' : 'Tasdiqlash'}
+                {loading ? 'Проверка…' : 'Подтвердить'}
               </button>
 
-              <button onClick={back} style={btn(false)}>← Orqaga</button>
+              <button onClick={back} style={btn(false)}>← Назад</button>
             </div>
           )}
 
@@ -307,11 +307,11 @@ export default function LoginPage() {
                     <rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                   </svg>
                 </div>
-                <p style={{ fontSize: 13.5, color: 'var(--txt2)' }}>Admin parolini kiriting</p>
+                <p style={{ fontSize: 13.5, color: 'var(--txt2)' }}>Введите пароль администратора</p>
               </div>
 
               <div>
-                <label style={label}>Parol</label>
+                <label style={label}>Пароль</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     ref={passRef}
@@ -338,17 +338,17 @@ export default function LoginPage() {
               {error && <div style={{ background: 'var(--redDim)', border: '1px solid rgba(229,56,43,.25)', borderRadius: 11, padding: '10px 14px', color: 'var(--red)', fontSize: 13 }}>{error}</div>}
 
               <button onClick={checkPassword} disabled={!password} style={{ ...btn(), opacity: !password ? 0.5 : 1 }}>
-                Kirish
+                Войти
               </button>
 
-              <button onClick={back} style={btn(false)}>← Orqaga</button>
+              <button onClick={back} style={btn(false)}>← Назад</button>
             </div>
           )}
 
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11.5, color: 'var(--txt3)', fontFamily: "'JetBrains Mono',monospace" }}>
-          000000 — test OTP kodi
+          000000 — тестовый код OTP
         </p>
       </div>
     </div>

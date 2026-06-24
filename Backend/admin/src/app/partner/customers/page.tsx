@@ -6,7 +6,7 @@ import Icon from '@/components/ui/Icon'
 import Toggle from '@/components/ui/Toggle'
 import partnerApi from '@/lib/partnerApi'
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 function fmtDate(d?: string | null) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('ru', { day:'2-digit', month:'2-digit', year:'numeric' })

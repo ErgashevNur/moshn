@@ -166,7 +166,7 @@ class OwnerHomeScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: r.isSmall ? 16 : 24),
 
-                  // Promo banner(lar) — backenddan kelgan faol promolar bo'lsagina ko'rinadi
+                  // Промо-баннер(ы) — показывается только если есть активные промо с backend'а
                   promosAsync.maybeWhen(
                     data: (promos) => promos.isEmpty
                         ? const SizedBox.shrink()
@@ -429,7 +429,7 @@ class _ServiceTypeGrid extends StatelessWidget {
   }
 }
 
-// ── Promo carousel (bir nechta faol banner bo'lsa) ───────────────────────────────
+// ── Промо-карусель (если активно несколько баннеров) ─────────────────────────────
 
 class _PromoCarousel extends StatefulWidget {
   final List<Promo> promos;
@@ -509,7 +509,7 @@ class _PromoBannerState extends State<_PromoBanner> {
   @override
   void initState() {
     super.initState();
-    // Banner ekranga chiqdi — bir martalik "view" hisoblanadi
+    // Баннер показался на экране — засчитывается одноразовый "view"
     PromoService().trackView(widget.promo.id);
   }
 

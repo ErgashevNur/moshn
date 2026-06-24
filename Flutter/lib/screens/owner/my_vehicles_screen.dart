@@ -170,13 +170,13 @@ class _CarCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // "Asosiy" chip + toggle
+          // Чип "Основной" + переключатель
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.sm),
             child: Row(
               children: [
-                _AsosiyChip(),
+                _PrimaryChip(),
                 const Spacer(),
                 CupertinoSwitch(
                   value: isActive,
@@ -222,7 +222,7 @@ class _CarCard extends StatelessWidget {
   }
 }
 
-class _AsosiyChip extends StatelessWidget {
+class _PrimaryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(

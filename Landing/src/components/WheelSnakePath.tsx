@@ -108,7 +108,7 @@ export default function WheelSnakePath() {
   })
 
   return (
-    <section ref={sectionRef} id="xizmat-yoli" className="relative h-[240vh] sm:h-[300vh]">
+    <section ref={sectionRef} id="how-it-works" className="relative h-[240vh] sm:h-[300vh]">
       <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="routeGrad" x1="0" y1="0" x2="0" y2="1">

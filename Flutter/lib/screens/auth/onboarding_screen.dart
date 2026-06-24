@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,32 +17,17 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _page = 0;
 
-  String _t(String uz, String ru) =>
-      context.locale.languageCode == 'ru' ? ru : uz;
-
   @override
   Widget build(BuildContext context) {
     final slides = [
       _SlideData(
-        title: _t(
-          'Eng yaqin shinomontaj — qo\'l ostingizda',
-          'Ближайший шиномонтаж — под рукой',
-        ),
-        sub: _t(
-          'Xizmatni tanlang, narxni ko\'ring, vaqtga yoziling — bir necha tegishda.',
-          'Выберите услугу, сравните цены и забронируйте время за пару касаний.',
-        ),
+        title: 'Ближайший шиномонтаж — под рукой',
+        sub: 'Выберите услугу, сравните цены и забронируйте время за пару касаний.',
         visual: 'search',
       ),
       _SlideData(
-        title: _t(
-          'Hozir yozeling — keyin to\'lang',
-          'Записывайтесь сейчас — платите позже',
-        ),
-        sub: _t(
-          'Bron qiling, xizmatdan keyin to\'lang — hammasi ilovada.',
-          'Забронируйте время и оплатите после — всё в приложении.',
-        ),
+        title: 'Записывайтесь сейчас — платите позже',
+        sub: 'Забронируйте время и оплатите после — всё в приложении.',
         visual: 'pay',
       ),
     ];
@@ -57,13 +41,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _LangToggle(),
                   TextButton(
                     onPressed: () => context.go('/phone'),
                     child: Text(
-                      _t('O\'tkazib yuborish', 'Пропустить'),
+                      'Пропустить',
                       style: AppTypography.labelMedium
                           .copyWith(color: AppColors.text2(context)),
                     ),
@@ -140,9 +123,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 22),
                   MButton(
-                    label: isLast
-                        ? _t('Boshlash', 'Начать')
-                        : _t('Keyingi', 'Далее'),
+                    label: isLast ? 'Начать' : 'Далее',
                     onTap: () {
                       if (isLast) {
                         context.go('/phone');
@@ -267,43 +248,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 class _SlideData {
   final String title, sub, visual;
   const _SlideData({required this.title, required this.sub, required this.visual});
-}
-
-class _LangToggle extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final lang = context.locale.languageCode;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.surface2(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_full),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: ['uz', 'ru'].map((l) {
-          final active = lang == l;
-          return GestureDetector(
-            onTap: () => context.setLocale(Locale(l)),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: active ? AppColors.bgElevated(context) : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSpacing.r_full),
-                boxShadow: active ? AppSpacing.shadow1 : null,
-              ),
-              child: Text(
-                l == 'uz' ? "O'z" : 'Ру',
-                style: AppTypography.soraSize(12.5, weight: FontWeight.w600)
-                    .copyWith(
-                  color: active ? AppColors.text(context) : AppColors.text2(context),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 }

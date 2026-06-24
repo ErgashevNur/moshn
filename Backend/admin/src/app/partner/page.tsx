@@ -15,9 +15,9 @@ const SC: Record<string, {label:string; bg:string; clr:string; dot:string}> = {
   cancelled:   {label:'Отменён',     bg:'var(--redDim)',    clr:'var(--red)',   dot:'var(--surf3)'},
 }
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString('uz', { hour:'2-digit', minute:'2-digit' })
+  return new Date(d).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' })
 }
 function isToday(d: string) {
   const t = new Date(d), n = new Date()
@@ -205,7 +205,7 @@ export default function PartnerTodayPage() {
   const [sel, setSel]           = useState<NB|null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [burgerOpen, setBurgerOpen] = useState(false)
-  const [shopName, setShopName] = useState('Shinomontaj')
+  const [shopName, setShopName] = useState('Шиномонтаж')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -270,8 +270,8 @@ export default function PartnerTodayPage() {
                     animation:'fade .15s ease',
                   }}>
                     {[
-                      {icon:'chart',  label:'Hisobot', href:'/partner/stats'},
-                      {icon:'wallet', label:'Narxlar', href:'/partner/prices'},
+                      {icon:'chart',  label:'Отчёт', href:'/partner/stats'},
+                      {icon:'wallet', label:'Цены', href:'/partner/prices'},
                     ].map((item, i) => (
                       <button key={i} onClick={() => { setBurgerOpen(false); router.push(item.href) }}
                         style={{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'13px 16px',background:'none',border:'none',cursor:'pointer',color:'var(--txt)',fontSize:14,fontWeight:600,textAlign:'left',borderBottom:'1px solid var(--hair)'}}>
@@ -282,7 +282,7 @@ export default function PartnerTodayPage() {
                     <button onClick={() => { setBurgerOpen(false); logout() }}
                       style={{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'13px 16px',background:'none',border:'none',cursor:'pointer',color:'var(--red)',fontSize:14,fontWeight:600,textAlign:'left'}}>
                       <Icon n="logout" s={18} col="var(--red)"/>
-                      Chiqish
+                      Выйти
                     </button>
                   </div>
                 </>

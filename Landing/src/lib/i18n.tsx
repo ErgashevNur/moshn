@@ -186,12 +186,14 @@ const DICTS: Record<Lang, Dict> = { uz, ru }
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: Dict }
 const I18nContext = createContext<Ctx | null>(null)
 
+// UZ остаётся в словаре как инфраструктура на будущее, но в интерфейсе
+// сейчас активен и выбираем только русский — переключатель языка скрыт.
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('uz')
+  const [lang, setLangState] = useState<Lang>('ru')
 
   useEffect(() => {
     const saved = window.localStorage.getItem('shina24-lang')
-    if (saved === 'uz' || saved === 'ru') setLangState(saved)
+    if (saved === 'ru') setLangState(saved)
   }, [])
 
   const setLang = useCallback((l: Lang) => {

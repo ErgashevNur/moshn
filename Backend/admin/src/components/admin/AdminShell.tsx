@@ -262,11 +262,11 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
     try {
       const ep = tab === 'user' ? `/admin/users/${confirm.id}` : `/admin/shops/${confirm.id}`
       const r = await api.delete(ep)
-      setToast({ ok: true, msg: r.data.data?.message || 'O\'chirildi' })
+      setToast({ ok: true, msg: r.data.data?.message || 'Удалено' })
       setItems(prev => prev.filter(i => i.id !== confirm.id))
       setConfirm(null)
     } catch (e: any) {
-      setToast({ ok: false, msg: e?.response?.data?.message || 'Xatolik yuz berdi' })
+      setToast({ ok: false, msg: e?.response?.data?.message || 'Произошла ошибка' })
     } finally { setDeleting(false) }
   }
 
@@ -282,8 +282,8 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
             <Icon n="trash" s={15} col="#fff"/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:14.5,fontWeight:700,color:'var(--txt)'}}>Super Admin — O&apos;chirish</div>
-            <div style={{fontSize:11.5,color:'var(--txt3)'}}>Ro&apos;yxatdan tanlang — ID shart emas</div>
+            <div style={{fontSize:14.5,fontWeight:700,color:'var(--txt)'}}>Супер-админ — Удаление</div>
+            <div style={{fontSize:11.5,color:'var(--txt3)'}}>Выберите из списка — ID не нужен</div>
           </div>
           <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--txt3)',padding:4,display:'grid',placeItems:'center'}}>
             <Icon n="x" s={18}/>
@@ -292,7 +292,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
 
         {/* Tabs */}
         <div style={{display:'flex',borderBottom:'1px solid var(--hair)',background:'var(--surf)',flexShrink:0}}>
-          {([['user','users','Mijozlar'],['shop','store','Servislar']] as const).map(([t,ic,label]) => (
+          {([['user','users','Пользователи'],['shop','store','Сервисы']] as const).map(([t,ic,label]) => (
             <button key={t} onClick={() => handleTabChange(t)}
               style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px 0',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:tab===t?700:500,color:tab===t?'var(--txt)':'var(--txt3)',borderBottom:tab===t?'2px solid var(--red)':'2px solid transparent',transition:'all .15s'}}>
               <Icon n={ic} s={14} col={tab===t?'var(--red)':'var(--txt3)'}/>
@@ -307,7 +307,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
           <div style={{display:'flex',alignItems:'center',gap:8,height:36,borderRadius:10,border:'1px solid var(--hair2)',background:'var(--bgE)',padding:'0 12px'}}>
             <Icon n="search" s={14} col="var(--txt3)"/>
             <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)}
-              placeholder={tab==='user' ? 'Ism, telefon raqami…' : 'Servis nomi, manzil…'}
+              placeholder={tab==='user' ? 'Имя, номер телефона…' : 'Название сервиса, адрес…'}
               style={{flex:1,background:'none',border:'none',fontSize:13.5,color:'var(--txt)',outline:'none',fontFamily:'inherit'}}/>
             {loading && <div style={{width:14,height:14,borderRadius:'50%',border:'2px solid var(--hair2)',borderTopColor:'var(--red)',animation:'spin .7s linear infinite',flexShrink:0}}/>}
             {q && <button onClick={() => setQ('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--txt3)',padding:0,display:'grid',placeItems:'center'}}><Icon n="x" s={14}/></button>}
@@ -326,19 +326,19 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
         {confirm && (
           <div style={{padding:'12px 16px',background:'var(--amberDim)',borderBottom:'1px solid rgba(245,158,11,.3)',flexShrink:0}}>
             <div style={{fontSize:13,fontWeight:600,color:'var(--amber)',marginBottom:8}}>
-              ⚠️ &quot;{tab==='user'?confirm.fullName:confirm.shopName}&quot; ni o&apos;chirishni tasdiqlaysizmi?
+              ⚠️ Подтвердите удаление &quot;{tab==='user'?confirm.fullName:confirm.shopName}&quot;?
             </div>
             <div style={{fontSize:11.5,color:'var(--txt3)',marginBottom:10,fontFamily:"'JetBrains Mono',monospace",wordBreak:'break-all'}}>ID: {confirm.id}</div>
             <div style={{display:'flex',gap:8}}>
               <button onClick={doDelete} disabled={deleting}
                 style={{height:34,padding:'0 16px',borderRadius:8,border:'none',background:'var(--red)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6,opacity:deleting?.6:1}}>
                 {deleting
-                  ? <><div style={{width:13,height:13,borderRadius:'50%',border:'2px solid rgba(255,255,255,.4)',borderTopColor:'#fff',animation:'spin .7s linear infinite'}}/> O&apos;chirilmoqda…</>
-                  : <><Icon n="trash" s={13} col="#fff"/> Ha, o&apos;chir</>}
+                  ? <><div style={{width:13,height:13,borderRadius:'50%',border:'2px solid rgba(255,255,255,.4)',borderTopColor:'#fff',animation:'spin .7s linear infinite'}}/> Удаление…</>
+                  : <><Icon n="trash" s={13} col="#fff"/> Да, удалить</>}
               </button>
               <button onClick={() => setConfirm(null)} disabled={deleting}
                 style={{height:34,padding:'0 14px',borderRadius:8,border:'1px solid var(--hair2)',background:'var(--surf)',color:'var(--txt2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                Bekor
+                Отмена
               </button>
             </div>
           </div>
@@ -348,7 +348,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
         <div style={{overflowY:'auto',flex:1}}>
           {!loading && items.length === 0 ? (
             <div style={{padding:'36px',textAlign:'center',color:'var(--txt3)',fontSize:13}}>
-              {q ? `"${q}" bo'yicha hech narsa topilmadi` : 'Ma\'lumot yo\'q'}
+              {q ? `По запросу "${q}" ничего не найдено` : 'Нет данных'}
             </div>
           ) : tab === 'user' ? (
             items.map(u => (
@@ -367,7 +367,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => setConfirm(confirm?.id===u.id ? null : u)}
                   style={{width:32,height:32,borderRadius:8,border:'1px solid',borderColor:confirm?.id===u.id?'var(--red)':'var(--hair2)',background:confirm?.id===u.id?'var(--redDim)':'none',display:'grid',placeItems:'center',cursor:'pointer',flexShrink:0,transition:'all .15s'}}
-                  title="O'chirish">
+                  title="Удалить">
                   <Icon n="trash" s={15} col={confirm?.id===u.id?'var(--red)':'var(--txt3)'}/>
                 </button>
               </div>
@@ -384,7 +384,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
                     <span style={{fontSize:11,padding:'1px 7px',borderRadius:5,flexShrink:0,
                       background:s.verificationStatus==='verified'?'var(--greenDim)':s.verificationStatus==='pending'?'var(--amberDim)':'var(--redDim)',
                       color:s.verificationStatus==='verified'?'var(--green)':s.verificationStatus==='pending'?'var(--amber)':'var(--red)'}}>
-                      {s.verificationStatus==='verified'?'Aktiv':s.verificationStatus==='pending'?'Kutmoqda':'Rad'}
+                      {s.verificationStatus==='verified'?'Активен':s.verificationStatus==='pending'?'На проверке':'Заблокирован'}
                     </span>
                   </div>
                   <div style={{fontSize:12,color:'var(--txt3)'}}>{s.user?.phone||s.address||'—'}</div>
@@ -393,7 +393,7 @@ function DeleteOverlay({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => setConfirm(confirm?.id===s.id ? null : s)}
                   style={{width:32,height:32,borderRadius:8,border:'1px solid',borderColor:confirm?.id===s.id?'var(--red)':'var(--hair2)',background:confirm?.id===s.id?'var(--redDim)':'none',display:'grid',placeItems:'center',cursor:'pointer',flexShrink:0,transition:'all .15s'}}
-                  title="O'chirish">
+                  title="Удалить">
                   <Icon n="trash" s={15} col={confirm?.id===s.id?'var(--red)':'var(--txt3)'}/>
                 </button>
               </div>
@@ -531,7 +531,7 @@ export default function AdminShell({ title, children }: { title: string; childre
             {/* Super delete */}
             <button
               onClick={() => setDeleteOpen(true)}
-              title="O'chirish (Ctrl+Shift+Del)"
+              title="Удалить (Ctrl+Shift+Del)"
               style={{width:36,height:36,borderRadius:9,background:'var(--redDim)',border:'1px solid rgba(229,56,43,.35)',display:'grid',placeItems:'center',color:'var(--red)',cursor:'pointer',flexShrink:0,transition:'background .15s'}}
               onMouseEnter={e=>(e.currentTarget.style.background='rgba(229,56,43,.22)')}
               onMouseLeave={e=>(e.currentTarget.style.background='var(--redDim)')}

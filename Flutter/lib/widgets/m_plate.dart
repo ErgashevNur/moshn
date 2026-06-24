@@ -3,12 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 enum _Country { uzbekistan, russia, unknown }
 
-/// Davlat raqamini real ko'rinishda ko'rsatadigan display widget.
-/// Birinchi belgiga qarab O'zbekiston yoki Rossiya dizayni avtomatik tanlanadi.
+/// Виджет, отображающий госномер в реалистичном виде.
+/// По первому символу автоматически выбирается дизайн Узбекистана или России.
 class MPlate extends StatelessWidget {
   final String plate;
 
-  /// true = katta (karta ichida), false = kichik (ro'yxatda)
+  /// true = крупный (внутри карточки), false = мелкий (в списке)
   final bool large;
 
   const MPlate({super.key, required this.plate, this.large = false});
@@ -94,7 +94,7 @@ class MPlate extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────
-//  O'ZBEKISTON  [ • 01 ║ A 123 EA  ≡ UZ ]
+//  УЗБЕКИСТАН  [ • 01 ║ A 123 EA  ≡ UZ ]
 // ─────────────────────────────────────────
 class _UzPlateDisplay extends StatelessWidget {
   final String region;
@@ -142,7 +142,7 @@ class _UzPlateDisplay extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Chap: dot + hudud kodi
+            // Слева: точка + код региона
             Container(
               padding: EdgeInsets.symmetric(horizontal: large ? 10 : 6),
               color: Colors.white,
@@ -170,9 +170,9 @@ class _UzPlateDisplay extends StatelessWidget {
                 ],
               ),
             ),
-            // Qalin ajratgich
+            // Толстый разделитель
             Container(width: large ? 3.5 : 2.5, color: const Color(0xFF111111)),
-            // Asosiy matn
+            // Основной текст
             Padding(
               padding: EdgeInsets.symmetric(horizontal: large ? 14 : 8),
               child: Center(
@@ -186,7 +186,7 @@ class _UzPlateDisplay extends StatelessWidget {
                 ),
               ),
             ),
-            // Yupqa chiziq
+            // Тонкая линия
             Container(width: 1, color: const Color(0xFFDDDDDD)),
             // UZ badge
             _UzBadgeDisplay(large: large, width: badgeW),
@@ -294,7 +294,7 @@ class _RuPlateDisplay extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Asosiy matn
+            // Основной текст
             Padding(
               padding: EdgeInsets.symmetric(horizontal: large ? 16 : 10),
               child: Center(
@@ -308,7 +308,7 @@ class _RuPlateDisplay extends StatelessWidget {
                 ),
               ),
             ),
-            // Yupqa chiziq
+            // Тонкая линия
             Container(width: 1, color: const Color(0xFFDDDDDD)),
             // RUS badge
             _RuBadgeDisplay(region: region, large: large, width: badgeW),
@@ -389,7 +389,7 @@ class _RuBadgeDisplay extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────
-//  Noma'lum format — oddiy ko'rsatish
+//  Неизвестный формат — простое отображение
 // ─────────────────────────────────────────
 class _PlainPlate extends StatelessWidget {
   final String text;

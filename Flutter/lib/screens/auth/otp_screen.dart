@@ -38,9 +38,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   int _countdown = _resendSecs;
   Timer? _timer;
 
-  String _t(String uz, String ru) =>
-      context.locale.languageCode == 'ru' ? ru : uz;
-
   String get _code => _controllers.map((c) => c.text).join();
   bool get _filled => _code.length == _len;
 
@@ -221,7 +218,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               // ── title ────────────────────────────────────────────────
               Text(
-                _t('Tasdiqlash kodi', 'Код подтверждения'),
+                'Код подтверждения',
                 style: AppTypography.soraSize(keyboardOpen ? 22 : 26,
                         weight: FontWeight.w700)
                     .copyWith(color: AppColors.text(context), height: 1.1),
@@ -233,7 +230,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 text: TextSpan(
                   style: AppTypography.body.copyWith(color: AppColors.text2(context)),
                   children: [
-                    TextSpan(text: _t('Kod yuborildi: ', 'Код отправлен: ')),
+                    TextSpan(text: 'Код отправлен: '),
                     TextSpan(
                       text: _maskedPhone(),
                       style: AppTypography.body.copyWith(
@@ -272,7 +269,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               Center(
                 child: _countdown > 0
                     ? Text(
-                        '${_t('Qayta yuborish', 'Повторная отправка')} '
+                        'Повторная отправка '
                         '0:${_countdown.toString().padLeft(2, '0')}',
                         style: AppTypography.labelMedium
                             .copyWith(color: AppColors.text3(context)),
@@ -280,7 +277,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     : GestureDetector(
                         onTap: _resend,
                         child: Text(
-                          _t('Qayta yuborish', 'Отправить снова'),
+                          'Отправить снова',
                           style: AppTypography.labelMedium.copyWith(
                             color: AppColors.text(context),
                             decoration: TextDecoration.underline,
@@ -294,7 +291,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               // ── submit button ────────────────────────────────────────
               MButton(
-                label: _t('Tasdiqlash', 'Подтвердить'),
+                label: 'Подтвердить',
                 onTap: _filled ? _submit : null,
                 enabled: _filled,
                 loading: _loading,

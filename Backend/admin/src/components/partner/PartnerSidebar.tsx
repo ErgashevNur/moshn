@@ -127,19 +127,19 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
       {/* Extra items: Report, Prices */}
       <div style={{width:34,height:1,background:'var(--hair)',margin:'6px 0'}}/>
       <button onClick={() => router.push('/partner/stats')} style={btnStyle(isActive('/partner/stats'))}>
-        <Icon n="chart" s={20}/>Hisobot
+        <Icon n="chart" s={20}/>Отчёт
       </button>
       <button onClick={() => router.push('/partner/prices')} style={btnStyle(isActive('/partner/prices'))}>
-        <Icon n="wallet" s={20}/>Narxlar
+        <Icon n="wallet" s={20}/>Цены
       </button>
 
       {/* Theme + Logout */}
       <div style={{width:34,height:1,background:'var(--hair)',margin:'6px 0'}}/>
       <button onClick={toggleTheme} style={btnStyle()}>
-        <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Tema
+        <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Тема
       </button>
       <button onClick={logout} style={{...btnStyle(), color:'var(--red)'}}>
-        <Icon n="logout" s={20} col="var(--red)"/>Chiqish
+        <Icon n="logout" s={20} col="var(--red)"/>Выйти
       </button>
     </div>
   )

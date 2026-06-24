@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 import AdminShell from '@/components/admin/AdminShell'
 import api from '@/lib/api'
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('uz', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+  return new Date(d).toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
 
 const MN = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек']

@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/colors.dart';
@@ -19,9 +18,6 @@ class _ServiceTourScreenState extends State<ServiceTourScreen>
   int _page = 0;
   late final AnimationController _fadeCtrl;
   late Animation<double> _fade;
-
-  String _t(String uz, String ru) =>
-      context.locale.languageCode == 'ru' ? ru : uz;
 
   @override
   void initState() {
@@ -86,7 +82,7 @@ class _ServiceTourScreenState extends State<ServiceTourScreen>
                   TextButton(
                     onPressed: widget.onDone,
                     child: Text(
-                      _t("O'tkazib yuborish", 'Пропустить'),
+                      'Пропустить',
                       style: AppTypography.labelMedium
                           .copyWith(color: AppColors.text2(context)),
                     ),
@@ -143,9 +139,7 @@ class _ServiceTourScreenState extends State<ServiceTourScreen>
                     ),
                   Expanded(
                     child: MButton(
-                      label: isLast
-                          ? _t('Boshlash', 'Начать')
-                          : _t('Keyingi', 'Далее'),
+                      label: isLast ? 'Начать' : 'Далее',
                       onTap: () {
                         if (isLast) {
                           widget.onDone();
@@ -172,66 +166,39 @@ class _ServiceTourScreenState extends State<ServiceTourScreen>
           icon: Icons.calendar_today_rounded,
           color: const Color(0xFF4A90E2),
           tabIndex: 0,
-          title: _t(
-            'Bronlar real vaqtda keladi',
-            'Брони приходят в реальном времени',
-          ),
-          sub: _t(
-            'Mijoz bron qilgan zahoti ekranda paydo bo\'ladi. Tasdiqlang yoki bekor qiling.',
-            'Как только клиент записывается — запись сразу появляется на экране.',
-          ),
+          title: 'Брони приходят в реальном времени',
+          sub: 'Как только клиент записывается — запись сразу появляется на экране.',
         ),
         _TourSlide(
           icon: Icons.format_list_bulleted_rounded,
           color: const Color(0xFF7B61FF),
           tabIndex: 1,
-          title: _t(
-            'Navbatni boshqaring',
-            'Управляйте очередью',
-          ),
-          sub: _t(
-            'Barcha bronlarni ko\'ring, sana bo\'yicha filtrlang va «Bajarildi» ga o\'tkazing.',
-            'Просматривайте все записи, фильтруйте по дате и переводите в статус «Выполнено».',
-          ),
+          title: 'Управляйте очередью',
+          sub:
+              'Просматривайте все записи, фильтруйте по дате и переводите в статус «Выполнено».',
         ),
         _TourSlide(
           icon: Icons.people_rounded,
           color: const Color(0xFF34C759),
           tabIndex: 2,
-          title: _t(
-            'Mijozlar bazasi — CRM',
-            'База клиентов — CRM',
-          ),
-          sub: _t(
-            'VIP belgilang, eslatmalar qo\'shing va mijozning tashrif tarixini ko\'ring.',
-            'Отмечайте VIP, добавляйте заметки и просматривайте историю посещений.',
-          ),
+          title: 'База клиентов — CRM',
+          sub:
+              'Отмечайте VIP, добавляйте заметки и просматривайте историю посещений.',
         ),
         _TourSlide(
           icon: Icons.credit_card_rounded,
           color: const Color(0xFFFF9500),
           tabIndex: 3,
-          title: _t(
-            'To\'lovni qabul qiling',
-            'Принимайте оплату',
-          ),
-          sub: _t(
-            'QR kod orqali mijoz to\'lovini bir teg bilan qabul qiling.',
-            'Принимайте оплату от клиента одним касанием через QR-код.',
-          ),
+          title: 'Принимайте оплату',
+          sub: 'Принимайте оплату от клиента одним касанием через QR-код.',
         ),
         _TourSlide(
           icon: Icons.store_rounded,
           color: const Color(0xFFFF3B30),
           tabIndex: 4,
-          title: _t(
-            'Servis profilingizni to\'ldiring',
-            'Заполните профиль сервиса',
-          ),
-          sub: _t(
-            'Ish vaqti, xizmat turlari va narxlarni kiriting — mijozlar to\'g\'ri ma\'lumotni ko\'radi.',
-            'Укажите часы работы, виды услуг и цены — клиенты увидят актуальную информацию.',
-          ),
+          title: 'Заполните профиль сервиса',
+          sub:
+              'Укажите часы работы, виды услуг и цены — клиенты увидят актуальную информацию.',
         ),
       ];
 }

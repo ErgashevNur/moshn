@@ -334,14 +334,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     setState(() => _loading = true);
 
     try {
-      // 1. Rol va ism saqlash — javobda yangi tokenlar keladi (role o'zgardi)
+      // 1. Сохраняем роль и имя — в ответе придут новые токены (роль изменилась)
       final resp = await ApiClient.instance.dio.put('/profile/role', data: {
         'role': 'service',
         'full_name': _fullNameCtrl.text.trim(),
       });
       final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
 
-      // Yangi tokenlarni saqlash — ServiceRoleGuard uchun zarur
+      // Сохраняем новые токены — нужны для ServiceRoleGuard
       final accessToken  = payload['access_token']  as String?;
       final refreshToken = payload['refresh_token'] as String?;
       if (accessToken != null && refreshToken != null) {
@@ -352,7 +352,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final updatedUser = User.fromJson(userMap);
       ref.read(authProvider.notifier).setAuthenticated(updatedUser);
 
-      // 2. Shop profili yaratish (camelCase — backend bilan mos)
+      // 2. Создаём профиль сервиса (camelCase — соответствует backend)
       await ShopService().createProfile({
         'shopName':     _shopNameCtrl.text.trim(),
         'address':      _addressCtrl.text.trim(),
@@ -362,7 +362,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'longitude':    _lng,
       });
 
-      // Router authenticated → /service ga redirect qiladi
+      // Router (authenticated) → перенаправит на /service
     } catch (_) {
       if (mounted) {
         setState(() => _loading = false);
@@ -549,7 +549,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ─── Step 0: Usta ismi ────────────────────────────────────
+  // ─── Шаг 0: Имя мастера ───────────────────────────────────
 
   Widget _stepName() {
     return SingleChildScrollView(
@@ -579,7 +579,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ─── Step 1: Servis nomi ──────────────────────────────────
+  // ─── Шаг 1: Название сервиса ──────────────────────────────
 
   Widget _stepShopName() {
     return SingleChildScrollView(
@@ -609,7 +609,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ─── Step 2: Manzil (xarita) ─────────────────────────────
+  // ─── Шаг 2: Адрес (карта) ─────────────────────────────────
 
   Widget _stepAddress() {
     return Column(
@@ -747,7 +747,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ─── Step 3: Xizmat turlari ───────────────────────────────
+  // ─── Шаг 3: Виды услуг ────────────────────────────────────
 
   Widget _stepServiceTypes() {
     return SingleChildScrollView(

@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,8 +84,6 @@ class PricesScreen extends ConsumerStatefulWidget {
 }
 
 class _PricesScreenState extends ConsumerState<PricesScreen> {
-  bool get _ru => context.locale.languageCode == 'ru';
-
   final Map<String, (TextEditingController, TextEditingController)> _ctrls = {};
   final Map<String, String> _selectedCurrency = {};
   bool _saving = false;
@@ -133,7 +130,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
 
     if (prices.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_ru ? 'Укажите хотя бы одну цену' : 'Kamida bitta narx kiriting'),
+        content: const Text('Укажите хотя бы одну цену'),
         backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -147,7 +144,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
       ref.invalidate(_pricesDataProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_ru ? 'Цены сохранены ✓' : 'Narxlar saqlandi ✓',
+          content: Text('Цены сохранены ✓',
               style: AppTypography.labelMedium.copyWith(color: Colors.white)),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
@@ -158,7 +155,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_ru ? 'Ошибка: $e' : 'Xatolik: $e'),
+          content: Text('Ошибка: $e'),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
@@ -189,7 +186,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
                     icon: Icon(Icons.arrow_back_rounded, color: AppColors.text(context)),
                   ),
                   Expanded(
-                    child: Text(_ru ? 'Цены на услуги' : 'Xizmat narxlari',
+                    child: Text('Цены на услуги',
                         style: AppTypography.displayLarge),
                   ),
                 ],
@@ -199,9 +196,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Text(
-                _ru
-                    ? 'Укажите диапазон и валюту для каждой услуги'
-                    : 'Har bir xizmat uchun narx va valyutani tanlang',
+                'Укажите диапазон и валюту для каждой услуги',
                 style: AppTypography.labelSmall.copyWith(color: AppColors.text2(context)),
               ),
             ),
@@ -217,11 +212,11 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
                         children: [
                           Icon(Icons.store_outlined, size: 48, color: AppColors.text3(context)),
                           const SizedBox(height: AppSpacing.md),
-                          Text(_ru ? 'Виды услуг не найдены' : 'Xizmat turlari topilmadi',
+                          Text('Виды услуг не найдены',
                               style: AppTypography.titleSmall.copyWith(color: AppColors.text2(context))),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            _ru ? 'Сначала выберите виды услуг в профиле' : 'Avval profilingizda xizmat turlarini tanlang',
+                            'Сначала выберите виды услуг в профиле',
                             style: AppTypography.labelSmall.copyWith(color: AppColors.text3(context)),
                             textAlign: TextAlign.center,
                           ),
@@ -253,12 +248,12 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_ru ? 'Произошла ошибка' : 'Xatolik yuz berdi',
+                      Text('Произошла ошибка',
                           style: AppTypography.titleSmall.copyWith(color: AppColors.text2(context))),
                       const SizedBox(height: AppSpacing.sm),
                       TextButton(
                         onPressed: () => ref.invalidate(_pricesDataProvider),
-                        child: Text(_ru ? 'Повторить' : 'Qayta urinish'),
+                        child: const Text('Повторить'),
                       ),
                     ],
                   ),
@@ -289,7 +284,7 @@ class _PricesScreenState extends ConsumerState<PricesScreen> {
                           width: 22, height: 22,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: AppColors.inverseText(context)))
-                      : Text(_ru ? 'Сохранить' : 'Saqlash',
+                      : Text('Сохранить',
                           style: AppTypography.labelMedium.copyWith(
                               color: AppColors.inverseText(context),
                               fontWeight: FontWeight.w600)),
@@ -331,9 +326,7 @@ class _PriceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ru   = context.locale.languageCode == 'ru';
-    final name = ru && type.nameRu.isNotEmpty ? type.nameRu : type.nameUz;
-    final sub  = ru ? type.nameUz : type.nameRu;
+    final name = type.nameRu.isNotEmpty ? type.nameRu : type.nameUz;
     final cur  = _getCur(selectedCurrency);
 
     return SectionCard(
@@ -357,10 +350,6 @@ class _PriceRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name, style: AppTypography.titleSmall),
-                    if (sub.isNotEmpty)
-                      Text(sub,
-                          style: AppTypography.labelSmall
-                              .copyWith(color: AppColors.text3(context))),
                   ],
                 ),
               ),
@@ -374,7 +363,7 @@ class _PriceRow extends StatelessWidget {
               Expanded(
                 child: _PriceField(
                   controller: minCtrl,
-                  label: ru ? 'Мин. цена' : 'Min narx',
+                  label: 'Мин. цена',
                   hint: '0',
                   suffix: cur.symbol,
                 ),
@@ -388,7 +377,7 @@ class _PriceRow extends StatelessWidget {
               Expanded(
                 child: _PriceField(
                   controller: maxCtrl,
-                  label: ru ? 'Макс. цена' : 'Max narx',
+                  label: 'Макс. цена',
                   hint: '0',
                   suffix: cur.symbol,
                 ),

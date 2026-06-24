@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/colors.dart';
@@ -61,46 +60,38 @@ class _ServiceCoachMarkState extends State<ServiceCoachMark>
   }
 
   _StepData _dataForStep(int step) {
-    final uz = context.locale.languageCode != 'ru';
     switch (step) {
       case 0:
         return _StepData(
-          title: uz ? 'Bugungi bronlar' : 'Сегодняшние записи',
-          sub: uz
-              ? 'Bu bo\'limda bugungi barcha bronlar ko\'rinadi. Mijoz bron qilsa — shu yerda darhol paydo bo\'ladi.'
-              : 'Здесь отображаются все записи на сегодня. Как только клиент забронирует — запись сразу появится здесь.',
+          title: 'Сегодняшние записи',
+          sub:
+              'Здесь отображаются все записи на сегодня. Как только клиент забронирует — запись сразу появится здесь.',
           shape: _SpotShape.roundedRect,
         );
       case 1:
         return _StepData(
-          title: uz ? 'Navbat' : 'Очередь',
-          sub: uz
-              ? 'Barcha bronlarni boshqaring: tasdiqlang, bajarildi qiling, bekor qiling.'
-              : 'Управляйте всеми записями: подтверждайте, завершайте, отменяйте.',
+          title: 'Очередь',
+          sub: 'Управляйте всеми записями: подтверждайте, завершайте, отменяйте.',
           shape: _SpotShape.roundedRect,
         );
       case 2:
         return _StepData(
-          title: uz ? 'Mijozlar bazasi' : 'База клиентов',
-          sub: uz
-              ? 'Bu yerda mijozlaringiz ro\'yxati. VIP belgilang, eslatma qo\'shing, tashrif tarixini ko\'ring.'
-              : 'Список ваших клиентов. Отмечайте VIP, добавляйте заметки, просматривайте историю визитов.',
+          title: 'База клиентов',
+          sub:
+              'Список ваших клиентов. Отмечайте VIP, добавляйте заметки, просматривайте историю визитов.',
           shape: _SpotShape.roundedRect,
         );
       case 3:
         return _StepData(
-          title: uz ? 'Terminal — To\'lov' : 'Терминал — Оплата',
-          sub: uz
-              ? 'Mijozdan QR orqali to\'lovni shu yerda qabul qiling.'
-              : 'Принимайте оплату от клиентов через QR-код прямо здесь.',
+          title: 'Терминал — Оплата',
+          sub: 'Принимайте оплату от клиентов через QR-код прямо здесь.',
           shape: _SpotShape.roundedRect,
         );
       default: // step 4: burger
         return _StepData(
-          title: uz ? '☰ Narxlarni belgilang' : '☰ Установите цены',
-          sub: uz
-              ? 'Bu tugmani bosing → «Narxlar» ni tanlang va xizmatlaringiz narxini kiriting. Mijozlar shu narxlarni ko\'radi!'
-              : 'Нажмите эту кнопку → выберите «Цены» и укажите стоимость услуг. Клиенты увидят эти цены!',
+          title: '☰ Установите цены',
+          sub:
+              'Нажмите эту кнопку → выберите «Цены» и укажите стоимость услуг. Клиенты увидят эти цены!',
           shape: _SpotShape.circle,
         );
     }
@@ -120,7 +111,6 @@ class _ServiceCoachMarkState extends State<ServiceCoachMark>
     final key = _keyForStep(_step);
     final rect = _rectFor(key);
     final data = _dataForStep(_step);
-    final uz = context.locale.languageCode != 'ru';
 
     if (rect == null) return const SizedBox.shrink();
 
@@ -233,8 +223,8 @@ class _ServiceCoachMarkState extends State<ServiceCoachMark>
               step: _step,
               total: _totalSteps,
               isLast: _isLast,
-              nextLabel: uz ? (_isLast ? 'Tushundim!' : 'Keyingi') : (_isLast ? 'Понятно!' : 'Далее'),
-              skipLabel: uz ? "O'tkazish" : 'Пропустить',
+              nextLabel: _isLast ? 'Понятно!' : 'Далее',
+              skipLabel: 'Пропустить',
               onNext: _next,
               onSkip: widget.onDone,
             ),

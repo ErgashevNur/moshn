@@ -26,7 +26,7 @@ class MyBookingsScreen extends ConsumerStatefulWidget {
 }
 
 class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
-  int _tab = 0; // 0=Kelgusi, 1=O'tgan
+  int _tab = 0; // 0=Будущие, 1=Прошедшие
 
   static const _upcomingStatuses = {
     'pending', 'confirmed', 'in_progress'
