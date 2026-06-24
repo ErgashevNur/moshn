@@ -15,13 +15,13 @@ export default function Benefits() {
   const items = tab === 'clients' ? t.benefits.clients : t.benefits.services
 
   return (
-    <section id="afzalliklar" className="relative py-20 sm:py-24 px-5 sm:px-8 bg-bgE overflow-hidden">
+    <section id="benefits" className="relative py-20 sm:py-24 px-5 sm:px-8 bg-bgE overflow-hidden">
       <div
         className="absolute inset-0 pointer-events-none opacity-60"
         style={{ background: 'radial-gradient(45% 35% at 15% 0%, rgba(212,168,67,.08), transparent 70%)' }}
       />
-      <span id="mijoz" className="absolute -top-16" />
-      <span id="servis" className="absolute -top-16" />
+      <span id="clients" className="absolute -top-16" />
+      <span id="services" className="absolute -top-16" />
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-9 sm:mb-10">
           <span className="text-gold text-[12.5px] font-bold uppercase tracking-[.08em]">{t.benefits.eyebrow}</span>

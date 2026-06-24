@@ -102,7 +102,7 @@ class ServiceCategoryScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Servislar ro'yxati ───────────────────────────────────────────────
+          // ── Список сервисов ──────────────────────────────────────────────────
           shopsAsync.when(
             data: (shops) {
               if (shops.isEmpty) {
@@ -231,7 +231,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── Bo'sh holat ───────────────────────────────────────────────────────────────
+// ── Пустое состояние ─────────────────────────────────────────────────────────
 
 class _EmptyShops extends StatelessWidget {
   final Color accent;

@@ -8,9 +8,9 @@ import partnerApi from '@/lib/partnerApi'
 
 type Step = 'select' | 'nfc' | 'qr' | 'done'
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString('uz', { hour:'2-digit', minute:'2-digit' })
+  return new Date(d).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' })
 }
 
 export default function PartnerTerminalPage() {

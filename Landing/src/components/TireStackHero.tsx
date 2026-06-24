@@ -51,7 +51,7 @@ export default function TireStackHero() {
               {t.hero.btnDownload}
             </a>
             <a
-              href="#xizmat-yoli"
+              href="#how-it-works"
               className="h-[50px] px-7 rounded-full border border-white/[.14] text-txt font-semibold text-[15px] flex items-center justify-center hover:bg-white/[.05] transition-all"
             >
               {t.hero.btnHow}

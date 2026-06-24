@@ -125,7 +125,7 @@ class _CustomerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Mashina (asosiy) ──────────────────────────────
+          // ── Автомобиль (основное) ──────────────────────────────
           Row(
             children: [
               Container(
@@ -167,12 +167,12 @@ class _CustomerCard extends StatelessWidget {
               ),
             ],
           ),
-          // ── Ajratgich ──────────────────────────────────────
+          // ── Разделитель ────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Container(height: 0.5, color: AppColors.hairline(context)),
           ),
-          // ── Mijoz (ikkinchi darajali) ──────────────────────
+          // ── Клиент (второстепенное) ──────────────────────
           Row(
             children: [
               Container(

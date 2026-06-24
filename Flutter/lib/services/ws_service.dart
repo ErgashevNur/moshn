@@ -10,9 +10,9 @@ class WsEvent {
   const WsEvent({required this.type, required this.data});
 }
 
-/// Singleton WebSocket xizmat. Servis roli uchun real-vaqt bron bildirshnomalar.
-/// connect() → ulaning. disconnect() → uzing.
-/// Auto-reconnect: uzilsa 2s, 4s, 8s... max 30s kutib qayta ulanadi.
+/// Singleton-сервис WebSocket. Уведомления о бронированиях в реальном времени для роли сервиса.
+/// connect() → подключиться. disconnect() → отключиться.
+/// Auto-reconnect: при разрыве 2с, 4с, 8с... максимум 30с, затем повторное подключение.
 class WsService {
   WsService._();
   static final WsService instance = WsService._();

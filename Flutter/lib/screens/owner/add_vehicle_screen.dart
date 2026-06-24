@@ -65,7 +65,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return 'Server bilan ulanishda xatolik. WiFi ulanishingizni tekshiring.';
+        return 'Ошибка подключения к серверу. Проверьте подключение к Wi-Fi.';
       }
       final data = e.response?.data;
       if (data is Map<String, dynamic>) {

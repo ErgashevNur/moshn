@@ -64,7 +64,7 @@ function Toast({ t, onClose }: { t: WSToast; onClose: () => void }) {
             )}
             {t.booking.totalPrice > 0 && (
               <span style={{fontSize:11.5, background:'var(--surf2)', color:'var(--green)', padding:'2px 8px', borderRadius:6, fontFamily:"'JetBrains Mono',monospace", fontWeight:700}}>
-                {t.booking.totalPrice.toLocaleString('uz')} сум
+                {t.booking.totalPrice.toLocaleString('ru-RU')} сум
               </span>
             )}
           </div>
@@ -88,17 +88,17 @@ function usePartnerWS(onMessage: (data: any) => void) {
   const mountedRef = useRef(false)
   const onMsgRef   = useRef(onMessage)
 
-  // onMessage ref ni har render yangilab turadi — WS qayta ulanmaydi
+  // обновляем ref onMessage при каждом рендере — WS не переподключается
   useEffect(() => { onMsgRef.current = onMessage })
 
   useEffect(() => {
-    if (mountedRef.current) return   // StrictMode ikkinchi chaqiruvini bloklash
+    if (mountedRef.current) return   // блокируем повторный вызов в StrictMode
     mountedRef.current = true
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v1'
 
-    // Token muddati tugaganda — yangi token olib qayta ulanamiz;
-    // refresh ham ishlamasa — login sahifasiga chiqaramiz.
+    // При истечении токена — получаем новый и переподключаемся;
+    // если и refresh не сработал — переходим на страницу входа.
     const refreshAndReconnect = async () => {
       const refreshToken = localStorage.getItem('partner_refresh_token')
       if (!refreshToken) { window.location.href = '/partner/login'; return }
@@ -119,7 +119,7 @@ function usePartnerWS(onMessage: (data: any) => void) {
       const token = localStorage.getItem('partner_access_token')
       if (!token) return
 
-      // Agar ulanish allaqachon mavjud bo'lsa — yangi ochmaymiz
+      // Если соединение уже есть — новое не открываем
       const s = wsRef.current?.readyState
       if (s === WebSocket.OPEN || s === WebSocket.CONNECTING) return
 
@@ -138,7 +138,7 @@ function usePartnerWS(onMessage: (data: any) => void) {
 
         ws.onclose = (ev) => {
           if (!mountedRef.current) return
-          // 1008 — backend token yo'q/yaroqsiz deb ulanishni rad etdi (ws.gateway.ts)
+          // 1008 — backend отклонил подключение: токен отсутствует/недействителен (ws.gateway.ts)
           if (ev.code === 1008) {
             refreshAndReconnect()
           } else {
@@ -158,7 +158,7 @@ function usePartnerWS(onMessage: (data: any) => void) {
       wsRef.current?.close()
       wsRef.current = null
     }
-  }, [])   // bir marta ishga tushadi
+  }, [])   // запускается один раз
 }
 
 // ── Shell ────────────────────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ export default function PartnerShell({ children, pendingCount = 0 }: Props) {
       title = data.title || 'Уведомление'
       body  = data.message || data.body || ''
     } else {
-      return // noma'lum xabar — ko'rsatma
+      return // неизвестное сообщение — не показываем
     }
 
     const toast: WSToast = {
@@ -217,7 +217,7 @@ export default function PartnerShell({ children, pendingCount = 0 }: Props) {
     }
     setToasts(ts => [toast, ...ts].slice(0, 5))
 
-    // Audio signal (agar brauzer ruxsat bersa)
+    // Звуковой сигнал (если браузер разрешит)
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
       const osc = ctx.createOscillator()

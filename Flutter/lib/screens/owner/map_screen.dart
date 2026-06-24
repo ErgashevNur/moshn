@@ -11,10 +11,10 @@ import '../../theme/typography.dart';
 import '../../widgets/m_workshop_card.dart';
 import 'home_screen.dart' show shopsProvider;
 
-// ── Toshkent markazi ──────────────────────────────────────────────────────────
+// ── Центр Ташкента ───────────────────────────────────────────────────────────
 const _tashkent = Point(latitude: 41.2995, longitude: 69.2401);
 
-// ── Aktiv do'kon provider ─────────────────────────────────────────────────────
+// ── Провайдер активного сервиса ─────────────────────────────────────────────
 final _activeShopIdProvider = StateProvider<String?>((ref) => null);
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: _TopBar(onBack: () => context.pop()),
           ),
 
-          // ── Joylashuvim tugmasi ─────────────────────────────────────────────
+          // ── Кнопка "Моё местоположение" ──────────────────────────────────────
           Positioned(
             right: 16,
             top: MediaQuery.of(context).padding.top + 72,

@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Icon from './Icon'
-import LangSelect from './LangSelect'
 import { useI18n } from '@/lib/i18n'
 
 export default function Navbar() {
@@ -13,11 +12,11 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const links = [
-    { href: '#xizmat-yoli', label: t.nav.howItWorks },
-    { href: '#afzalliklar', label: t.nav.benefits },
-    { href: '#mijoz', label: t.nav.forClients },
-    { href: '#servis', label: t.nav.forServices },
-    { href: '#yuklab-olish', label: t.nav.download },
+    { href: '#how-it-works', label: t.nav.howItWorks },
+    { href: '#benefits', label: t.nav.benefits },
+    { href: '#clients', label: t.nav.forClients },
+    { href: '#services', label: t.nav.forServices },
+    { href: '#download', label: t.nav.download },
   ]
 
   useEffect(() => {
@@ -56,9 +55,8 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <LangSelect />
           <a
-            href="#yuklab-olish"
+            href="#download"
             className="hidden sm:flex items-center gap-1.5 h-10 px-4 rounded-full bg-gold text-bg text-[13.5px] font-semibold hover:brightness-110 transition-all"
           >
             {t.nav.downloadApp}
@@ -99,7 +97,7 @@ export default function Navbar() {
                 </motion.a>
               ))}
               <a
-                href="#yuklab-olish"
+                href="#download"
                 onClick={() => setMenuOpen(false)}
                 className="mt-4 flex items-center justify-center gap-2 h-12 rounded-full bg-gold text-bg text-[14.5px] font-semibold"
               >

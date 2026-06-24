@@ -30,12 +30,12 @@ class ApiClient {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
 
-  /// Backend ulanish manzili.
-  /// Production APK uchun to'liq URL bering (HTTPS bilan):
+  /// Адрес подключения к backend'у.
+  /// Для production APK укажите полный URL (с HTTPS):
   ///   `--dart-define=API_BASE_URL=https://moshn.uz/v1`
-  /// Lokal test uchun host/port:
+  /// Для локального теста — host/port:
   ///   `--dart-define=API_HOST=192.168.50.2`  (LAN IP)
-  /// Hech narsa berilmasa — emulator/web standartlari.
+  /// Если ничего не указано — стандарты эмулятора/веба.
   static const _baseOverride = String.fromEnvironment('API_BASE_URL');
   static const _hostOverride = String.fromEnvironment('API_HOST');
   static const _portOverride = String.fromEnvironment('API_PORT', defaultValue: '8080');

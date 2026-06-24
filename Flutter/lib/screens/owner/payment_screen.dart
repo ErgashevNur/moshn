@@ -818,7 +818,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
               child: Column(
                 children: [
-                  // Kalendarga qo'shish
+                  // Добавить в календарь
                   GestureDetector(
                     onTap: b == null ? null : () => _addToCalendar(b),
                     child: Container(
@@ -851,7 +851,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
 
-                  // Bandlovni ko'rish
+                  // Просмотр брони
                   GestureDetector(
                     onTap: () => context.go('/owner', extra: 1),
                     child: Padding(

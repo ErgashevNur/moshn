@@ -2,10 +2,10 @@
 import { useEffect, useRef } from 'react'
 import axios from 'axios'
 
-// Admin WebSocket — real-vaqt eventlar uchun ulanish hook'i.
-// Partner panel'dagi usePartnerWS bilan bir xil mantiq: oddiy uzilishda
-// retry, token muddati tugaganda (close code 1008) avval /auth/refresh
-// chaqirib qayta ulanadi, u ham ishlamasa /login'ga chiqaradi.
+// Admin WebSocket — хук подключения для событий в реальном времени.
+// Та же логика, что и в usePartnerWS партнёрской панели: при обычном
+// разрыве — retry, при истечении токена (close code 1008) сначала
+// вызывается /auth/refresh для переподключения, если не помогло — /login.
 export function useAdminSocket(
   onEvent: (type: string, data: any) => void,
   onStatus?: (connected: boolean) => void,
@@ -28,18 +28,18 @@ export function useAdminSocket(
     const buildWsUrl = (token: string) => {
       let base: string
       if (/^https?:\/\//.test(apiUrl)) {
-        // To'liq URL: http(s):// -> ws(s)://, oxiridagi /v1 ni olib tashlaymiz
+        // Полный URL: http(s):// -> ws(s)://, отбрасываем конечный /v1
         base = apiUrl.replace(/^http/, 'ws').replace(/\/v1\/?$/, '')
       } else {
-        // Nisbiy "/v1": joriy origin'dan ws(s):// quramiz
+        // Относительный "/v1": строим ws(s):// из текущего origin
         const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
         base = `${proto}://${window.location.host}`
       }
       return `${base}/v1/ws?token=${encodeURIComponent(token)}`
     }
 
-    // Token muddati tugaganda — yangi token olib qayta ulanamiz;
-    // refresh ham ishlamasa — login sahifasiga chiqaramiz.
+    // При истечении токена — получаем новый и переподключаемся;
+    // если и refresh не сработал — переходим на страницу входа.
     const refreshAndReconnect = async () => {
       const refreshToken = localStorage.getItem('refresh_token')
       if (!refreshToken) { window.location.href = '/login'; return }
@@ -60,7 +60,7 @@ export function useAdminSocket(
       const token = localStorage.getItem('access_token')
       if (!token) return
 
-      // Agar ulanish allaqachon mavjud bo'lsa — yangi ochmaymiz
+      // Если соединение уже есть — новое не открываем
       const s = wsRef.current?.readyState
       if (s === WebSocket.OPEN || s === WebSocket.CONNECTING) return
 
@@ -80,7 +80,7 @@ export function useAdminSocket(
         ws.onclose = (ev) => {
           onStatusRef.current?.(false)
           if (!mountedRef.current) return
-          // 1008 — backend token yo'q/yaroqsiz deb ulanishni rad etdi (ws.gateway.ts)
+          // 1008 — backend отклонил подключение: токен отсутствует/недействителен (ws.gateway.ts)
           if (ev.code === 1008) {
             refreshAndReconnect()
           } else {
@@ -100,5 +100,5 @@ export function useAdminSocket(
       wsRef.current?.close()
       wsRef.current = null
     }
-  }, [])   // bir marta ishga tushadi
+  }, [])   // запускается один раз
 }

@@ -248,7 +248,7 @@ class _HeroSection extends ConsumerWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Mini xarita — koordinatlar bor bo'lsa
+          // Мини-карта — если есть координаты
           if (shop.latitude != 0 || shop.longitude != 0)
             IgnorePointer(
               child: FlutterMap(
@@ -636,7 +636,7 @@ class _ServicesCard extends StatelessWidget {
           final slug = entry.value;
           final isLast = i == serviceTypes.length - 1;
 
-          // Narx diapazoni — slug yoki serviceTypeId bo'yicha topamiz
+          // Диапазон цен — ищем по slug или serviceTypeId
           final price = servicePrices.where((p) => p.slug == slug).firstOrNull;
           final priceText = price != null && (price.priceMin > 0 || price.priceMax > 0)
               ? _buildPriceText(price)

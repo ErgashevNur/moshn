@@ -10,8 +10,8 @@ final _localNotifications = FlutterLocalNotificationsPlugin();
 // Notification channel (Android)
 const _channel = AndroidNotificationChannel(
   'shina24_main',
-  'Shina24 Bildirishnomalar',
-  description: 'Bron va xizmat bildirishnomalari',
+  'Уведомления Shina24',
+  description: 'Уведомления о бронированиях и услугах',
   importance: Importance.high,
   playSound: true,
   enableVibration: true,
@@ -22,7 +22,7 @@ Future<void> initLocalNotifications() async {
   const initSettings = InitializationSettings(android: androidSettings);
   await _localNotifications.initialize(initSettings);
 
-  // Channel'ni Android'da ro'yxatga olamiz
+  // Регистрируем канал в Android
   await _localNotifications
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(_channel);
@@ -71,7 +71,7 @@ class PushService {
         try {
           await NotificationService().registerToken(token);
         } catch (e) {
-          if (kDebugMode) debugPrint('FCM token xatosi: $e');
+          if (kDebugMode) debugPrint('Ошибка FCM-токена: $e');
         }
       }
 
@@ -79,12 +79,12 @@ class PushService {
         NotificationService().registerToken(t).catchError((_) {});
       });
 
-      // Foreground: local notification bilan ovoz + vibro
+      // Foreground: локальное уведомление со звуком и вибрацией
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
       FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
       _initialized = true;
     } catch (e) {
-      if (kDebugMode) debugPrint('Push init xatosi: $e');
+      if (kDebugMode) debugPrint('Ошибка инициализации push: $e');
     }
   }
 
