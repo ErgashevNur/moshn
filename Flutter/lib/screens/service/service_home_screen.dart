@@ -72,7 +72,8 @@ class _ServiceHomeScreenState extends ConsumerState<ServiceHomeScreen> {
         (event.data['customer'] as Map<String, dynamic>?)?['fullName'] as String? ??
             'Клиент';
     final serviceTypeName =
-        (event.data['serviceType'] as Map<String, dynamic>?)?['nameUz'] as String? ??
+        (event.data['serviceType'] as Map<String, dynamic>?)?['nameRu'] as String? ??
+            (event.data['serviceType'] as Map<String, dynamic>?)?['nameUz'] as String? ??
             'Новая запись';
 
     showLocalNotification(

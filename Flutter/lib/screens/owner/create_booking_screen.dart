@@ -441,7 +441,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(t.icon,
+                            Text(t.emoji,
                                 style: const TextStyle(fontSize: 14)),
                             const SizedBox(width: 6),
                             Text(

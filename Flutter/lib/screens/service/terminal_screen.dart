@@ -134,7 +134,7 @@ class TerminalScreen extends ConsumerWidget {
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                b.serviceType?.nameUz ?? '—',
+                                                b.serviceType?.name ?? '—',
                                                 style: AppTypography.labelSmall
                                                     .copyWith(
                                                         color: AppColors

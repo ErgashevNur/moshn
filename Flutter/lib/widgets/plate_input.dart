@@ -132,22 +132,30 @@ class _PlateInputState extends State<PlateInput> {
             duration: const Duration(milliseconds: 250),
             child: plate,
           ),
-          SizedBox(
-            height: 0,
-            child: TextField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              style: const TextStyle(fontSize: 0, color: Colors.transparent),
-              decoration: const InputDecoration(border: InputBorder.none),
-              cursorColor: Colors.transparent,
-              cursorWidth: 0,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                LengthLimitingTextInputFormatter(9),
-                _UpperCaseFormatter(),
-              ],
-              textCapitalization: TextCapitalization.characters,
-              keyboardType: TextInputType.visiblePassword,
+          SizedBox.shrink(
+            child: OverflowBox(
+              maxHeight: double.infinity,
+              maxWidth: double.infinity,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 1,
+                height: 1,
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: _focusNode,
+                  style: const TextStyle(fontSize: 1, color: Colors.transparent),
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  cursorColor: Colors.transparent,
+                  cursorWidth: 0.01,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    LengthLimitingTextInputFormatter(9),
+                    _UpperCaseFormatter(),
+                  ],
+                  textCapitalization: TextCapitalization.characters,
+                  keyboardType: TextInputType.visiblePassword,
+                ),
+              ),
             ),
           ),
         ],
