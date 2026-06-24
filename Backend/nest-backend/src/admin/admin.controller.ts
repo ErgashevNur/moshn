@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminRoleGuard } from '../common/guards/admin-role.guard';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -141,5 +141,33 @@ export class AdminController {
   @ApiOperation({ summary: 'Bitta konfiguratsiya qiymatini yangilash' })
   async setConfig(@Param('key') key: string, @Body('value') value: string) {
     return { data: await this.svc.setConfig(key, value) };
+  }
+
+  // ── Super Admin: O'chirish ─────────────────────────────────────────────────
+
+  @Get('users/:id')
+  @ApiOperation({ summary: 'Foydalanuvchini ID bo\'yicha olish' })
+  async getUserById(@Param('id') id: string) {
+    return { data: await this.svc.getUserById(id) };
+  }
+
+  @Delete('users/:id')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Foydalanuvchini ID bo\'yicha o\'chirish (kaskad)' })
+  async deleteUser(@Param('id') id: string) {
+    return { data: await this.svc.deleteUser(id) };
+  }
+
+  @Get('shops/:id')
+  @ApiOperation({ summary: 'Servisni ID bo\'yicha olish' })
+  async getShopById(@Param('id') id: string) {
+    return { data: await this.svc.getShopById(id) };
+  }
+
+  @Delete('shops/:id')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Servisni ID bo\'yicha o\'chirish (kaskad)' })
+  async deleteShop(@Param('id') id: string) {
+    return { data: await this.svc.deleteShop(id) };
   }
 }

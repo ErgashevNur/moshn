@@ -8,9 +8,8 @@ const NAV = [
   {id:'today',     icon:'cal'    as const, label:'Сегодня',  href:'/partner'},
   {id:'queue',     icon:'list'   as const, label:'Очередь',  href:'/partner/queue'},
   {id:'customers', icon:'users'  as const, label:'Клиенты',  href:'/partner/customers'},
-  {id:'prices',    icon:'wallet' as const, label:'Цены',     href:'/partner/prices'},
   {id:'terminal',  icon:'card'   as const, label:'Терминал', href:'/partner/terminal'},
-  {id:'stats',     icon:'chart'  as const, label:'Отчёт',    href:'/partner/stats'},
+  {id:'profile',   icon:'user'   as const, label:'Профиль',  href:'/partner/profile'},
 ]
 
 const DARK: Record<string,string> = {bg:'#09090a',bgE:'#131316',surf:'#1a1a1e',surf2:'#242429',surf3:'#2e2e34',hair:'rgba(255,255,255,.085)',hair2:'rgba(255,255,255,.14)',txt:'#f4f4f2',txt2:'rgba(244,244,242,.60)',txt3:'rgba(244,244,242,.36)',inv:'#f4f4f2',invT:'#0a0a0b',gold:'#d4a843',goldDim:'rgba(212,168,67,.16)',red:'#e5382b',redDim:'rgba(229,56,43,.16)',green:'#30d158',greenDim:'rgba(48,209,88,.16)',amber:'#f59e0b',amberDim:'rgba(245,158,11,.15)',blue:'#3b82f6',blueDim:'rgba(59,130,246,.15)'}
@@ -77,7 +76,6 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
                 fontWeight: active ? 700 : 500,
                 letterSpacing:'.04em',
               }}>
-              {/* Active indicator dot */}
               {active && (
                 <div style={{position:'absolute',top:6,width:20,height:2.5,borderRadius:2,background:'var(--txt)'}}/>
               )}
@@ -91,31 +89,29 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
             </button>
           )
         })}
-        {/* Logout button */}
-        <button onClick={logout}
-          style={{
-            flex:1, display:'flex', flexDirection:'column', alignItems:'center',
-            justifyContent:'center', gap:3, border:'none', background:'none',
-            color:'var(--red)', cursor:'pointer', position:'relative', fontSize:9.5,
-            fontWeight:500, letterSpacing:'.04em',
-          }}>
-          <Icon n="logout" s={22} col="var(--red)"/>
-          Выйти
-        </button>
       </nav>
     )
   }
 
   // ── Desktop left sidebar ─────────────────────────────────────────────────
+  const btnStyle = (active = false): React.CSSProperties => ({
+    width:54, height:54, borderRadius:13, display:'flex', flexDirection:'column',
+    alignItems:'center', justifyContent:'center', gap:3,
+    color: active ? 'var(--txt)' : 'var(--txt3)',
+    fontSize:8.5, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase',
+    cursor:'pointer', transition:'all .15s', position:'relative',
+    border:'none', background: active ? 'var(--surf)' : 'none',
+  })
+
   return (
     <div style={{width:72,background:'var(--bgE)',borderRight:'1px solid var(--hair)',display:'flex',flexDirection:'column',alignItems:'center',padding:'12px 0',gap:2,flexShrink:0,zIndex:2}}>
       <div style={{width:44,height:44,borderRadius:13,background:'var(--inv)',color:'var(--invT)',display:'grid',placeItems:'center',marginBottom:14,flexShrink:0}}>
         <Brand s={28} theme={theme as 'dark' | 'light'}/>
       </div>
 
+      {/* Main nav */}
       {NAV.map(n => (
-        <button key={n.id} onClick={() => router.push(n.href)}
-          style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:isActive(n.href)?'var(--txt)':'var(--txt3)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',transition:'all .15s',position:'relative',border:'none',background:isActive(n.href)?'var(--surf)':'none'}}>
+        <button key={n.id} onClick={() => router.push(n.href)} style={btnStyle(isActive(n.href))}>
           <div style={{position:'relative'}}>
             <Icon n={n.icon} s={22}/>
             {n.id==='queue' && pendingCount > 0 && (
@@ -127,13 +123,22 @@ export default function PartnerSidebar({ pendingCount = 0 }: Props) {
       ))}
 
       <div style={{flex:1}}/>
+
+      {/* Extra items: Report, Prices */}
       <div style={{width:34,height:1,background:'var(--hair)',margin:'6px 0'}}/>
-      <button onClick={toggleTheme}
-        style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--txt3)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
+      <button onClick={() => router.push('/partner/stats')} style={btnStyle(isActive('/partner/stats'))}>
+        <Icon n="chart" s={20}/>Отчёт
+      </button>
+      <button onClick={() => router.push('/partner/prices')} style={btnStyle(isActive('/partner/prices'))}>
+        <Icon n="wallet" s={20}/>Цены
+      </button>
+
+      {/* Theme + Logout */}
+      <div style={{width:34,height:1,background:'var(--hair)',margin:'6px 0'}}/>
+      <button onClick={toggleTheme} style={btnStyle()}>
         <Icon n={theme==='dark'?'sun':'moon'} s={20}/>Тема
       </button>
-      <button onClick={logout}
-        style={{width:54,height:54,borderRadius:13,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,color:'var(--red)',fontSize:8.5,fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',cursor:'pointer',border:'none',background:'none'}}>
+      <button onClick={logout} style={{...btnStyle(), color:'var(--red)'}}>
         <Icon n="logout" s={20} col="var(--red)"/>Выйти
       </button>
     </div>

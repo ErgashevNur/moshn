@@ -6,9 +6,9 @@ import Icon from '@/components/ui/Icon'
 import Plate from '@/components/ui/Plate'
 import partnerApi from '@/lib/partnerApi'
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 function fmtTime(d: string) {
-  return new Date(d).toLocaleTimeString('uz', { hour:'2-digit', minute:'2-digit' })
+  return new Date(d).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' })
 }
 
 export default function PartnerQueuePage() {
@@ -99,14 +99,14 @@ export default function PartnerQueuePage() {
                           <Icon n="car" s={22}/>
                         </div>
                         <div style={{flex:1,minWidth:0}}>
-                          {/* Mashina markasi + raqami (asosiy) */}
+                          {/* Марка и госномер автомобиля (основное) */}
                           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
                             <span style={{fontSize:15,fontWeight:700,color:'var(--txt)'}}>{car}</span>
                             <Plate v={plate} sm/>
                           </div>
-                          {/* Xizmat turi */}
+                          {/* Тип услуги */}
                           <div style={{fontSize:12.5,color:'var(--txt2)',marginBottom:2}}>{svcName}</div>
-                          {/* Mijoz ismi va telefon raqami (ikkinchi darajali) */}
+                          {/* Имя клиента и телефон (вторично) */}
                           <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                             <span style={{fontSize:12,color:'var(--txt3)'}}>{name}</span>
                             {phone && (
@@ -118,12 +118,12 @@ export default function PartnerQueuePage() {
                           </div>
                         </div>
                         <div style={{textAlign:'right',flexShrink:0}}>
-                          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:16,fontWeight:700,color:'var(--txt)'}}>{fmt(amt)} <span style={{fontSize:11,fontWeight:500,color:'var(--txt3)'}}>so'm</span></div>
+                          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:16,fontWeight:700,color:'var(--txt)'}}>{fmt(amt)} <span style={{fontSize:11,fontWeight:500,color:'var(--txt3)'}}>сум</span></div>
                           <div style={{fontSize:12,color:'var(--txt3)',fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{time}</div>
                         </div>
                       </div>
 
-                      {/* Bottom row: tugmalar */}
+                      {/* Нижняя строка: кнопки действий */}
                       <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',paddingTop:12,borderTop:'1px solid var(--hair)',gap:8}}>
                         <button disabled={!!acting} onClick={() => onDecline(b.id)}
                           style={{height:38,padding:'0 14px',borderRadius:999,border:'1.5px solid rgba(229,56,43,.4)',color:'var(--red)',fontSize:13,fontWeight:600,background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',gap:5,opacity:acting?0.5:1,whiteSpace:'nowrap'}}>

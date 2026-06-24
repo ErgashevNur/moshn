@@ -7,7 +7,7 @@ type IconName =
   | 'crown' | 'pin' | 'star' | 'starF' | 'trend' | 'send' | 'snow'
   | 'chevD' | 'chevR' | 'edit' | 'plus' | 'ban' | 'refresh' | 'cal'
   | 'car' | 'nfc' | 'qr' | 'phone' | 'card' | 'chart' | 'clock' | 'disc'
-  | 'menu' | 'chevL'
+  | 'menu' | 'chevL' | 'user' | 'trash'
 
 interface IconProps {
   n: IconName
@@ -28,6 +28,7 @@ export default function Icon({ n, s = 18, st = 1.8, col, style }: IconProps) {
     store: <><path d="M3 6.2V18a1 1 0 001 1h16a1 1 0 001-1V6.2"/><path d="M2 4h20v2.5a2 2 0 01-2 2H4a2 2 0 01-2-2V4z"/><path d="M9 19v-6a1 1 0 011-1h4a1 1 0 011 1v6"/></>,
     list: <><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></>,
     users: <><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.1a4 4 0 010 7.8M22 21v-2a4 4 0 00-3-3.87"/></>,
+    user: <><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a6 6 0 0112 0v2"/></>,
     wallet: <><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 14h2"/></>,
     bolt: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>,
     bell: <><path d="M18 9a6 6 0 10-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9z"/><path d="M10.5 20a2 2 0 003 0"/></>,
@@ -62,6 +63,7 @@ export default function Icon({ n, s = 18, st = 1.8, col, style }: IconProps) {
     disc: <><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></>,
     menu: <><path d="M3 6h18M3 12h18M3 18h18"/></>,
     chevL: <path d="M15 19l-7-7 7-7"/>,
+    trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></>,
   }
   return <svg {...pp}>{paths[n] ?? null}</svg>
 }

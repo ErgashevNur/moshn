@@ -1,11 +1,11 @@
 'use client'
 
-// Asosiy brend belgisi (shina/g'ildirak). `theme` qaysi rangda chiqishini
-// belgilaydi — bu komponent har doim "inverse" foni (var(--inv)) ustida
-// chiqadi, shuning uchun fon rangiga qarama-qarshi rangli variant tanlanadi.
+// Основной фирменный знак (шина/колесо). `theme` определяет, в каком
+// цвете он выводится — компонент всегда отображается на "инверсном"
+// фоне (var(--inv)), поэтому выбирается вариант, контрастный этому фону.
 export default function Brand({ s = 26, theme = 'dark' }: { s?: number; theme?: 'dark' | 'light' }) {
-  // dark tema -> var(--inv) yorug' (oq-kulrang) -> belgi qora rangda bo'lishi kerak
-  // light tema -> var(--inv) qora -> belgi oq rangda bo'lishi kerak
+  // тёмная тема -> var(--inv) светлый (бело-серый) -> знак должен быть тёмным
+  // светлая тема -> var(--inv) тёмный -> знак должен быть светлым
   const src = theme === 'dark'
     ? '/logos/shina24-mark-transparent.png'
     : '/logos/shina24-mark-white.png'

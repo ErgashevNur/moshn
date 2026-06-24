@@ -35,8 +35,23 @@ class ShopService {
     return (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
   }
 
+  Future<void> createProfile(Map<String, dynamic> data) async {
+    await _dio.post('/service/profile', data: data);
+  }
+
   Future<void> updateProfile(Map<String, dynamic> data) async {
     await _dio.put('/service/profile', data: data);
+  }
+
+  Future<List<Map<String, dynamic>>> getMyPrices() async {
+    final resp = await _dio.get('/service/prices');
+    final data = resp.data['data'] as List<dynamic>? ?? [];
+    return data.map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  Future<void> updatePrices(
+      List<Map<String, dynamic>> prices) async {
+    await _dio.put('/service/prices', data: {'prices': prices});
   }
 
   Future<List<Map<String, dynamic>>> getCustomers() async {

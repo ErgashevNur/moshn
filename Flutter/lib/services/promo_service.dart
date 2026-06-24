@@ -15,7 +15,7 @@ class PromoService {
     try {
       await _dio.post('/promos/$id/view');
     } catch (_) {
-      // analytics — jim tursin, UI'ga ta'sir qilmasin
+      // аналитика — пусть молчит, не должна влиять на UI
     }
   }
 
@@ -23,7 +23,7 @@ class PromoService {
     try {
       await _dio.post('/promos/$id/click');
     } catch (_) {
-      // analytics — jim tursin, UI'ga ta'sir qilmasin
+      // аналитика — пусть молчит, не должна влиять на UI
     }
   }
 }

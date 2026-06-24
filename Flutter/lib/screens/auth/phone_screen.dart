@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -54,9 +53,6 @@ class _PhoneScreenState extends State<PhoneScreen> {
   bool _loading = false;
   String _error = '';
 
-  String _t(String uz, String ru) =>
-      context.locale.languageCode == 'ru' ? ru : uz;
-
   String get _digits => _controller.text.replaceAll(RegExp(r'\D'), '');
 
   bool get _canSubmit => _digits.length == 9 && !_loading;
@@ -66,15 +62,13 @@ class _PhoneScreenState extends State<PhoneScreen> {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return _t('Serverga ulanib bo\'lmadi. Internet aloqasini tekshiring.',
-            'Не удалось подключиться к серверу. Проверьте интернет-соединение.');
+        return 'Не удалось подключиться к серверу. Проверьте интернет-соединение.';
       }
       final msg = e.response?.data?['error'] as String? ??
           e.response?.data?['message'] as String?;
       if (msg != null && msg.isNotEmpty) return msg;
     }
-    return _t('Xatolik yuz berdi. Qayta urinib ko\'ring.',
-        'Произошла ошибка. Попробуйте ещё раз.');
+    return 'Произошла ошибка. Попробуйте ещё раз.';
   }
 
   @override
@@ -123,8 +117,6 @@ class _PhoneScreenState extends State<PhoneScreen> {
                       size: 20,
                     ),
                   ),
-                  const Spacer(),
-                  _LangToggle(),
                 ],
               ),
             ),
@@ -156,7 +148,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
 
                     // Title
                     Text(
-                      _t('Telefon raqamingiz', 'Ваш номер телефона'),
+                      'Ваш номер телефона',
                       style: AppTypography.displaySmall.copyWith(
                         color: AppColors.text(context),
                       ),
@@ -165,10 +157,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
 
                     // Subtitle
                     Text(
-                      _t(
-                        'Kirish uchun SMS-kod yuboramiz',
-                        'Отправим SMS-код для входа',
-                      ),
+                      'Отправим SMS-код для входа',
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.text2(context),
                       ),
@@ -189,13 +178,12 @@ class _PhoneScreenState extends State<PhoneScreen> {
                             border:
                                 Border.all(color: AppColors.hairline(context)),
                           ),
-                          child: Center(
-                            child: Text(
-                              '+998',
-                              style: AppTypography.mono.copyWith(
-                                color: AppColors.text(context),
-                                fontSize: 15,
-                              ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '+998',
+                            style: AppTypography.mono.copyWith(
+                              color: AppColors.text(context),
+                              fontSize: 17,
                             ),
                           ),
                         ),
@@ -209,6 +197,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                               controller: _controller,
                               keyboardType: TextInputType.phone,
                               inputFormatters: [_PhoneFormatter()],
+                              textAlignVertical: TextAlignVertical.center,
                               style: AppTypography.mono.copyWith(
                                 color: AppColors.text(context),
                                 fontSize: 17,
@@ -222,7 +211,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                 filled: true,
                                 fillColor: AppColors.surface(context),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 0),
+                                    horizontal: 16, vertical: 16),
                                 border: OutlineInputBorder(
                                   borderRadius:
                                       BorderRadius.circular(AppSpacing.r_md),
@@ -266,7 +255,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
 
                     // Submit
                     MButton(
-                      label: _t('Kod yuborish', 'Отправить код'),
+                      label: 'Отправить код',
                       onTap: _canSubmit ? _submit : null,
                       loading: _loading,
                       enabled: _canSubmit,
@@ -277,10 +266,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                     // Fine print
                     Center(
                       child: Text(
-                        _t(
-                          'Davom etish orqali siz foydalanish shartlariga rozilik bildirasiz',
-                          'Продолжая, вы соглашаетесь с условиями использования',
-                        ),
+                        'Продолжая, вы соглашаетесь с условиями использования',
                         textAlign: TextAlign.center,
                         style: AppTypography.body.copyWith(
                           color: AppColors.text3(context),
@@ -300,50 +286,3 @@ class _PhoneScreenState extends State<PhoneScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Language toggle (shared with onboarding style)
-// ---------------------------------------------------------------------------
-
-class _LangToggle extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final lang = context.locale.languageCode;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.surface2(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_full),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: ['uz', 'ru'].map((l) {
-          final active = lang == l;
-          return GestureDetector(
-            onTap: () => context.setLocale(Locale(l)),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: active
-                    ? AppColors.bgElevated(context)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSpacing.r_full),
-                boxShadow: active ? AppSpacing.shadow1 : null,
-              ),
-              child: Text(
-                l == 'uz' ? "O'z" : 'Ру',
-                style:
-                    AppTypography.soraSize(12.5, weight: FontWeight.w600)
-                        .copyWith(
-                  color: active
-                      ? AppColors.text(context)
-                      : AppColors.text2(context),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}

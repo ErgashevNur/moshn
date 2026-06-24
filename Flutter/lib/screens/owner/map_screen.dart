@@ -11,10 +11,10 @@ import '../../theme/typography.dart';
 import '../../widgets/m_workshop_card.dart';
 import 'home_screen.dart' show shopsProvider;
 
-// ── Toshkent markazi ──────────────────────────────────────────────────────────
+// ── Центр Ташкента ───────────────────────────────────────────────────────────
 const _tashkent = Point(latitude: 41.2995, longitude: 69.2401);
 
-// ── Aktiv do'kon provider ─────────────────────────────────────────────────────
+// ── Провайдер активного сервиса ─────────────────────────────────────────────
 final _activeShopIdProvider = StateProvider<String?>((ref) => null);
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -48,7 +48,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   List<MapObject> _buildMapObjects(List<Shop> shops) {
-    return shops.map((shop) {
+    return shops
+        .where((s) => s.latitude != 0 || s.longitude != 0)
+        .map((shop) {
       final isActive = shop.id == ref.read(_activeShopIdProvider);
       return PlacemarkMapObject(
         mapId: MapObjectId(shop.id),
@@ -63,6 +65,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
             scale: isActive ? 2.2 : 1.8,
             anchor: const Offset(0.5, 1.0),
+          ),
+        ),
+        text: PlacemarkText(
+          text: shop.shopName,
+          style: PlacemarkTextStyle(
+            size: 11,
+            color: const Color(0xFF1A1A1A),
+            outlineColor: const Color(0xFFFFFFFF),
+            placement: TextStylePlacement.bottom,
+            offset: 4,
+            offsetFromIcon: true,
           ),
         ),
         onTap: (_, p) {
@@ -116,7 +129,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: _TopBar(onBack: () => context.pop()),
           ),
 
-          // ── Joylashuvim tugmasi ─────────────────────────────────────────────
+          // ── Кнопка "Моё местоположение" ──────────────────────────────────────
           Positioned(
             right: 16,
             top: MediaQuery.of(context).padding.top + 72,
@@ -182,7 +195,7 @@ class _TopBar extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Servislar xaritasi',
+              'Карта сервисов',
               style: AppTypography.soraSize(14, weight: FontWeight.w600)
                   .copyWith(color: AppColors.text(context)),
             ),

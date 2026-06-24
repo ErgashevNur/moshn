@@ -116,7 +116,7 @@ Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) a
                                 setModalState(() => saving = false);
                                 ScaffoldMessenger.of(ctx).showSnackBar(
                                   SnackBar(
-                                    content: Text('Xatolik: ${e.toString().split('\n').first}'),
+                                    content: Text('Ошибка: ${e.toString().split('\n').first}'),
                                     backgroundColor: AppColors.danger,
                                     behavior: SnackBarBehavior.floating,
                                   ),
@@ -150,7 +150,6 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user      = ref.watch(authProvider).user;
     final themeMode = ref.watch(themeProvider);
-    final locale    = context.locale.languageCode;
     final safeBot   = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -160,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.fromLTRB(18, 16, 18, 32 + safeBot),
           children: [
-            // ── Sarlavha ──────────────────────────────────────────────────
+            // ── Заголовок ─────────────────────────────────────────────────
             Text(
               'profile.title'.tr(),
               style: AppTypography.soraSize(28, weight: FontWeight.w700)
@@ -172,24 +171,19 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Foydalanuvchi kartochkasi ─────────────────────────────────
+            // ── Карточка пользователя ───────────────────────────────────────
             _UserCard(
               user: user,
               onTap: () => _showEditProfile(context, ref, user),
             ),
             const SizedBox(height: 12),
 
-            // ── Til + Ko'rinish ───────────────────────────────────────────
+            // ── Внешний вид ─────────────────────────────────────────────────
+            // Переключатель языка скрыт: интерфейс работает только на
+            // русском. Локаль 'uz' остаётся в инфраструктуре (main.dart,
+            // assets/translations/uz.json) на случай, если её понадобится
+            // включить в будущем.
             _Group(children: [
-              _SegmentRow(
-                icon: Icons.language_rounded,
-                label: 'profile.language'.tr(),
-                options: const ["O'Z", 'РУ'],
-                activeIndex: locale == 'uz' ? 0 : 1,
-                onSelect: (i) => context.setLocale(
-                    i == 0 ? const Locale('uz') : const Locale('ru')),
-              ),
-              _Hairline(),
               _SegmentRow(
                 icon: Icons.nightlight_round,
                 label: 'profile.appearance'.tr(),
@@ -205,7 +199,7 @@ class ProfileScreen extends ConsumerWidget {
             ]),
             const SizedBox(height: 12),
 
-            // ── Menu elementlari ──────────────────────────────────────────
+            // ── Пункты меню ────────────────────────────────────────────────
             _Group(children: [
               _MenuItem(
                 icon: Icons.credit_card_rounded,
@@ -230,11 +224,11 @@ class ProfileScreen extends ConsumerWidget {
             ]),
             const SizedBox(height: 12),
 
-            // ── Servislar uchun ───────────────────────────────────────────
+            // ── Для сервисов ───────────────────────────────────────────────
             _ServiceCard(),
             const SizedBox(height: 36),
 
-            // ── Chiqish ───────────────────────────────────────────────────
+            // ── Выход ───────────────────────────────────────────────────────
             Center(
               child: GestureDetector(
                 onTap: () => _confirmLogout(context, ref),
@@ -308,7 +302,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-// ── Foydalanuvchi kartochkasi ──────────────────────────────────────────────────
+// ── Карточка пользователя ───────────────────────────────────────────────────────
 
 class _UserCard extends StatelessWidget {
   final User? user;
@@ -392,7 +386,7 @@ class _Group extends StatelessWidget {
   }
 }
 
-// ── Segment qator (Til, Ko'rinish) ────────────────────────────────────────────
+// ── Сегмент-строка (внешний вид) ────────────────────────────────────────────────
 
 class _SegmentRow extends StatelessWidget {
   final IconData icon;
@@ -495,7 +489,7 @@ class _SegmentPill extends StatelessWidget {
   }
 }
 
-// ── Menu elementi ─────────────────────────────────────────────────────────────
+// ── Пункт меню ──────────────────────────────────────────────────────────────────
 
 class _MenuItem extends StatelessWidget {
   final IconData icon;
@@ -554,7 +548,7 @@ class _Hairline extends StatelessWidget {
       );
 }
 
-// ── Servislar uchun kartochka ─────────────────────────────────────────────────
+// ── Карточка для сервисов ─────────────────────────────────────────────────────
 
 class _ServiceCard extends StatelessWidget {
   @override

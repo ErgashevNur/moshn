@@ -65,7 +65,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return 'Server bilan ulanishda xatolik. WiFi ulanishingizni tekshiring.';
+        return 'Ошибка подключения к серверу. Проверьте подключение к Wi-Fi.';
       }
       final data = e.response?.data;
       if (data is Map<String, dynamic>) {
@@ -74,9 +74,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
         if (msg is List && msg.isNotEmpty) return msg.join(', ');
       }
       if (e.response?.statusCode == 409) {
-        return 'Bu davlat raqami allaqachon ro\'yxatda';
+        return 'Этот номер уже зарегистрирован';
       }
-      if (e.response?.statusCode == 400) return 'Ma\'lumotlarni to\'g\'ri kiriting';
+      if (e.response?.statusCode == 400) return 'Введите данные правильно';
     }
     return e.toString();
   }

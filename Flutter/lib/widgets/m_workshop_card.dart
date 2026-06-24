@@ -75,7 +75,7 @@ class WorkshopCard extends StatelessWidget {
               ),
               SizedBox(width: gap),
 
-              // Ma'lumotlar
+              // Данные
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,14 +102,14 @@ class WorkshopCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Reyting
+                    // Рейтинг
                     Row(
                       children: [
                         MStars(value: rating, size: starSize, gap: 1.5),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            '${rating.toStringAsFixed(1)} · $reviewCount sharh',
+                            '${rating.toStringAsFixed(1)} · $reviewCount отзывов',
                             style: AppTypography.soraSize(metaSize)
                                 .copyWith(color: AppColors.text2(context)),
                             overflow: TextOverflow.ellipsis,
@@ -119,7 +119,7 @@ class WorkshopCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Manzil
+                    // Адрес
                     if (address != null) ...[
                       const SizedBox(height: 4),
                       Row(

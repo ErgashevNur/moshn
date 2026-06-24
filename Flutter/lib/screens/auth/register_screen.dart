@@ -29,7 +29,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _phone = TextEditingController(text: '+998');
   final _email = TextEditingController();
   final _password = TextEditingController();
-  // Owner uchun ixtiyoriy mashina ma'lumotlari
+  // Необязательные данные автомобиля для владельца
   final _plate = TextEditingController();
   final _vehicleMake = TextEditingController();
   final _vehicleModel = TextEditingController();
@@ -96,7 +96,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    // Ro'yxatdan o'tish muvaffaqiyatli — owner bo'lsa va plaka kiritilgan bo'lsa mashina saqlash
+    // Регистрация успешна — если это владелец и указан госномер, сохраняем автомобиль
     if (_isOwner && _plate.text.trim().isNotEmpty) {
       try {
         await VehicleService().createVehicle(
@@ -105,7 +105,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           model: _vehicleModel.text.trim(),
         );
       } catch (e) {
-        // Mashina saqlash xatosi foydalanuvchini to'xtatmasin — garajda qo'shib olish mumkin
+        // Ошибка сохранения авто не должна блокировать пользователя — можно добавить позже в гараже
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -124,7 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (e is DioException) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout) {
-        return 'Server bilan ulanishda xatolik';
+        return 'Ошибка подключения к серверу';
       }
       final data = e.response?.data;
       if (data is Map<String, dynamic>) {
@@ -133,10 +133,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (msg is List && msg.isNotEmpty) return msg.join(', ');
       }
       if (e.response?.statusCode == 409) {
-        return 'Bu davlat raqami allaqachon ro\'yxatda';
+        return 'Этот номер уже зарегистрирован';
       }
     }
-    return 'Mashina saqlanmadi — garajdan qo\'shib oling';
+    return 'Авто не сохранено — добавьте из гаража';
   }
 
   @override
@@ -235,11 +235,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             : null,
                       ),
 
-                      // Owner roli uchun mashina bo'limi
+                      // Раздел автомобиля для роли владельца
                       if (_isOwner) ...[
                         const SizedBox(height: AppSpacing.xxl),
                         _SectionDivider(
-                          label: 'Mashina ma\'lumotlari (ixtiyoriy)',
+                          label: 'Данные автомобиля (необязательно)',
                           icon: CupertinoIcons.car_detailed,
                         ),
                         const SizedBox(height: AppSpacing.md),

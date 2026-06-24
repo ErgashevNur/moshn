@@ -51,7 +51,6 @@ class ServiceCategoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale = context.locale.languageCode;
     final shopsAsync = ref.watch(_catShopsProvider(slug));
     final typesAsync = ref.watch(_serviceTypesForCatProvider);
 
@@ -59,8 +58,8 @@ class ServiceCategoryScreen extends ConsumerWidget {
         .where((t) => t.slug == slug)
         .firstOrNull;
 
-    final title = locale == 'ru'
-        ? (apiType?.nameRu ?? slug)
+    final title = apiType?.nameRu.isNotEmpty == true
+        ? apiType!.nameRu
         : (apiType?.nameUz ?? slug);
 
     final m = _slugMeta(slug);
@@ -103,7 +102,7 @@ class ServiceCategoryScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Servislar ro'yxati ───────────────────────────────────────────────
+          // ── Список сервисов ──────────────────────────────────────────────────
           shopsAsync.when(
             data: (shops) {
               if (shops.isEmpty) {
@@ -232,7 +231,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── Bo'sh holat ───────────────────────────────────────────────────────────────
+// ── Пустое состояние ─────────────────────────────────────────────────────────
 
 class _EmptyShops extends StatelessWidget {
   final Color accent;

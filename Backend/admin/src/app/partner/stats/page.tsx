@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import PartnerShell from '@/components/partner/PartnerShell'
 import partnerApi from '@/lib/partnerApi'
 
-function fmt(n: number) { return n.toLocaleString('uz') }
+function fmt(n: number) { return n.toLocaleString('ru-RU') }
 
 const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
 

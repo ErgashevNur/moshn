@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/review.dart';
@@ -53,20 +55,26 @@ IconData _iconForServiceSlug(String slug) {
 
 String _labelForSlug(String slug, String locale) {
   const labelsUz = {
-    'podkachka': 'Podkachka',
-    'perezobuvka': 'Perezobuvka',
-    'disk_repair': "Disk ta'mir",
-    'balanslash': 'Balanslash',
+    'podkachka':      'Podkachka',
+    'perezobuvka':    'Perezobuvka',
+    'disk_repair':    "Disk ta'mirlash",
+    'balancing':      'Balansirovka',
+    'balanslash':     'Balansirovka',
+    'vulkanizatsiya': 'Vulkanizatsiya',
+    'tire_storage':   'Shina saqlash',
     'remont_prokola': "Prokol ta'mir",
-    'hranenie': 'Shina saqlash',
+    'hranenie':       'Shina saqlash',
   };
   const labelsRu = {
-    'podkachka': 'Подкачка',
-    'perezobuvka': 'Переобувка',
-    'disk_repair': 'Ремонт диска',
-    'balanslash': 'Балансировка',
+    'podkachka':      'Подкачка',
+    'perezobuvka':    'Переобувка',
+    'disk_repair':    'Ремонт дисков',
+    'balancing':      'Балансировка',
+    'balanslash':     'Балансировка',
+    'vulkanizatsiya': 'Вулканизация',
+    'tire_storage':   'Хранение шин',
     'remont_prokola': 'Ремонт прокола',
-    'hranenie': 'Хранение шин',
+    'hranenie':       'Хранение шин',
   };
   final map = locale == 'ru' ? labelsRu : labelsUz;
   return map[slug] ?? slug;
@@ -240,13 +248,46 @@ class _HeroSection extends ConsumerWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background photo placeholder
-          MPh(
-            width: double.infinity,
-            height: heroH,
-            radius: 0,
-            label: 'shop.photo_placeholder'.tr(),
-          ),
+          // Мини-карта — если есть координаты
+          if (shop.latitude != 0 || shop.longitude != 0)
+            IgnorePointer(
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(shop.latitude, shop.longitude),
+                  initialZoom: 15,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'uz.moshn.moshn',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(shop.latitude, shop.longitude),
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Color(0xFFE5382B),
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )
+          else
+            MPh(
+              width: double.infinity,
+              height: heroH,
+              radius: 0,
+              label: 'shop.photo_placeholder'.tr(),
+            ),
 
           // Gradient overlay
           Positioned.fill(
@@ -595,7 +636,7 @@ class _ServicesCard extends StatelessWidget {
           final slug = entry.value;
           final isLast = i == serviceTypes.length - 1;
 
-          // Narx diapazoni — slug yoki serviceTypeId bo'yicha topamiz
+          // Диапазон цен — ищем по slug или serviceTypeId
           final price = servicePrices.where((p) => p.slug == slug).firstOrNull;
           final priceText = price != null && (price.priceMin > 0 || price.priceMax > 0)
               ? _buildPriceText(price)
@@ -660,11 +701,19 @@ class _ServicesCard extends StatelessWidget {
   String _buildPriceText(ShopServicePrice p) {
     String fmt(int n) => n.toString().replaceAllMapped(
         RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
+    final sym = switch (p.currency) {
+      'USD' => '\$',
+      'EUR' => '€',
+      'RUB' => '₽',
+      'GBP' => '£',
+      'KZT' => '₸',
+      _     => 'so\'m',
+    };
     if (p.priceMin > 0 && p.priceMax > 0) {
-      return '${fmt(p.priceMin)} – ${fmt(p.priceMax)} so\'m';
+      return '${fmt(p.priceMin)} – ${fmt(p.priceMax)} $sym';
     }
-    if (p.priceMin > 0) return '${fmt(p.priceMin)} so\'mdan';
-    if (p.priceMax > 0) return '${fmt(p.priceMax)} so\'mgacha';
+    if (p.priceMin > 0) return '${fmt(p.priceMin)} $sym dan';
+    if (p.priceMax > 0) return '${fmt(p.priceMax)} $sym gacha';
     return '';
   }
 }

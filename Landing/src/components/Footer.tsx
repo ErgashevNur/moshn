@@ -16,10 +16,10 @@ export default function Footer() {
           © {new Date().getFullYear()} Shina24. {t.footer.rights}
         </p>
         <div className="flex items-center gap-5 text-[12.5px] text-txt2">
-          <a href="#xizmat-yoli" className="hover:text-txt transition-colors">
+          <a href="#how-it-works" className="hover:text-txt transition-colors">
             {t.footer.howItWorks}
           </a>
-          <a href="#yuklab-olish" className="hover:text-txt transition-colors">
+          <a href="#download" className="hover:text-txt transition-colors">
             {t.footer.download}
           </a>
         </div>

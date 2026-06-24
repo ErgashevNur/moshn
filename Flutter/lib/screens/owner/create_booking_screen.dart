@@ -113,15 +113,15 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
 
   Future<void> _confirm(int price) async {
     if (_vehicleId == null) {
-      _toast('Avtomobilingizni tanlang');
+      _toast('Выберите автомобиль');
       return;
     }
     if (_serviceTypeId == null) {
-      _toast('Xizmat turini tanlang');
+      _toast('Выберите тип услуги');
       return;
     }
     if (_selectedTime == null) {
-      _toast('Vaqtni tanlang');
+      _toast('Выберите время');
       return;
     }
 
@@ -178,9 +178,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     final diff = date
         .difference(DateTime(today.year, today.month, today.day))
         .inDays;
-    if (diff == 0) return 'Bugun';
-    if (diff == 1) return 'Ert';
-    const abbr = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+    if (diff == 0) return 'Сег.';
+    if (diff == 1) return 'Завт.';
+    const abbr = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     return abbr[date.weekday - 1];
   }
 
@@ -267,7 +267,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
             ),
             const SizedBox(width: AppSpacing.md),
             Text(
-              'Vaqtga yozilish',
+              'Запись на время',
               style: AppTypography.appbarTitle
                   .copyWith(color: AppColors.text(context)),
             ),
@@ -311,7 +311,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.shopName.isNotEmpty ? widget.shopName : 'Shinomontaj',
+                  widget.shopName.isNotEmpty ? widget.shopName : 'Шиномонтаж',
                   style: AppTypography.labelLarge
                       .copyWith(color: AppColors.text(context)),
                   maxLines: 1,
@@ -402,7 +402,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(context, 'XIZMATNI TANLANG'),
+        _label(context, 'ВЫБЕРИТЕ УСЛУГУ'),
         const SizedBox(height: AppSpacing.sm),
         async.when(
           data: (types) => Column(
@@ -441,7 +441,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(t.icon,
+                            Text(t.emoji,
                                 style: const TextStyle(fontSize: 14)),
                             const SizedBox(width: 6),
                             Text(
@@ -483,7 +483,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(context, 'AVTOMOBILINGIZ'),
+        _label(context, 'ВАШ АВТОМОБИЛЬ'),
         const SizedBox(height: AppSpacing.sm),
         async.when(
           data: (vehicles) => vehicles.isEmpty
@@ -498,7 +498,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                           BorderRadius.circular(AppSpacing.r_md),
                     ),
                     child: Text(
-                      'Avtomobil qo\'shilmagan. Avval avtomobil qo\'shing.',
+                      'Автомобиль не добавлен. Сначала добавьте авто.',
                       style: AppTypography.body
                           .copyWith(color: AppColors.text3(context)),
                     ),
@@ -603,7 +603,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(context, 'SANA'),
+        _label(context, 'ДАТА'),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(
           height: 68,
@@ -766,7 +766,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'JAMI',
+                  'ИТОГО',
                   style: AppTypography.eyebrow
                       .copyWith(color: AppColors.text3(context)),
                 ),

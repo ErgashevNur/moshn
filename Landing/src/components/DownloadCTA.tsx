@@ -9,7 +9,7 @@ const APK_URL = process.env.NEXT_PUBLIC_APK_URL || 'https://shina24.uz/media/shi
 export default function DownloadCTA() {
   const { t } = useI18n()
   return (
-    <section id="yuklab-olish" className="py-20 sm:py-24 px-5 sm:px-8 section-glow">
+    <section id="download" className="py-20 sm:py-24 px-5 sm:px-8 section-glow">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}

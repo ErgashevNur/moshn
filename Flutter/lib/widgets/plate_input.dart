@@ -132,22 +132,30 @@ class _PlateInputState extends State<PlateInput> {
             duration: const Duration(milliseconds: 250),
             child: plate,
           ),
-          SizedBox(
-            height: 0,
-            child: TextField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              style: const TextStyle(fontSize: 0, color: Colors.transparent),
-              decoration: const InputDecoration(border: InputBorder.none),
-              cursorColor: Colors.transparent,
-              cursorWidth: 0,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                LengthLimitingTextInputFormatter(9),
-                _UpperCaseFormatter(),
-              ],
-              textCapitalization: TextCapitalization.characters,
-              keyboardType: TextInputType.visiblePassword,
+          SizedBox.shrink(
+            child: OverflowBox(
+              maxHeight: double.infinity,
+              maxWidth: double.infinity,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 1,
+                height: 1,
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: _focusNode,
+                  style: const TextStyle(fontSize: 1, color: Colors.transparent),
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  cursorColor: Colors.transparent,
+                  cursorWidth: 0.01,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    LengthLimitingTextInputFormatter(9),
+                    _UpperCaseFormatter(),
+                  ],
+                  textCapitalization: TextCapitalization.characters,
+                  keyboardType: TextInputType.visiblePassword,
+                ),
+              ),
             ),
           ),
         ],
@@ -157,7 +165,7 @@ class _PlateInputState extends State<PlateInput> {
 }
 
 // ──────────────────────────────────────────────
-//  O'ZBEKISTON raqami
+//  Номер УЗБЕКИСТАНА
 //  [ • 01 ║ A 123 EA  ≡ UZ ]
 // ──────────────────────────────────────────────
 class _UzPlate extends StatelessWidget {
@@ -206,7 +214,7 @@ class _UzPlate extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Chap: bolt + hudud kodi ──
+            // ── Слева: герб + код региона ──
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               color: Colors.white,
@@ -229,9 +237,9 @@ class _UzPlate extends StatelessWidget {
                 ],
               ),
             ),
-            // ── Qalin vertikal chiziq ──
+            // ── Толстая вертикальная линия ──
             Container(width: 3.5, color: const Color(0xFF111111)),
-            // ── Markaziy matn ──
+            // ── Центральный текст ──
             Expanded(
               child: Container(
                 color: Colors.white,
@@ -243,7 +251,7 @@ class _UzPlate extends StatelessWidget {
                 ),
               ),
             ),
-            // ── O'ng: UZ badge ──
+            // ── Справа: бейдж UZ ──
             Container(width: 1.5, color: const Color(0xFFDDDDDD)),
             _UzBadge(),
           ],
@@ -264,7 +272,7 @@ class _UzBadge extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Bayroq: ko'k / oq / yashil
+          // Флаг: синий / белый / зелёный
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: SizedBox(
@@ -296,7 +304,7 @@ class _UzBadge extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
-//  ROSSIYA raqami
+//  Номер РОССИИ
 //  [ A 000 AA │ RU flag │ 77 ]
 // ──────────────────────────────────────────────
 class _RuPlate extends StatelessWidget {
@@ -345,7 +353,7 @@ class _RuPlate extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Asosiy matn ──
+            // ── Основной текст ──
             Expanded(
               child: Container(
                 color: Colors.white,
@@ -357,7 +365,7 @@ class _RuPlate extends StatelessWidget {
                 ),
               ),
             ),
-            // ── O'ng: RU badge ──
+            // ── Справа: бейдж RU ──
             Container(width: 1.5, color: const Color(0xFFDDDDDD)),
             _RuBadge(region: region),
           ],
@@ -380,7 +388,7 @@ class _RuBadge extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Bayroq: oq / ko'k / qizil
+          // Флаг: белый / синий / красный
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: SizedBox(
@@ -428,7 +436,7 @@ class _RuBadge extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
-//  Bo'sh holat — hali raqam kiritilmagan
+//  Пустое состояние — номер ещё не введён
 // ──────────────────────────────────────────────
 class _EmptyPlate extends StatelessWidget {
   final bool focused;

@@ -38,9 +38,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   int _countdown = _resendSecs;
   Timer? _timer;
 
-  String _t(String uz, String ru) =>
-      context.locale.languageCode == 'ru' ? ru : uz;
-
   String get _code => _controllers.map((c) => c.text).join();
   bool get _filled => _code.length == _len;
 
@@ -48,15 +45,25 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   void initState() {
     super.initState();
     _startCountdown();
+    for (final f in _nodes) {
+      f.addListener(_onFocusChange);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _nodes[0].requestFocus();
     });
   }
 
+  void _onFocusChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     for (final c in _controllers) { c.dispose(); }
-    for (final f in _nodes) { f.dispose(); }
+    for (final f in _nodes) {
+      f.removeListener(_onFocusChange);
+      f.dispose();
+    }
     _timer?.cancel();
     super.dispose();
   }
@@ -211,7 +218,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               // ── title ────────────────────────────────────────────────
               Text(
-                _t('Tasdiqlash kodi', 'Код подтверждения'),
+                'Код подтверждения',
                 style: AppTypography.soraSize(keyboardOpen ? 22 : 26,
                         weight: FontWeight.w700)
                     .copyWith(color: AppColors.text(context), height: 1.1),
@@ -223,7 +230,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 text: TextSpan(
                   style: AppTypography.body.copyWith(color: AppColors.text2(context)),
                   children: [
-                    TextSpan(text: _t('Kod yuborildi: ', 'Код отправлен: ')),
+                    TextSpan(text: 'Код отправлен: '),
                     TextSpan(
                       text: _maskedPhone(),
                       style: AppTypography.body.copyWith(
@@ -262,7 +269,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               Center(
                 child: _countdown > 0
                     ? Text(
-                        '${_t('Qayta yuborish', 'Повторная отправка')} '
+                        'Повторная отправка '
                         '0:${_countdown.toString().padLeft(2, '0')}',
                         style: AppTypography.labelMedium
                             .copyWith(color: AppColors.text3(context)),
@@ -270,7 +277,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     : GestureDetector(
                         onTap: _resend,
                         child: Text(
-                          _t('Qayta yuborish', 'Отправить снова'),
+                          'Отправить снова',
                           style: AppTypography.labelMedium.copyWith(
                             color: AppColors.text(context),
                             decoration: TextDecoration.underline,
@@ -284,7 +291,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               // ── submit button ────────────────────────────────────────
               MButton(
-                label: _t('Tasdiqlash', 'Подтвердить'),
+                label: 'Подтвердить',
                 onTap: _filled ? _submit : null,
                 enabled: _filled,
                 loading: _loading,
@@ -320,25 +327,29 @@ class _OtpBox extends StatelessWidget {
     final filled = controller.text.isNotEmpty;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
+      duration: const Duration(milliseconds: 150),
       width: boxWidth,
       height: boxHeight,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_sm),
+        color: focusNode.hasFocus
+            ? AppColors.surface(context)
+            : AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_md),
         border: Border.all(
           color: focusNode.hasFocus
               ? AppColors.inverseBg(context)
               : filled
                   ? AppColors.hairline2(context)
                   : AppColors.hairline(context),
-          width: focusNode.hasFocus ? 1.5 : 1.0,
+          width: focusNode.hasFocus ? 2.0 : 1.0,
         ),
       ),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
         textAlign: TextAlign.center,
+        textAlignVertical: TextAlignVertical.center,
         keyboardType: TextInputType.number,
         maxLength: 2,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
