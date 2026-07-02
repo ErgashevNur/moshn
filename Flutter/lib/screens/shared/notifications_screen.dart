@@ -15,8 +15,8 @@ import '../../widgets/section_card.dart';
 
 final _notificationsProvider =
     FutureProvider.autoDispose<List<AppNotification>>((ref) {
-  return NotificationService().list();
-});
+      return NotificationService().list();
+    });
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -33,26 +33,37 @@ class NotificationsScreen extends ConsumerWidget {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => context.pop(),
                     child: Container(
-                      width: 40, height: 40,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: AppColors.surface(context),
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.text(context), size: 17),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.text(context),
+                        size: 17,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: Text('notifications.title'.tr(),
-                        style: AppTypography.titleLarge),
+                    child: Text(
+                      'notifications.title'.tr(),
+                      style: AppTypography.titleLarge,
+                    ),
                   ),
                 ],
               ),
@@ -74,17 +85,21 @@ class NotificationsScreen extends ConsumerWidget {
                   },
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
+                    ),
                     itemCount: items.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (ctx, i) =>
-                        _NotificationCard(item: items[i]),
+                    itemBuilder: (ctx, i) => _NotificationCard(
+                      item: items[i],
+                      onTap: () => _handleTap(context, ref, items[i]),
+                    ),
                   ),
                 );
               },
-              loading: () => const Center(
-                  child: CircularProgressIndicator.adaptive()),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator.adaptive()),
               error: (_, _) => EmptyState(
                 icon: CupertinoIcons.exclamationmark_triangle,
                 title: 'common.error'.tr(),
@@ -97,50 +112,67 @@ class NotificationsScreen extends ConsumerWidget {
   }
 }
 
+void _handleTap(BuildContext context, WidgetRef ref, AppNotification item) {
+  if (!item.read) {
+    NotificationService().markRead(item.id).catchError((_) {});
+    ref.invalidate(_notificationsProvider);
+  }
+  final refId = item.referenceId;
+  if (item.type == 'review_reminder' && refId != null && refId.isNotEmpty) {
+    context.push('/owner/bookings/$refId');
+  }
+}
+
 class _NotificationCard extends StatelessWidget {
   final AppNotification item;
-  const _NotificationCard({required this.item});
+  final VoidCallback onTap;
+  const _NotificationCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 8, height: 8,
-            margin: const EdgeInsets.only(top: 6),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: item.read
-                  ? const Color(0xFFC7C7CC)
-                  : AppColors.inverseBg(context),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SectionCard(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(top: 6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: item.read
+                    ? const Color(0xFFC7C7CC)
+                    : AppColors.inverseBg(context),
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.title, style: AppTypography.titleSmall),
-                const SizedBox(height: 2),
-                Text(
-                  item.body,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.text2(context),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title, style: AppTypography.titleSmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.body,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: AppColors.text2(context),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  formatDateTime(item.createdAt),
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.text3(context),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    formatDateTime(item.createdAt),
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.text3(context),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -169,6 +169,18 @@ export class ShopsService {
     return Promise.all(ops);
   }
 
+  async getBookedSlots(shopId: string, dateFrom: string, dateTo: string) {
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        shopId,
+        status: { in: ['pending', 'confirmed', 'in_progress'] },
+        scheduledAt: { gte: new Date(dateFrom), lt: new Date(dateTo) },
+      },
+      select: { scheduledAt: true },
+    });
+    return bookings.map((b) => b.scheduledAt.toISOString());
+  }
+
   private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;

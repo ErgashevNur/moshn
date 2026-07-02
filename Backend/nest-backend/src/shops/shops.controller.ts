@@ -47,6 +47,16 @@ export class ShopsController {
     return { data: await this.svc.findById(id) };
   }
 
+  @Get('shops/:id/booked-slots')
+  @ApiOperation({ summary: "Berilgan kun oralig'ida band qilingan vaqtlar (bron kalendari uchun)" })
+  async getBookedSlots(
+    @Param('id') id: string,
+    @Query('date_from') dateFrom: string,
+    @Query('date_to') dateTo: string,
+  ) {
+    return { data: await this.svc.getBookedSlots(id, dateFrom, dateTo) };
+  }
+
   @Get('shops/:id/reviews')
   @ApiOperation({ summary: 'Servis sharhlari' })
   async getReviews(

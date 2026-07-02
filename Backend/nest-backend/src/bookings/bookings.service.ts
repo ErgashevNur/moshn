@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppConfigService } from '../app-config/app-config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,6 +15,8 @@ const BOOKING_INCLUDE = {
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifSvc: NotificationsService,
@@ -36,7 +39,7 @@ export class BookingsService {
     if (!vehicle) throw new NotFoundException('Mashina topilmadi');
 
     const shop = await this.prisma.shopProfile.findFirst({
-      where: { id: data.shopId, verificationStatus: 'verified' },
+      where: { id: data.shopId },
     });
     if (!shop) throw new NotFoundException('Servis topilmadi');
 
@@ -212,5 +215,47 @@ export class BookingsService {
       data: { status: 'cancelled', cancelReason: reason ?? '' },
     });
     this.notifSvc.sendToUser(b.customerId, 'Bron bekor qilindi', 'Servis broningizni bekor qildi', 'booking_cancelled', b.id);
+  }
+
+  // ─── Sharh so'rash: xizmat tugaganidan 2 soat o'tgach mijozga eslatma ────────
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async sendReviewReminders() {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const candidates = await this.prisma.booking.findMany({
+      where: {
+        status: 'completed',
+        completedAt: { lte: twoHoursAgo },
+        reviewReminderSentAt: null,
+      },
+      include: { shop: true },
+      take: 200,
+    });
+
+    for (const b of candidates) {
+      try {
+        const existingReview = await this.prisma.review.findFirst({
+          where: { bookingId: b.id, reviewType: 'owner_to_shop' },
+        });
+
+        if (!existingReview) {
+          this.notifSvc.sendToUser(
+            b.customerId,
+            'Xizmatni baholang',
+            `${b.shop.shopName || 'Shinomontaj'} — xizmat sifatini baholab, fikringizni qoldiring`,
+            'review_reminder',
+            b.id,
+          );
+        }
+
+        await this.prisma.booking.update({
+          where: { id: b.id },
+          data: { reviewReminderSentAt: new Date() },
+        });
+      } catch (err: any) {
+        this.logger.error(`Review reminder xatosi (booking ${b.id}): ${err?.message}`);
+      }
+    }
   }
 }

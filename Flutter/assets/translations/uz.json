@@ -268,6 +268,7 @@
     "year": "Yil",
     "color": "Rang",
     "add": "Mashina qo'shish",
+    "edit": "Mashinani tahrirlash",
     "plate_required": "Davlat raqamini kiriting",
     "make_hint": "Chevrolet",
     "model_hint": "Cobalt",
@@ -298,6 +299,15 @@
     "no_reviews": "Hali sharh yo'q",
     "price_on_request": "Narx so'raladi",
     "is_verified": "Tasdiqlangan"
+  },
+  "review": {
+    "title": "Sharh qoldirish",
+    "subtitle": "{shop} xizmatini qanday baholaysiz?",
+    "comment_hint": "Fikringizni yozing (ixtiyoriy)",
+    "submit": "Yuborish",
+    "thanks": "Rahmat! Sharhingiz yuborildi",
+    "already_done": "Siz bu bron uchun sharh qoldirgansiz",
+    "rating_required": "Baho tanlang"
   },
   "payment_error": "To'lovda xatolik yuz berdi"
 }

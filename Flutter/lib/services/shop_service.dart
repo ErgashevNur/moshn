@@ -74,6 +74,17 @@ class ShopService {
     await _dio.put('/service/customers/$customerId', data: {'is_vip': isVip});
   }
 
+  Future<List<DateTime>> getBookedSlots(String shopId, DateTime date) async {
+    final dayStart = DateTime(date.year, date.month, date.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    final resp = await _dio.get('/shops/$shopId/booked-slots', queryParameters: {
+      'date_from': dayStart.toUtc().toIso8601String(),
+      'date_to': dayEnd.toUtc().toIso8601String(),
+    });
+    final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
+    return data.map((e) => DateTime.parse(e as String).toLocal()).toList();
+  }
+
   Future<List<Review>> getShopReviews(String shopId, {int page = 1, int limit = 10}) async {
     final resp = await _dio.get(
       '/shops/$shopId/reviews',

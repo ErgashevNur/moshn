@@ -3,7 +3,7 @@ class AppNotification {
   final String title;
   final String body;
   final String? type;
-  final Map<String, dynamic>? data;
+  final String? referenceId;
   final bool read;
   final DateTime createdAt;
 
@@ -12,7 +12,7 @@ class AppNotification {
     required this.title,
     required this.body,
     this.type,
-    this.data,
+    this.referenceId,
     required this.read,
     required this.createdAt,
   });
@@ -22,8 +22,10 @@ class AppNotification {
         title: json['title'] as String? ?? '',
         body: json['body'] as String? ?? '',
         type: json['type'] as String?,
-        data: (json['data'] as Map?)?.cast<String, dynamic>(),
-        read: json['read'] as bool? ?? false,
-        createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+        referenceId: (json['referenceId'] ?? json['reference_id']) as String?,
+        read: (json['isRead'] ?? json['is_read'] ?? json['read']) as bool? ?? false,
+        createdAt: DateTime.tryParse(
+                (json['createdAt'] ?? json['created_at'] ?? '') as String) ??
+            DateTime.now(),
       );
 }

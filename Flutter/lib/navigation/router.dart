@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/user.dart';
+import '../models/vehicle.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/otp_screen.dart';
@@ -114,6 +115,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'vehicles/new',
             builder: (_, _) => const AddVehicleScreen(),
+          ),
+          GoRoute(
+            path: 'vehicles/edit',
+            builder: (_, st) => AddVehicleScreen(vehicle: st.extra as Vehicle),
           ),
           GoRoute(
             path: 'shops/:id',

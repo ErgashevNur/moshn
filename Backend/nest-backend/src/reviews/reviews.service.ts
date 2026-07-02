@@ -52,6 +52,13 @@ export class ReviewsService {
     return review;
   }
 
+  async getByBooking(bookingId: string, reviewType: string) {
+    return this.prisma.review.findFirst({
+      where: { bookingId, reviewType },
+      include: { author: true },
+    });
+  }
+
   async getById(id: string) {
     const review = await this.prisma.review.findUnique({
       where: { id },
