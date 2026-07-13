@@ -258,7 +258,10 @@ class _Body extends ConsumerWidget {
               if (amount != null && amount > 0) {
                 await BookingService().addTip(booking.id, amount);
               }
-              if (ctx.mounted) Navigator.pop(ctx);
+              if (ctx.mounted) {
+                FocusScope.of(ctx).unfocus();
+                Navigator.pop(ctx);
+              }
             },
             child: Text('common.send'.tr()),
           ),
@@ -433,7 +436,10 @@ class _ReviewSection extends ConsumerWidget {
         if (review == null) {
           return PrimaryButton(
             label: 'booking.leave_review'.tr(),
-            onPressed: () => _showLeaveReviewSheet(context, ref, booking),
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              _showLeaveReviewSheet(context, ref, booking);
+            },
           );
         }
         return SectionCard(
@@ -609,10 +615,13 @@ Future<void> _showLeaveReviewSheet(
                                 rating: rating,
                                 comment: commentCtrl.text.trim(),
                               );
+                              if (ctx.mounted) {
+                                FocusScope.of(ctx).unfocus();
+                                Navigator.pop(ctx);
+                              }
                               ref.invalidate(
                                 _bookingReviewProvider(booking.id),
                               );
-                              if (ctx.mounted) Navigator.pop(ctx);
                             } catch (e) {
                               if (ctx.mounted) {
                                 setModalState(() => saving = false);

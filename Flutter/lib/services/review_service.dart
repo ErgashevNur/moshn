@@ -26,7 +26,10 @@ class ReviewService {
   Future<Review?> getByBooking(String bookingId, {String reviewType = 'owner_to_shop'}) async {
     final resp = await _dio.get('/reviews/booking/$bookingId',
         queryParameters: {'type': reviewType});
-    final data = resp.data['data'] ?? resp.data;
+    final body = resp.data;
+    final data = (body is Map<String, dynamic> && body.containsKey('data'))
+        ? body['data']
+        : body;
     if (data == null) return null;
     return Review.fromJson(data as Map<String, dynamic>);
   }

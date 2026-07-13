@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/booking.dart';
@@ -28,9 +29,7 @@ class MyBookingsScreen extends ConsumerStatefulWidget {
 class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
   int _tab = 0; // 0=Будущие, 1=Прошедшие
 
-  static const _upcomingStatuses = {
-    'pending', 'confirmed', 'in_progress'
-  };
+  static const _upcomingStatuses = {'pending', 'confirmed', 'in_progress'};
   static const _pastStatuses = {'completed', 'cancelled'};
 
   List<Booking> _filter(List<Booking> all) {
@@ -62,11 +61,14 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                   return RefreshIndicator(
                     color: AppColors.gold,
                     backgroundColor: AppColors.surface(context),
-                    onRefresh: () async =>
-                        ref.invalidate(allBookingsProvider),
+                    onRefresh: () async => ref.invalidate(allBookingsProvider),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.huge),
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        AppSpacing.huge,
+                      ),
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: list.length,
                       separatorBuilder: (_, _) =>
@@ -77,14 +79,19 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                 },
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.gold),
+                    strokeWidth: 2,
+                    color: AppColors.gold,
+                  ),
                 ),
                 error: (_, _) => Center(
                   child: GestureDetector(
                     onTap: () => ref.invalidate(allBookingsProvider),
-                    child: Text('common.retry'.tr(),
-                        style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.gold)),
+                    child: Text(
+                      'common.retry'.tr(),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.gold,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -100,7 +107,11 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
   Widget _header(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        0,
+      ),
       child: Text(
         'booking.list_title'.tr(),
         style: AppTypography.displayLarge.copyWith(
@@ -169,14 +180,14 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
           const SizedBox(height: AppSpacing.md),
           Text(
             _tab == 0 ? 'booking.no_upcoming'.tr() : 'booking.no_past'.tr(),
-            style: AppTypography.titleSmall
-                .copyWith(color: AppColors.text(context)),
+            style: AppTypography.titleSmall.copyWith(
+              color: AppColors.text(context),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             _tab == 0 ? 'booking.find_hint'.tr() : '',
-            style: AppTypography.body
-                .copyWith(color: AppColors.text3(context)),
+            style: AppTypography.body.copyWith(color: AppColors.text3(context)),
           ),
         ],
       ),
@@ -196,150 +207,176 @@ class _BookingCard extends StatelessWidget {
     final shop = booking.shop;
     final vehicle = booking.vehicle;
     final serviceType = booking.serviceType;
-    final initial =
-        (shop?.shopName ?? 'S').isNotEmpty ? (shop?.shopName ?? 'S')[0] : 'S';
+    final initial = (shop?.shopName ?? 'S').isNotEmpty
+        ? (shop?.shopName ?? 'S')[0]
+        : 'S';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_md),
-        border: Border.all(color: AppColors.hairline(context)),
-      ),
-      child: Column(
-        children: [
-          // ── Row 1: shop info + status badge ───────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface3(context),
-                    borderRadius: BorderRadius.circular(AppSpacing.r_xs),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initial.toUpperCase(),
-                    style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.text2(context)),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              shop?.shopName ?? '—',
-                              style: AppTypography.labelLarge.copyWith(
-                                color: AppColors.text(context),
-                                fontWeight: FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          _StatusBadge(status: booking.status),
-                        ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.push('/owner/bookings/${booking.id}'),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_md),
+          border: Border.all(color: AppColors.hairline(context)),
+        ),
+        child: Column(
+          children: [
+            // ── Row 1: shop info + status badge ───────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface3(context),
+                      borderRadius: BorderRadius.circular(AppSpacing.r_xs),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initial.toUpperCase(),
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.text2(context),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (serviceType != null) ...[
-                            Text(
-                              serviceType.nameFor(context.locale.languageCode),
-                              style: AppTypography.body.copyWith(
-                                color: AppColors.text3(context),
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            if (vehicle?.plate != null &&
-                                vehicle!.plate.isNotEmpty)
-                              const SizedBox(width: 8),
-                          ],
-                          if (vehicle?.plate != null &&
-                              vehicle!.plate.isNotEmpty)
-                            MPlate(plate: vehicle.plate),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Divider ───────────────────────────────────────────────────────
-          Divider(height: 1, color: AppColors.hairline(context)),
-
-          // ── Row 2: date + price ───────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 14, color: AppColors.text3(context)),
-                const SizedBox(width: 6),
-                Text(
-                  _smartDate(context, booking.scheduledAt),
-                  style: AppTypography.body.copyWith(
-                      color: AppColors.text2(context), fontSize: 13),
-                ),
-                const Spacer(),
-                if (booking.totalPrice > 0)
-                  Text(
-                    _fmtPrice(booking.totalPrice),
-                    style: AppTypography.mono.copyWith(
-                      color: AppColors.text(context),
-                      fontSize: 15,
                     ),
                   ),
-              ],
-            ),
-          ),
-
-          // ── Divider ───────────────────────────────────────────────────────
-          Divider(height: 1, color: AppColors.hairline(context)),
-
-          // ── Row 3: action buttons ─────────────────────────────────────────
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.near_me_rounded,
-                    label: 'booking.direction'.tr(),
-                    onTap: shop != null && (shop.latitude != 0 || shop.longitude != 0)
-                        ? () => _openMaps(shop.latitude, shop.longitude,
-                            shop.shopName)
-                        : null,
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                shop?.shopName ?? '—',
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: AppColors.text(context),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            _StatusBadge(status: booking.status),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (serviceType != null) ...[
+                              Text(
+                                serviceType.nameFor(
+                                  context.locale.languageCode,
+                                ),
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.text3(context),
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                              if (vehicle?.plate != null &&
+                                  vehicle!.plate.isNotEmpty)
+                                const SizedBox(width: 8),
+                            ],
+                            if (vehicle?.plate != null &&
+                                vehicle!.plate.isNotEmpty)
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: MPlate(plate: vehicle.plate),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                VerticalDivider(
-                    width: 1, color: AppColors.hairline(context)),
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.phone_rounded,
-                    label: 'booking.call'.tr(),
-                    onTap: (shop?.phone ?? '').isNotEmpty
-                        ? () => _call(shop!.phone)
-                        : null,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // ── Divider ───────────────────────────────────────────────────────
+            Divider(height: 1, color: AppColors.hairline(context)),
+
+            // ── Row 2: date + price ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
+                    color: AppColors.text3(context),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _smartDate(context, booking.scheduledAt),
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.text2(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (booking.totalPrice > 0)
+                    Text(
+                      _fmtPrice(booking.totalPrice),
+                      style: AppTypography.mono.copyWith(
+                        color: AppColors.text(context),
+                        fontSize: 15,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Divider ───────────────────────────────────────────────────────
+            Divider(height: 1, color: AppColors.hairline(context)),
+
+            // ── Row 3: action buttons ─────────────────────────────────────────
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ActionBtn(
+                      icon: Icons.near_me_rounded,
+                      label: 'booking.direction'.tr(),
+                      onTap:
+                          shop != null &&
+                              (shop.latitude != 0 || shop.longitude != 0)
+                          ? () => _openMaps(
+                              shop.latitude,
+                              shop.longitude,
+                              shop.shopName,
+                            )
+                          : null,
+                    ),
+                  ),
+                  VerticalDivider(width: 1, color: AppColors.hairline(context)),
+                  Expanded(
+                    child: _ActionBtn(
+                      icon: Icons.phone_rounded,
+                      label: 'booking.call'.tr(),
+                      onTap: (shop?.phone ?? '').isNotEmpty
+                          ? () => _call(shop!.phone)
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -356,8 +393,36 @@ class _BookingCard extends StatelessWidget {
     if (diff == 1) return '${'dates.tomorrow'.tr()}, $time';
     if (diff == -1) return '${'dates.yesterday'.tr()}, $time';
     final months = locale == 'ru'
-        ? ['', 'янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-        : ['', 'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+        ? [
+            '',
+            'янв',
+            'фев',
+            'мар',
+            'апр',
+            'май',
+            'июн',
+            'июл',
+            'авг',
+            'сен',
+            'окт',
+            'ноя',
+            'дек',
+          ]
+        : [
+            '',
+            'yanvar',
+            'fevral',
+            'mart',
+            'aprel',
+            'may',
+            'iyun',
+            'iyul',
+            'avgust',
+            'sentyabr',
+            'oktyabr',
+            'noyabr',
+            'dekabr',
+          ];
     return '${dt.day} ${months[dt.month]}, $time';
   }
 
@@ -373,7 +438,8 @@ class _BookingCard extends StatelessWidget {
 
   Future<void> _openMaps(double lat, double lng, String label) async {
     final uri = Uri.parse(
-        'https://maps.google.com/?q=${Uri.encodeComponent(label)}&ll=$lat,$lng');
+      'https://maps.google.com/?q=${Uri.encodeComponent(label)}&ll=$lat,$lng',
+    );
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
@@ -394,7 +460,9 @@ class _StatusBadge extends StatelessWidget {
     final (label, bg, fg) = _resolve(context);
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: 3),
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppSpacing.r_full),
@@ -409,16 +477,35 @@ class _StatusBadge extends StatelessWidget {
   (String, Color, Color) _resolve(BuildContext context) {
     switch (status) {
       case 'pending':
-        return ('booking.status_pending'.tr(), AppColors.goldDim, AppColors.gold);
+        return (
+          'booking.status_pending'.tr(),
+          AppColors.goldDim,
+          AppColors.gold,
+        );
       case 'confirmed':
-        return ('booking.status_confirmed_short'.tr(), AppColors.successDim, AppColors.success);
+        return (
+          'booking.status_confirmed_short'.tr(),
+          AppColors.successDim,
+          AppColors.success,
+        );
       case 'in_progress':
-        return ('booking.status_in_progress'.tr(), const Color(0x2938BDF8), const Color(0xFF38BDF8));
+        return (
+          'booking.status_in_progress'.tr(),
+          const Color(0x2938BDF8),
+          const Color(0xFF38BDF8),
+        );
       case 'completed':
-        return ('booking.status_completed'.tr(), AppColors.surface2(context),
-            AppColors.text2(context));
+        return (
+          'booking.status_completed'.tr(),
+          AppColors.surface2(context),
+          AppColors.text2(context),
+        );
       case 'cancelled':
-        return ('booking.status_cancelled_short'.tr(), AppColors.dangerDim, AppColors.danger);
+        return (
+          'booking.status_cancelled_short'.tr(),
+          AppColors.dangerDim,
+          AppColors.danger,
+        );
       default:
         return (status, AppColors.surface2(context), AppColors.text3(context));
     }
@@ -432,11 +519,7 @@ class _ActionBtn extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
 
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
+  const _ActionBtn({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -445,7 +528,9 @@ class _ActionBtn extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+          vertical: AppSpacing.md,
+          horizontal: AppSpacing.sm,
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

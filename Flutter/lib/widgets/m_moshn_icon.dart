@@ -83,6 +83,45 @@ class MoshnIcon extends StatelessWidget {
       <circle cx="12" cy="12" r="3" stroke="C" stroke-width="1.8" fill="none"/>
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
     ''',
+    // Балансировка
+    'balance': '''
+      <path d="M12 3v4M8 21h8M12 7v14" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M5 8h14" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M5 8l-2.5 5a2.5 2.5 0 005 0L5 8z" stroke="C" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+      <path d="M19 8l-2.5 5a2.5 2.5 0 005 0L19 8z" stroke="C" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+    ''',
+    // Ремонт дисков
+    'diskWrench': '''
+      <circle cx="10" cy="14" r="6" stroke="C" stroke-width="1.8" fill="none"/>
+      <circle cx="10" cy="14" r="2" stroke="C" stroke-width="1.8" fill="none"/>
+      <path d="M15.5 4.5a3 3 0 00-3.9 3.9l-1 1 2 2 1-1a3 3 0 003.9-3.9l-1.5 1.5-2-2 1.5-1.5z" stroke="C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    // Подкачка
+    'pump': '''
+      <rect x="5" y="4" width="6" height="10" rx="1.5" stroke="C" stroke-width="1.8" fill="none"/>
+      <path d="M8 4V2.3M8 14v3M8 17h6a2 2 0 012 2v2" stroke="C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="18" cy="19.7" r="1.3" fill="C" stroke="none"/>
+    ''',
+    // Перезобувка
+    'tireSwap': '''
+      <circle cx="12" cy="12" r="7" stroke="C" stroke-width="1.8" fill="none"/>
+      <circle cx="12" cy="12" r="2.5" stroke="C" stroke-width="1.8" fill="none"/>
+      <path d="M12 3a9 9 0 018.5 6" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M18 6.5l2.5 2.5 1-3.3" stroke="C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M12 21a9 9 0 01-8.5-6" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M6 17.5l-2.5-2.5-1 3.3" stroke="C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    // Хранение шин
+    'tireStack': '''
+      <ellipse cx="12" cy="6" rx="7" ry="3" stroke="C" stroke-width="1.8" fill="none"/>
+      <ellipse cx="12" cy="6" rx="2.5" ry="1.1" stroke="C" stroke-width="1.8" fill="none"/>
+      <path d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    ''',
+    // Вулканизация
+    'flame': '''
+      <path d="M12 3c3 3 5 6 5 9a5 5 0 11-10 0c0-1 .3-2 1-3 .2 1.2 1 2 1 2-.4-2.5.8-4.5 2-6-.3 1.3.2 2.2 1 2.6-.6-1.7 0-3.3 0-4.6z" stroke="C" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+    ''',
   };
 
   String _toHex(Color c) {

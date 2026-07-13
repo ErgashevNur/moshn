@@ -14,7 +14,6 @@ import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_moshn_icon.dart';
-import '../../widgets/m_ph.dart';
 import '../../widgets/m_service_tile.dart';
 import '../../widgets/m_tag.dart';
 import '../../widgets/m_workshop_card.dart';
@@ -70,13 +69,13 @@ class _R {
 
 String _iconForSlug(String slug) {
   switch (slug) {
-    case 'tire_change':  return 'disc';
-    case 'pumping':      return 'gauge';
-    case 'patch':        return 'wrench';
-    case 'balancing':    return 'disc';
-    case 'rim_repair':   return 'disc';
-    case 'storage':      return 'layers';
-    default:             return 'wrench';
+    case 'balancing':      return 'balance';
+    case 'disk_repair':    return 'diskWrench';
+    case 'podkachka':      return 'pump';
+    case 'perezobuvka':    return 'tireSwap';
+    case 'tire_storage':   return 'tireStack';
+    case 'vulkanizatsiya': return 'flame';
+    default:                return 'wrench';
   }
 }
 
@@ -308,20 +307,6 @@ class _HomeAppBar extends ConsumerWidget {
                     ),
                   ),
               ],
-            ),
-          ),
-          SizedBox(width: r.isSmall ? 6 : 8),
-
-          // Avatar
-          GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: Container(
-              width: iconSize, height: iconSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.hairline(context), width: 1),
-              ),
-              child: ClipOval(child: MPh(width: iconSize, height: iconSize, label: 'AV')),
             ),
           ),
         ],

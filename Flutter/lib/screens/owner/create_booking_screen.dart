@@ -657,7 +657,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
-                              MPlate(plate: v.plate),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: MPlate(plate: v.plate),
+                              ),
                               const SizedBox(width: AppSpacing.md),
                               _RadioDot(selected: sel, context: context),
                             ],

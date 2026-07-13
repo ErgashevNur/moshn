@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
@@ -45,6 +46,36 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         duration: 0.6,
       ),
     );
+  }
+
+  Future<void> _goToMyLocation() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('home.location_service_disabled'.tr())),
+        );
+      }
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('home.location_permission_denied'.tr())),
+        );
+      }
+      return;
+    }
+
+    final pos = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+    await _moveTo(Point(latitude: pos.latitude, longitude: pos.longitude), zoom: 15);
   }
 
   List<MapObject> _buildMapObjects(List<Shop> shops) {
@@ -134,7 +165,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             right: 16,
             top: MediaQuery.of(context).padding.top + 72,
             child: _MyLocationButton(
-              onTap: () => _moveTo(_tashkent, zoom: 13),
+              onTap: _goToMyLocation,
             ),
           ),
 

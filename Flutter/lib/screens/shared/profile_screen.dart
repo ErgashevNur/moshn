@@ -110,7 +110,10 @@ Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) a
                                 data: {'full_name': name},
                               );
                               await ref.read(authProvider.notifier).refreshUser();
-                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (ctx.mounted) {
+                                FocusScope.of(ctx).unfocus();
+                                Navigator.pop(ctx);
+                              }
                             } catch (e) {
                               if (ctx.mounted) {
                                 setModalState(() => saving = false);

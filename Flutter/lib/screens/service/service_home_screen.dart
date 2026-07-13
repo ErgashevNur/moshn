@@ -493,7 +493,10 @@ class _BookingCard extends StatelessWidget {
                     if (booking.vehicle?.plate != null &&
                         booking.vehicle!.plate.isNotEmpty) ...[
                       const SizedBox(width: 8),
-                      MPlate(plate: booking.vehicle!.plate),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: MPlate(plate: booking.vehicle!.plate),
+                      ),
                     ],
                   ],
                 ),
@@ -502,12 +505,16 @@ class _BookingCard extends StatelessWidget {
                   booking.serviceType
                           ?.nameFor(context.locale.languageCode) ??
                       '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   booking.customer?.name ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),

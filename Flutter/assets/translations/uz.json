@@ -97,7 +97,9 @@
     "error_label": "Xatolik yuz berdi",
     "nearby_count": "{count} ta yaqin atrofda",
     "location_all": "O'zbekiston",
-    "service_types_error": "Xizmat turlari yuklanmadi"
+    "service_types_error": "Xizmat turlari yuklanmadi",
+    "location_service_disabled": "Qurilmada geolokatsiyani yoqing",
+    "location_permission_denied": "Joylashuvga ruxsat yo'q. Sozlamalardan ruxsat bering"
   },
   "booking": {
     "title": "Bron qilish",

@@ -95,7 +95,9 @@
     "error_label": "Ошибка",
     "nearby_count": "{count} рядом",
     "location_all": "Узбекистан",
-    "service_types_error": "Типы услуг не загружены"
+    "service_types_error": "Типы услуг не загружены",
+    "location_service_disabled": "Включите геолокацию на устройстве",
+    "location_permission_denied": "Нет доступа к геолокации. Разрешите в настройках"
   },
   "booking": {
     "title": "Запись",
