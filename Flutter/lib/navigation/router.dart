@@ -21,6 +21,7 @@ import '../screens/owner/owner_root.dart';
 import '../screens/owner/payment_screen.dart';
 import '../screens/owner/service_category_screen.dart';
 import '../screens/owner/shop_detail_screen.dart';
+import '../screens/mechanic/mechanic_root.dart';
 import '../screens/service/customer_card_screen.dart';
 import '../screens/service/service_booking_detail_screen.dart';
 import '../screens/service/service_root.dart';
@@ -59,7 +60,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (loc == '/role-select' || loc == '/profile-setup') return null;
           return '/role-select';
         }
-        return role == UserRole.service ? '/service' : '/owner';
+        switch (role) {
+          case UserRole.service:
+            return '/service';
+          case UserRole.master:
+            return '/mechanic';
+          default:
+            return '/owner';
+        }
       }
 
       return null;
@@ -182,6 +190,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+
+      // Mechanic (usta) shell
+      GoRoute(
+        path: '/mechanic',
+        builder: (_, _) => const MechanicRoot(),
       ),
 
       // Shared

@@ -45,6 +45,17 @@ class BookingService {
     await _dio.put('/bookings/$id/cancel', data: {'reason': reason});
   }
 
+  // --- Usta roli uchun ---
+
+  Future<List<Booking>> getMasterBookings({String? status}) async {
+    final params = <String, dynamic>{};
+    if (status != null) params['status'] = status;
+    final resp = await _dio.get('/master/bookings', queryParameters: params);
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+    final list = (payload['bookings'] ?? []) as List<dynamic>;
+    return list.map((e) => Booking.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
   // --- Для роли сервиса ---
 
   Future<List<Booking>> getShopBookings({String? status}) async {
