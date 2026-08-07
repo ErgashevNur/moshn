@@ -106,8 +106,9 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
       ⚠️ Bu **kritik yo'l** edi — backend `masterId`ni majburiy qilgach, booking
       buzilgan edi; endi tiklandi. `flutter analyze` toza.
 - [ ] Servis sahifasida (shop_detail) ustalar ro'yxatini ko'rsatish
-- [ ] Servis egasi kabineti: usta qo'shish/tahrirlash UI
-      (`service/masters` endpointlari tayyor)
+- [x] Servis egasi kabineti: usta qo'shish/tahrirlash UI — menyu → "Мастера",
+      `masters_screen` (ro'yxat + forma: telefon/email/parol/ism/lavozim +
+      xizmatlar multi-select, nofaol qilish). Qo'shishда `'master'` login yaratiladi.
 - [x] Usta uchun login va o'z kabineti — `UserRole.master`, router `master →
       /mechanic` (otp_screen ham), `mechanic_root` (2 tab: Записи + Профиль),
       usta bronlari ekrani (`master/bookings`). Ilgari usta `role=none` bo'lib
