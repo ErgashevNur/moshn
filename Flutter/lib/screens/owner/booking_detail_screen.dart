@@ -474,8 +474,11 @@ Future<void> _showLeaveReviewSheet(
   Booking booking,
 ) async {
   int rating = 0;
+  int masterRating = 0;
   final commentCtrl = TextEditingController();
   bool saving = false;
+  final hasMaster = booking.masterId != null;
+  final masterName = booking.master?.fullName ?? 'Мастер';
 
   await showModalBottomSheet<void>(
     context: context,
@@ -526,6 +529,16 @@ Future<void> _showLeaveReviewSheet(
                   ),
                 ),
                 const SizedBox(height: 20),
+                if (hasMaster) ...[
+                  Center(
+                    child: Text(
+                      'Сервис',
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.text3(ctx)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -549,6 +562,42 @@ Future<void> _showLeaveReviewSheet(
                     }),
                   ),
                 ),
+                if (hasMaster) ...[
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'Мастер · $masterName',
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.text3(ctx)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(5, (i) {
+                        final filled = i < masterRating;
+                        return GestureDetector(
+                          onTap: () =>
+                              setModalState(() => masterRating = i + 1),
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(
+                              filled
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              size: 32,
+                              color: filled
+                                  ? AppColors.gold
+                                  : AppColors.text3(ctx),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 TextField(
                   controller: commentCtrl,
@@ -615,6 +664,16 @@ Future<void> _showLeaveReviewSheet(
                                 rating: rating,
                                 comment: commentCtrl.text.trim(),
                               );
+                              // Ustaga ham baho (agar tanlansa)
+                              if (hasMaster && masterRating > 0) {
+                                await ReviewService().createReview(
+                                  bookingId: booking.id,
+                                  targetId: booking.masterId!,
+                                  reviewType: 'owner_to_master',
+                                  rating: masterRating,
+                                  comment: commentCtrl.text.trim(),
+                                );
+                              }
                               if (ctx.mounted) {
                                 FocusScope.of(ctx).unfocus();
                                 Navigator.pop(ctx);
