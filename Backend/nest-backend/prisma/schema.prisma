@@ -178,7 +178,7 @@ model Booking {
   id                   String    @id @default(uuid()) @db.Uuid
   customerId           String    @map("customer_id") @db.Uuid
   shopId               String    @map("shop_id") @db.Uuid
-  masterId             String?   @map("master_id") @db.Uuid
+  masterId             String    @map("master_id") @db.Uuid
   vehicleId            String    @map("vehicle_id") @db.Uuid
   serviceTypeId        String    @map("service_type_id") @db.Uuid
   scheduledAt          DateTime  @map("scheduled_at")
@@ -193,7 +193,7 @@ model Booking {
 
   customer    User        @relation("BookingCustomer", fields: [customerId], references: [id])
   shop        ShopProfile @relation("BookingShop", fields: [shopId], references: [id])
-  master      Master?     @relation("BookingMaster", fields: [masterId], references: [id])
+  master      Master      @relation("BookingMaster", fields: [masterId], references: [id])
   vehicle     Vehicle     @relation("BookingVehicle", fields: [vehicleId], references: [id])
   serviceType ServiceType @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
   payment     Payment?    @relation("BookingPayment")
