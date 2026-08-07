@@ -26,7 +26,38 @@ docker compose up -d --build
 docker compose ps          # hammasi "running"/"healthy" bo'lishi kerak
 docker compose logs -f backend
 ```
-Migratsiya (jadvallar) backend ishga tushganda avtomatik bajariladi.
+
+## 3.1 Ma'lumotlar bazasi migratsiyasi (Prisma)
+
+> ⚠️ Migratsiya **avtomatik bajarilmaydi** — backend faqat `node dist/main`
+> bilan ishga tushadi. Migratsiyani alohida ishga tushirish kerak.
+
+**Prod / server (yangi jadval qo'shish, sxema o'zgarishi):**
+```bash
+docker compose exec backend npx prisma migrate deploy
+```
+Bu `prisma/migrations/` dagi barcha migratsiyalarni tartib bilan qo'llaydi.
+Yangi backend imijini deploy qilganda, konteyner yangilangandan keyin shu buyruqni
+ishga tushiring (yoki Dockerfile CMD ichida `prisma migrate deploy && node dist/main`
+qilib qo'ying).
+
+**Lokal ishlab chiqish (sxema o'zgartirganda):**
+```bash
+cd Backend/nest-backend
+npx prisma migrate dev --name <ozgarish_nomi>
+```
+
+**Qoidalar:**
+- `prisma db push` **ishlatilmaydi** — har bir sxema o'zgarishi migratsiya fayli
+  bo'lishi shart (aks holda prodda ma'lumot yo'qolishi mumkin).
+- Baseline migratsiya (`0_init`) mavjud bazadan yaratilgan va `resolve --applied`
+  bilan bog'langan. Toza bazada `migrate deploy` to'liq sxemani quradi.
+- Migratsiya holatini tekshirish: `npx prisma migrate status`.
+
+> **Eslatma:** SOS moduli (Faza 3) uchun PostGIS kerak bo'ladi. Hozircha
+> postgres imijida postgis paketi yo'q. O'sha vaqtda `postgres:16-alpine` o'rniga
+> `postgis/postgis:16-3.4` imijiga o'tiladi va migratsiyada
+> `CREATE EXTENSION IF NOT EXISTS postgis;` qo'shiladi.
 
 ## 4. Admin foydalanuvchi yaratish
 API orqali admin ro'yxatdan o'tmaydi — konteynerda yaratamiz:
