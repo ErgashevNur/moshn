@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/master.dart';
 import '../../models/service_type.dart';
 import '../../models/vehicle.dart';
 import '../../services/booking_service.dart';
+import '../../services/master_service.dart';
 import '../../services/shop_service.dart';
 import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
@@ -27,6 +29,11 @@ final _vehiclesForBookingProvider = FutureProvider.autoDispose<List<Vehicle>>((
 final _serviceTypesForBookingProvider =
     FutureProvider.autoDispose<List<ServiceType>>((ref) {
       return ShopService().getServiceTypes();
+    });
+
+final _mastersForBookingProvider =
+    FutureProvider.autoDispose.family<List<Master>, String>((ref, shopId) {
+      return MasterService().getShopMasters(shopId);
     });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -53,6 +60,7 @@ class CreateBookingScreen extends ConsumerStatefulWidget {
 class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   String? _vehicleId;
   String? _serviceTypeId;
+  String? _masterId;
   DateTime _selectedDate = DateTime.now();
   String? _selectedTime;
   bool _saving = false;
@@ -93,10 +101,11 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     final requestId = ++_slotsRequestId;
     setState(() => _slotsLoading = true);
     try {
-      final booked = await ShopService().getBookedSlots(
-        widget.shopId,
-        _selectedDate,
-      );
+      // Bandlik endi usta bo'yicha hisoblanadi. Usta tanlanmagan bo'lsa —
+      // servis darajasidagi umumiy bandlikni ko'rsatamiz (taxminiy).
+      final booked = _masterId != null
+          ? await MasterService().getBookedSlots(_masterId!, _selectedDate)
+          : await ShopService().getBookedSlots(widget.shopId, _selectedDate);
       if (!mounted || requestId != _slotsRequestId) return;
       final slots = booked
           .map(
@@ -155,6 +164,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       _toast('Выберите тип услуги');
       return;
     }
+    if (_masterId == null) {
+      _toast('Выберите мастера');
+      return;
+    }
     if (_selectedTime == null) {
       _toast('Выберите время');
       return;
@@ -173,6 +186,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     try {
       final booking = await BookingService().createBooking(
         shopId: widget.shopId,
+        masterId: _masterId!,
         vehicleId: _vehicleId!,
         serviceTypeId: _serviceTypeId!,
         scheduledAt: scheduledAt,
@@ -280,6 +294,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                   _shopCard(context),
                   const SizedBox(height: AppSpacing.xl),
                   _serviceSection(context, typesAsync),
+                  const SizedBox(height: AppSpacing.xl),
+                  _masterSection(context),
                   const SizedBox(height: AppSpacing.xl),
                   _vehicleSection(context, vehiclesAsync),
                   const SizedBox(height: AppSpacing.xl),
@@ -497,7 +513,15 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                     final t = types[i];
                     final sel = _serviceTypeId == t.id;
                     return GestureDetector(
-                      onTap: () => setState(() => _serviceTypeId = t.id),
+                      onTap: () {
+                        setState(() {
+                          _serviceTypeId = t.id;
+                          // Usta shu xizmatni bajarishi shart — qayta tanlanadi
+                          _masterId = null;
+                          _selectedTime = null;
+                        });
+                        _loadBookedSlots();
+                      },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.symmetric(
@@ -548,6 +572,164 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
             ),
           ),
           error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  // ── Master (usta) list ────────────────────────────────────────────────────
+
+  Widget _masterSection(BuildContext context) {
+    final async = ref.watch(_mastersForBookingProvider(widget.shopId));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(context, 'ВЫБЕРИТЕ МАСТЕРА'),
+        const SizedBox(height: AppSpacing.sm),
+        async.when(
+          data: (masters) {
+            final list = _serviceTypeId == null
+                ? masters
+                : masters.where((m) => m.offersService(_serviceTypeId!)).toList();
+            if (list.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                  ),
+                  child: Text(
+                    'Для этой услуги нет свободных мастеров',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.text3(context),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: List.generate(list.length, (i) {
+                final m = list[i];
+                final sel = _masterId == m.id;
+                final initial =
+                    m.fullName.isNotEmpty ? m.fullName[0].toUpperCase() : 'M';
+                return Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom: i < list.length - 1 ? AppSpacing.sm : 0,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _masterId = m.id;
+                        _selectedTime = null;
+                      });
+                      _loadBookedSlots();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: sel
+                            ? AppColors.surface2(context)
+                            : AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                        border: Border.all(
+                          color: sel
+                              ? AppColors.inverseBg(context)
+                                  .withValues(alpha: 0.25)
+                              : AppColors.hairline(context),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColors.goldDim,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.r_xs),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initial,
+                              style: AppTypography.labelLarge
+                                  .copyWith(color: AppColors.gold),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  m.fullName.isNotEmpty ? m.fullName : 'Мастер',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: AppColors.text(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  m.position.isNotEmpty ? m.position : 'Мастер',
+                                  style: AppTypography.body.copyWith(
+                                    color: AppColors.text3(context),
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _masterRating(context, m),
+                          const SizedBox(width: AppSpacing.md),
+                          _RadioDot(selected: sel, context: context),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _masterRating(BuildContext context, Master m) {
+    if (m.ratingCount == 0) {
+      return Text(
+        'Нов.',
+        style: AppTypography.body.copyWith(
+          color: AppColors.text3(context),
+          fontSize: 12,
+        ),
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('⭐', style: TextStyle(fontSize: 12)),
+        const SizedBox(width: 3),
+        Text(
+          m.ratingAvg.toStringAsFixed(1),
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.text2(context),
+          ),
         ),
       ],
     );

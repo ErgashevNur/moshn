@@ -8,6 +8,7 @@ class BookingService {
 
   Future<Booking> createBooking({
     required String shopId,
+    required String masterId,
     required String vehicleId,
     required String serviceTypeId,
     required DateTime scheduledAt,
@@ -16,6 +17,7 @@ class BookingService {
   }) async {
     final resp = await _dio.post('/bookings', data: {
       'shop_id': shopId,
+      'master_id': masterId,
       'vehicle_id': vehicleId,
       'service_type_id': serviceTypeId,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
