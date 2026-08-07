@@ -5,6 +5,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { EmailModule } from './email/email.module';
+import { MastersModule } from './masters/masters.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -26,6 +27,7 @@ import { PromosModule } from './promos/promos.module';
     ProfileModule,
     VehiclesModule,
     ShopsModule,
+    MastersModule,
     BookingsModule,
     PaymentsModule,
     ReviewsModule,

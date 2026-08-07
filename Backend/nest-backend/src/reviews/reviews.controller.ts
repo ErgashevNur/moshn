@@ -16,7 +16,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Baholash qoldirish (owner→shop yoki shop→owner)' })
   async create(
     @User('user_id') userId: string,
-    @Body() body: { booking_id: string; rating: number; comment?: string; review_type: 'owner_to_shop' | 'shop_to_owner' },
+    @Body() body: { booking_id: string; rating: number; comment?: string; review_type: 'owner_to_shop' | 'owner_to_master' | 'shop_to_owner' },
   ) {
     return { data: await this.svc.create(userId, { bookingId: body.booking_id, rating: body.rating, comment: body.comment, reviewType: body.review_type }) };
   }

@@ -9,6 +9,7 @@ import { WsHub } from '../ws/ws.hub';
 const BOOKING_INCLUDE = {
   customer: true,
   shop: { include: { user: true } },
+  master: true,
   vehicle: true,
   serviceType: true,
 } as const;
@@ -27,6 +28,7 @@ export class BookingsService {
 
   async create(customerId: string, data: {
     shopId: string;
+    masterId: string;
     vehicleId: string;
     serviceTypeId: string;
     scheduledAt: string;
@@ -43,10 +45,18 @@ export class BookingsService {
     });
     if (!shop) throw new NotFoundException('Servis topilmadi');
 
+    // Mijoz aniq ustaga yoziladi — usta shu servisga tegishli va faol bo'lishi shart
+    if (!data.masterId) throw new BadRequestException('Usta tanlanmagan');
+    const master = await this.prisma.master.findFirst({
+      where: { id: data.masterId, shopId: data.shopId, isActive: true },
+    });
+    if (!master) throw new BadRequestException('Usta topilmadi yoki bu servisga tegishli emas');
+
     const booking = await this.prisma.booking.create({
       data: {
         customerId,
         shopId: data.shopId,
+        masterId: data.masterId,
         vehicleId: data.vehicleId,
         serviceTypeId: data.serviceTypeId,
         scheduledAt: new Date(data.scheduledAt),
@@ -59,6 +69,11 @@ export class BookingsService {
 
     this.wsHub.broadcastToUser(shop.userId, 'new_booking', booking);
     this.notifSvc.sendToUser(shop.userId, 'Yangi bron!', 'Yangi mijoz bron qildi', 'new_booking', booking.id);
+    // Usta alohida login bo'lsa, unga ham xabar (yakka usta = egasi bo'lsa takrorlamaymiz)
+    if (master.userId !== shop.userId) {
+      this.wsHub.broadcastToUser(master.userId, 'new_booking', booking);
+      this.notifSvc.sendToUser(master.userId, 'Yangi bron!', 'Sizga yangi mijoz yozildi', 'new_booking', booking.id);
+    }
     this.shopSvc.upsertCustomerCard(data.shopId, customerId).catch(() => null);
 
     return booking;
@@ -86,6 +101,26 @@ export class BookingsService {
     if (!shop) throw new NotFoundException('Servis topilmadi');
 
     const where: any = { shopId: shop.id };
+    if (status) where.status = status;
+
+    const [items, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        include: { customer: true, vehicle: true, serviceType: true },
+        orderBy: { scheduledAt: 'asc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+    return { bookings: items, total };
+  }
+
+  async getMasterBookings(masterUserId: string, status: string, limit: number, skip: number) {
+    const master = await this.prisma.master.findUnique({ where: { userId: masterUserId } });
+    if (!master) throw new NotFoundException('Usta profili topilmadi');
+
+    const where: any = { masterId: master.id };
     if (status) where.status = status;
 
     const [items, total] = await Promise.all([
