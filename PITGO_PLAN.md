@@ -99,13 +99,22 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
 
 ### 2.4 Flutter
 
-- [ ] Servis sahifasida ustalar ro'yxati
-- [ ] Yozilishda usta tanlash qadami
-- [ ] Usta uchun login va o'z kabineti (buyurtmalari, jadvali)
-- [ ] Sharh qoldirishda ustaga ham baho
+- [x] **Yozilishda usta tanlash qadami** — `create_booking_screen`da usta bo'limi
+      (xizmatga qarab filtr, reyting). `booking_service` `master_id` yuboradi,
+      bandlik usta bo'yicha (`/masters/:id/booked-slots`).
+      Model: `master.dart`, service: `master_service.dart`.
+      ⚠️ Bu **kritik yo'l** edi — backend `masterId`ni majburiy qilgach, booking
+      buzilgan edi; endi tiklandi. `flutter analyze` toza.
+- [ ] Servis sahifasida (shop_detail) ustalar ro'yxatini ko'rsatish
+- [ ] Servis egasi kabineti: usta qo'shish/tahrirlash UI
+      (`service/masters` endpointlari tayyor)
+- [ ] Usta uchun login va o'z kabineti — role routing (`'master'`) + mechanic
+      ekranlari (`master/profile`, `master/bookings` tayyor)
+- [ ] Sharh qoldirishda ustaga ham baho (`owner_to_master` tayyor)
 
-**Tayyor deb hisoblanadi:** mijoz servis ichidagi aniq ustaga yozila oladi,
-usta o'z akkauntiga kirib buyurtmasini ko'radi, sharh ikki darajada yoziladi.
+**Holat:** ✅ mijoz aniq ustaga yozila oladi (kritik oqim ishlaydi). Qolgan UI
+qismlari (usta kabineti, egasi boshqaruvi, usta sharhi) — keyingi bosqichlar.
+Backend hammasini qo'llab-quvvatlaydi.
 
 ---
 
