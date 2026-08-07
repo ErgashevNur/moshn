@@ -105,7 +105,8 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
       Model: `master.dart`, service: `master_service.dart`.
       ⚠️ Bu **kritik yo'l** edi — backend `masterId`ni majburiy qilgach, booking
       buzilgan edi; endi tiklandi. `flutter analyze` toza.
-- [ ] Servis sahifasida (shop_detail) ustalar ro'yxatini ko'rsatish
+- [x] Servis sahifasida (shop_detail) ustalar ro'yxatini ko'rsatish — "Мастера"
+      bo'limi (ism, lavozim, reyting).
 - [x] Servis egasi kabineti: usta qo'shish/tahrirlash UI — menyu → "Мастера",
       `masters_screen` (ro'yxat + forma: telefon/email/parol/ism/lavozim +
       xizmatlar multi-select, nofaol qilish). Qo'shishда `'master'` login yaratiladi.
@@ -113,11 +114,13 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
       /mechanic` (otp_screen ham), `mechanic_root` (2 tab: Записи + Профиль),
       usta bronlari ekrani (`master/bookings`). Ilgari usta `role=none` bo'lib
       `/role-select`da qamalardi — tuzatildi. `flutter analyze`: 0 error.
-- [ ] Sharh qoldirishda ustaga ham baho (`owner_to_master` tayyor)
+- [x] Sharh qoldirishda ustaga ham baho — `booking_detail` sharh oynasida
+      servis + usta bahosi (bitta oynada), `owner_to_master` yuboriladi.
 
-**Holat:** ✅ mijoz aniq ustaga yozila oladi (kritik oqim ishlaydi). Qolgan UI
-qismlari (usta kabineti, egasi boshqaruvi, usta sharhi) — keyingi bosqichlar.
-Backend hammasini qo'llab-quvvatlaydi.
+**✅ FAZA 2 TO'LIQ TUGADI (backend + Flutter):** egasi usta qo'shadi (login
+yaratiladi) → usta `/mechanic` kabinetiga kiradi va bronlarini ko'radi → mijoz
+servis sahifasida ustalarni ko'rib, aniq ustaga yoziladi → xizmatdan keyin servis
+va ustani alohida baholaydi. Reyting ikki darajali. `flutter analyze`: 0 error.
 
 ---
 
