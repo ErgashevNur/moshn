@@ -32,6 +32,54 @@ class MasterService {
     return data.map((e) => DateTime.parse(e as String).toLocal()).toList();
   }
 
+  // ── Servis egasi tomonidan boshqaruv ───────────────────────────────────────
+
+  Future<List<Master>> listMyMasters() async {
+    final resp = await _dio.get('/service/masters');
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+    final list = (payload['masters'] ?? []) as List<dynamic>;
+    return list.map((e) => Master.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Master> createMaster({
+    required String phone,
+    required String email,
+    required String password,
+    required String fullName,
+    String position = '',
+    List<String> serviceTypeIds = const [],
+  }) async {
+    final resp = await _dio.post('/service/masters', data: {
+      'phone': phone,
+      'email': email,
+      'password': password,
+      'full_name': fullName,
+      'position': position,
+      'service_type_ids': serviceTypeIds,
+    });
+    return Master.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<Master> updateMaster(
+    String id, {
+    String? fullName,
+    String? position,
+    bool? isActive,
+    List<String>? serviceTypeIds,
+  }) async {
+    final body = <String, dynamic>{};
+    if (fullName != null) body['full_name'] = fullName;
+    if (position != null) body['position'] = position;
+    if (isActive != null) body['is_active'] = isActive;
+    if (serviceTypeIds != null) body['service_type_ids'] = serviceTypeIds;
+    final resp = await _dio.put('/service/masters/$id', data: body);
+    return Master.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<void> deactivateMaster(String id) async {
+    await _dio.delete('/service/masters/$id');
+  }
+
   Future<List<Review>> getMasterReviews(String masterId, {int page = 1, int limit = 10}) async {
     final resp = await _dio.get(
       '/masters/$masterId/reviews',

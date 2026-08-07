@@ -18,6 +18,7 @@ import '../../widgets/m_plate.dart';
 import '../../widgets/section_card.dart';
 import 'report_screen.dart';
 import 'prices_screen.dart';
+import 'masters_screen.dart';
 
 final _shopProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
   (_) => ShopService().getMyShop(),
@@ -679,6 +680,16 @@ class _BurgerSheet extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const PricesScreen()));
+            },
+          ),
+          _BurgerDivider(),
+          _MenuItem(
+            icon: Icons.engineering_rounded,
+            label: 'Мастера',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MastersScreen()));
             },
           ),
           _BurgerDivider(),
