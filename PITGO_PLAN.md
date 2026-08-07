@@ -108,8 +108,10 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
 - [ ] Servis sahifasida (shop_detail) ustalar ro'yxatini ko'rsatish
 - [ ] Servis egasi kabineti: usta qo'shish/tahrirlash UI
       (`service/masters` endpointlari tayyor)
-- [ ] Usta uchun login va o'z kabineti — role routing (`'master'`) + mechanic
-      ekranlari (`master/profile`, `master/bookings` tayyor)
+- [x] Usta uchun login va o'z kabineti — `UserRole.master`, router `master →
+      /mechanic` (otp_screen ham), `mechanic_root` (2 tab: Записи + Профиль),
+      usta bronlari ekrani (`master/bookings`). Ilgari usta `role=none` bo'lib
+      `/role-select`da qamalardi — tuzatildi. `flutter analyze`: 0 error.
 - [ ] Sharh qoldirishda ustaga ham baho (`owner_to_master` tayyor)
 
 **Holat:** ✅ mijoz aniq ustaga yozila oladi (kritik oqim ishlaydi). Qolgan UI
