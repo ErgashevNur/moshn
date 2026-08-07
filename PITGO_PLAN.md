@@ -74,11 +74,16 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
 
 ### 2.2 Ma'lumot migratsiyasi
 
-- [ ] Har bir mavjud `ShopProfile` uchun bitta **standart usta** yaratish
-      (yakka usta stsenariysi bilan mos)
-- [ ] Mavjud `Booking` yozuvlarini shu standart ustaga bog'lash
-- [ ] Mavjud `Review` larni ham shunday bog'lash
-- [ ] Shundan keyingina `masterId` ni majburiy qilish
+- [x] Har bir `ShopProfile` uchun standart usta yaratildi (userId = servis egasi).
+      6 servis → 6 usta. Migratsiya: `20260807191300_backfill_masters`.
+- [x] Mavjud 8 `Booking` standart ustaga bog'landi (`masterId` bo'sh 0 ta).
+- [x] `master_service_types` `shop_service_prices`'dan to'ldirildi (6 yozuv).
+- [~] Mavjud `Review` larni bog'lash — KERAK EMAS. Master reytingi yangi
+      `reviewType='owner_to_master'` orqali; eski review'lar `owner_to_shop`/
+      `shop_to_owner`, ular tegishli emas.
+- [ ] ⏳ `masterId` NOT NULL — **2.3 backend'dan keyin**. Hozir nullable, chunki
+      booking yaratish kodi hali `masterId` bermaydi. Backend ulangach alohida
+      migratsiyada majburiy qilinadi.
 
 ### 2.3 Backend
 
