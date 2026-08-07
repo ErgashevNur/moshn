@@ -14,20 +14,20 @@ usta modeli bo'lmasa keyin qayta yozishga to'g'ri keladi.
 
 Repoda maxfiy ma'lumot ochiq yotibdi.
 
-- [ ] **Firebase service account kalitini almashtirish**
-  - Repo ildizidagi `shina24-*-firebase-adminsdk-*.json` — bu **private key**.
-    U bilan Firebase loyihasiga to'liq admin kirish mumkin.
-  - Firebase Console → Project settings → Service accounts → eski kalitni
-    **o'chirish (revoke)**, yangisini yaratish
-  - Yangi kalit repoga qo'yilmaydi — `.env` yoki secret orqali uzatiladi
-  - ⚠️ Faylni git'dan o'chirish yetarli emas — tarixda qoladi.
-    Shuning uchun kalit **almashtirilishi shart**.
-- [ ] `Moshn.zip` ni repodan olib tashlash (kerak bo'lsa alohida saqlash)
-- [ ] `.gitignore` ni to'ldirish: `*.json` firebase kalitlari, `.env`,
-      `Moshn.zip`, `uploads/`, `media/`
-- [ ] `.env.example` ni tekshirish — ichida haqiqiy qiymat qolmaganiga ishonch hosil qilish
+- [x] **Firebase service account kalitini almashtirish** — yangi kalit
+      (`0c94837fc7`) yaratildi, `nest-backend/.env`ga bir qatorlik JSON qilib
+      ulandi (backend `FIREBASE_SERVICE_ACCOUNT` env'dan o'qiydi). Eski/yangi
+      `.json` fayllar diskdan o'chirildi.
+      - ⚠️ **Qoldi:** Firebase Console'da eski kalitni (`fcf8e90332`) revoke qilish.
+        Muhim: eski fayl git tarixida **umuman bo'lmagan** (`.gitignore` qamragan).
+      - ℹ️ Serverga deploy'da kalit `Backend/.env` (compose) ga qo'yiladi.
+- [x] `Moshn.zip` — git kuzatuvidan chiqarildi, lokal fayl saqlandi.
+      (Tarixda `c9c84ef` da qolgan; to'liq o'chirish = tarix qayta yozish, past ustuvorlik.)
+- [x] `.gitignore` — `Moshn.zip` qo'shildi (firebase/`.env`/uploads/media allaqachon bor edi).
+- [x] `.env.example` tekshirildi — faqat placeholder qiymatlar, haqiqiy sir yo'q.
 
-**Tayyor deb hisoblanadi:** repoda birorta ham amaldagi kalit/parol yo'q.
+**Holat:** repoda amaldagi kalit/parol yo'q. Qolgan yagona ish — Console'da eski
+kalitni revoke qilish (lokal loyiha uchun shoshilinch emas).
 
 ---
 
@@ -37,16 +37,16 @@ Hozir `prisma/migrations/` bo'sh, `db push` bilan ishlangan. Sxemani
 o'zgartirishdan oldin bu tuzatilishi kerak, aks holda prodda ma'lumot
 yo'qolishi mumkin va orqaga qaytarish yo'q.
 
-- [ ] Hozirgi `schema.prisma` dan baseline migratsiya yaratish
-      (`prisma migrate diff` → birinchi migratsiya fayli)
-- [ ] Mavjud bazani shu migratsiyaga `resolve --applied` bilan bog'lash
-- [ ] PostGIS kengaytmasini qo'shish: `CREATE EXTENSION IF NOT EXISTS postgis;`
-      (SOS uchun kerak, hozirdan qo'yib qo'yilsin)
-- [ ] `README` yoki `DEPLOY.md` ga migratsiya tartibini yozish
-- [ ] Bundan keyin `db push` ishlatilmasin — faqat `migrate dev` / `migrate deploy`
+- [x] Baseline migratsiya `0_init` yaratildi (15 jadval, `migrate diff --from-empty`).
+- [x] Mavjud baza `resolve --applied 0_init` bilan bog'landi (DDL ishlamadi).
+- [ ] ⏸️ PostGIS **keyinga qoldirildi** — bu postgres imijida postgis paketi yo'q
+      **va** `moshn` user superuser emas (`CREATE EXTENSION` ruxsat bermaydi).
+      Faza 3'da `postgis/postgis:16-3.4` imijiga o'tilganda qo'shiladi.
+- [x] `DEPLOY.md` §3.1 — migratsiya tartibi yozildi, "avtomatik" degan xato tuzatildi.
+- [x] Qoida o'rnatildi: `db push` emas, `migrate dev` / `migrate deploy`.
 
-**Tayyor deb hisoblanadi:** toza bazada `migrate deploy` ishlagach, sxema
-hozirgi holatga to'liq mos keladi.
+**Holat:** `migrate status` → "Database schema is up to date". Baseline ishlaydi.
+PostGIS Faza 3 ochilishida hal qilinadi.
 
 ---
 
@@ -57,17 +57,20 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
 
 ### 2.1 Sxema
 
-- [ ] `Master` modeli:
-      `id, shopProfileId, userId (login akkaunti), fullName, position,
-      isActive, ratingAvg, ratingCount, createdAt`
-- [ ] `Master.userId → User` — har bir ustaning alohida logini
-- [ ] `User` rollariga `MASTER` qo'shish (mavjud rol enum ko'rilsin)
-- [ ] `Booking.masterId` (nullable emas — migratsiyada bosqichma-bosqich)
-- [ ] `Review.masterId` — reyting ikki darajali bo'ladi:
-      servis reytingi + usta reytingi
-- [ ] `MasterServiceType` — qaysi usta qaysi xizmatni bajaradi
-      (SOS tarqatishida filtr sifatida kerak bo'ladi)
-- [ ] `Booking` uchun kesishish cheklovi (`EXCLUDE USING gist`) — `CLAUDE.md` §8.3
+- [x] `Master` modeli yaratildi: `id, shopId, userId, fullName, position,
+      avatarUrl, isActive, ratingAvg, ratingCount, createdAt, updatedAt`.
+- [x] `Master.userId → User` (@unique) — har bir ustaning alohida logini.
+- [~] Rol: mavjud rollar `'owner'/'service'/'admin'` (kichik harf). Yangi rol
+      **`'master'`** bo'ladi — hali sxemada emas, backend (2.3) da qo'llanadi.
+- [x] `Booking.masterId` **nullable** qilib qo'shildi (2.2 backfill'dan keyin majburiy).
+- [x] ~~`Review.masterId`~~ — QILINMADI. Mavjud polimorf Review ishlatiladi:
+      yangi `reviewType='owner_to_master'` (`targetId=masterId`). Reyting
+      `Master.ratingAvg/ratingCount` da yig'iladi.
+- [x] `MasterServiceType` yaratildi (SOS filtri uchun) + `service_type_id` indeksi.
+- [ ] ⏸️ `EXCLUDE USING gist` cheklovi **keyinga qoldirildi**: `Booking`da tugash
+      vaqti yo'q (faqat `scheduledAt`) + `btree_gist` superuser talab qiladi.
+      Booking'ga davomiylik/`endAt` qo'shilgach alohida bosqichda.
+- Migratsiya: `20260807190817_add_master` (qo'llandi). FK indekslari qo'shildi.
 
 ### 2.2 Ma'lumot migratsiyasi
 
