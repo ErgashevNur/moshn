@@ -81,16 +81,21 @@ PitGo talab qiladi: mijoz **aniq ustaga** yoziladi.
 - [~] Mavjud `Review` larni bog'lash — KERAK EMAS. Master reytingi yangi
       `reviewType='owner_to_master'` orqali; eski review'lar `owner_to_shop`/
       `shop_to_owner`, ular tegishli emas.
-- [ ] ⏳ `masterId` NOT NULL — **2.3 backend'dan keyin**. Hozir nullable, chunki
-      booking yaratish kodi hali `masterId` bermaydi. Backend ulangach alohida
-      migratsiyada majburiy qilinadi.
+- [x] `masterId` NOT NULL qilindi (backend ulangach). FK SET NULL → RESTRICT.
+      Migratsiya: `20260807192829_booking_master_required`.
 
 ### 2.3 Backend
 
-- [ ] `masters` moduli: CRUD (servis egasi o'z ustalarini boshqaradi)
-- [ ] Huquqlar: usta **faqat o'z** buyurtmalarini ko'radi; servis egasi hammasini
-- [ ] Bandlik hisobi servis emas, **usta** bo'yicha
-- [ ] Qidiruvda usta bo'yicha filtr va usta kartochkasi endpointi
+- [x] `masters` moduli: CRUD — `GET/POST /v1/service/masters`,
+      `PUT/DELETE /v1/service/masters/:id`. Usta qo'shishда `'master'` rolli User
+      login yaratiladi (bcrypt parol, tranzaksiyada).
+- [x] Huquqlar: `MasterRoleGuard`. Usta `GET /v1/master/bookings` orqali faqat
+      o'z bronlarini ko'radi; egasi `service/bookings` orqali hammasini.
+- [x] Bandlik hisobi usta bo'yicha: `GET /v1/masters/:id/booked-slots`.
+- [x] Ommaviy: `GET /v1/shops/:id/masters`, `/v1/masters/:id` (kartochka),
+      `/v1/masters/:id/reviews`. Usta kabineti: `GET /v1/master/profile`.
+      Reyting ikki darajali: `owner_to_master` review → `Master.ratingAvg`.
+      Tekshirildi: `nest build` ✓, boot ✓, 10 route ✓, ommaviy endpoint ✓.
 
 ### 2.4 Flutter
 
