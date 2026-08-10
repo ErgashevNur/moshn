@@ -42,7 +42,7 @@ class ApiClient {
 
   /// Адрес подключения к backend'у.
   /// Для production APK укажите полный URL (с HTTPS):
-  ///   `--dart-define=API_BASE_URL=https://moshn.uz/v1`
+  ///   `--dart-define=API_BASE_URL=https://pitgo.uz/v1`
   /// Для локального теста — host/port:
   ///   `--dart-define=API_HOST=192.168.50.2`  (LAN IP)
   /// Если ничего не указано — стандарты эмулятора/веба.

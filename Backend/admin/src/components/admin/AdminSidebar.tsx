@@ -146,7 +146,7 @@ export default function AdminSidebar({ collapsed, mobileOpen, onClose, onToggleC
         </div>
         {showLabel && (
           <div style={{minWidth:0,overflow:'hidden'}}>
-            <div style={{fontSize:15,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',whiteSpace:'nowrap'}}>Shina24</div>
+            <div style={{fontSize:15,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)',whiteSpace:'nowrap'}}>PitGo</div>
             <div style={{fontSize:11,color:'var(--txt3)',fontWeight:500}}>Панель администратора</div>
           </div>
         )}

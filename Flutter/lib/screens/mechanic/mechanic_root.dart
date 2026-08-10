@@ -7,6 +7,7 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../shared/profile_screen.dart';
 import 'mechanic_bookings_screen.dart';
+import 'mechanic_sos_screen.dart';
 
 class MechanicRoot extends ConsumerStatefulWidget {
   const MechanicRoot({super.key});
@@ -32,6 +33,7 @@ class _MechanicRootState extends ConsumerState<MechanicRoot> {
 
   static const _pages = <Widget>[
     MechanicBookingsScreen(),
+    MechanicSosScreen(),
     ProfileScreen(),
   ];
 
@@ -58,7 +60,8 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <_NavItem>[
       const _NavItem(icon: Icons.format_list_bulleted_rounded, label: 'Записи', index: 0),
-      const _NavItem(icon: Icons.person_rounded, label: 'Профиль', index: 1),
+      const _NavItem(icon: Icons.warning_amber_rounded, label: 'SOS', index: 1),
+      const _NavItem(icon: Icons.person_rounded, label: 'Профиль', index: 2),
     ];
 
     return Container(

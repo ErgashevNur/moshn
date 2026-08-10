@@ -1,4 +1,4 @@
-package uz.moshn.moshn
+package uz.pitgo.pitgo
 
 import android.app.Application
 import com.yandex.mapkit.MapKitFactory

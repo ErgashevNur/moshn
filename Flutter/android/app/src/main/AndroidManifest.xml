@@ -12,7 +12,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
 
     <application
-        android:label="Shina24"
+        android:label="PitGo"
         android:name=".MainApplication"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">

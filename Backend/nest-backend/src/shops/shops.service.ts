@@ -5,6 +5,39 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ShopsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Bosh ekrandagi qidiruv paneli — ism bo'yicha servis va usta aralash
+   * natija qaytaradi (CLAUDE.md §4: "mijoz servisni ham, aniq ustani ham
+   * ko'ra oladi").
+   */
+  async search(query: string) {
+    const q = query.trim();
+    if (!q) return { shops: [], masters: [] };
+
+    const [shops, masters] = await Promise.all([
+      this.prisma.shopProfile.findMany({
+        where: {
+          verificationStatus: { in: ['verified', 'pending'] },
+          shopName: { contains: q, mode: 'insensitive' },
+        },
+        orderBy: [{ ratingAvg: 'desc' }],
+        take: 10,
+      }),
+      this.prisma.master.findMany({
+        where: {
+          isActive: true,
+          fullName: { contains: q, mode: 'insensitive' },
+          shop: { verificationStatus: { in: ['verified', 'pending'] } },
+        },
+        include: { shop: true },
+        orderBy: [{ ratingAvg: 'desc' }],
+        take: 10,
+      }),
+    ]);
+
+    return { shops, masters };
+  }
+
   async findMany(filter: {
     serviceType?: string;
     lat?: number;

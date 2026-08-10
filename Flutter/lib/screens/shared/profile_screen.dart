@@ -10,7 +10,7 @@ import '../../store/theme_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_pitgo_icon.dart';
 
 void _showComingSoon(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -337,7 +337,7 @@ class _UserCard extends StatelessWidget {
                 border: Border.all(color: AppColors.hairline(context), width: 1),
               ),
               alignment: Alignment.center,
-              child: MoshnIcon(
+              child: PitGoIcon(
                 name: 'user',
                 size: 24,
                 color: AppColors.text3(context),

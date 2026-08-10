@@ -9,8 +9,18 @@ import '../../services/shop_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_workshop_card.dart';
+
+String _priceRangeText(ServiceType t) {
+  final fmt = NumberFormat.decimalPattern('ru');
+  if (t.priceMin > 0 && t.priceMax > t.priceMin) {
+    return '${fmt.format(t.priceMin)} – ${fmt.format(t.priceMax)} сум';
+  }
+  if (t.priceMin > 0) return '${fmt.format(t.priceMin)} сум';
+  if (t.priceMax > 0) return '${fmt.format(t.priceMax)} сум';
+  return '';
+}
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -70,7 +80,12 @@ class ServiceCategoryScreen extends ConsumerWidget {
         slivers: [
           // ── Header ──────────────────────────────────────────────────────────
           SliverToBoxAdapter(
-            child: _Header(title: title, accent: m.accent, iconName: m.iconName),
+            child: _Header(
+              title: title,
+              accent: m.accent,
+              iconName: apiType?.icon.isNotEmpty == true ? apiType!.icon : m.iconName,
+              priceRange: apiType != null ? _priceRangeText(apiType) : '',
+            ),
           ),
 
           // ── "Yaqin servislar" sarlavhasi ────────────────────────────────────
@@ -159,11 +174,13 @@ class _Header extends StatelessWidget {
   final String title;
   final Color accent;
   final String iconName;
+  final String priceRange;
 
   const _Header({
     required this.title,
     required this.accent,
     required this.iconName,
+    this.priceRange = '',
   });
 
   @override
@@ -208,21 +225,37 @@ class _Header extends StatelessWidget {
               border: Border.all(color: accent.withAlpha(60)),
             ),
             alignment: Alignment.center,
-            child: MoshnIcon(name: iconName, size: 22, color: accent),
+            child: PitGoIcon(name: iconName, size: 22, color: accent),
           ),
           const SizedBox(width: 12),
 
           // Sarlavha
           Expanded(
-            child: Text(
-              title,
-              style: AppTypography.soraSize(18, weight: FontWeight.w700)
-                  .copyWith(
-                color: AppColors.text(context),
-                letterSpacing: -0.4,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.soraSize(18, weight: FontWeight.w700)
+                      .copyWith(
+                    color: AppColors.text(context),
+                    letterSpacing: -0.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (priceRange.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    priceRange,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.text3(context),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

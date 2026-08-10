@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import 'home_screen.dart';
 import 'my_bookings_screen.dart';
 import 'my_vehicles_screen.dart';
@@ -101,7 +101,7 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            MoshnIcon(name: icon, size: 22, color: color),
+            PitGoIcon(name: icon, size: 22, color: color),
             const SizedBox(height: 3),
             Text(
               label,

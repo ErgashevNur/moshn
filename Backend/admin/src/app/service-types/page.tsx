@@ -6,11 +6,12 @@ import api from '@/lib/api'
 interface ServiceType {
   id: string
   slug: string
-  name_uz: string
-  name_ru: string
+  nameUz: string
+  nameRu: string
   icon: string
-  base_price: number
-  is_active: boolean
+  priceMin: number
+  priceMax: number
+  isActive: boolean
 }
 
 // â”€â”€ SVG icon library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -115,12 +116,34 @@ const ICON_LIST: { id: string; label: string; svg: React.ReactNode }[] = [
     label: 'Полный пакет — комплексное обслуживание',
     svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
   },
+  // Quyidagilar Flutter ilovasida maxsus chizilgan (mobile ilova
+  // widgets/m_pitgo_icon.dart bilan bir xil kalitlar) — shina xizmatlari uchun.
+  {
+    id: 'diskWrench',
+    label: 'Ремонт дисков — восстановление и балансировка',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><circle cx="10" cy="14" r="2"/><path d="M15.5 4.5a3 3 0 00-3.9 3.9l-1 1 2 2 1-1a3 3 0 003.9-3.9l-1.5 1.5-2-2 1.5-1.5z"/></svg>,
+  },
+  {
+    id: 'tireSwap',
+    label: 'Переобувка — сезонная замена шин',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3a9 9 0 018.5 6"/><path d="M18 6.5l2.5 2.5 1-3.3"/><path d="M12 21a9 9 0 01-8.5-6"/><path d="M6 17.5l-2.5-2.5-1 3.3"/></svg>,
+  },
+  {
+    id: 'tireStack',
+    label: 'Хранение шин — сезонное хранение',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><ellipse cx="12" cy="6" rx="2.5" ry="1.1"/><path d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6"/><path d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6"/></svg>,
+  },
+  {
+    id: 'flame',
+    label: 'Вулканизация — ремонт проколов',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c3 3 5 6 5 9a5 5 0 11-10 0c0-1 .3-2 1-3 .2 1.2 1 2 1 2-.4-2.5.8-4.5 2-6-.3 1.3.2 2.2 1 2.6-.6-1.7 0-3.3 0-4.6z"/></svg>,
+  },
 ]
 
 const toSlug = (s: string) =>
   s.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').substring(0, 40) || `type_${Date.now()}`
 
-const emptyForm = { name_uz: '', name_ru: '', icon: 'wheel', base_price: '' as string, is_active: true }
+const emptyForm = { nameUz: '', nameRu: '', icon: 'wheel', priceMin: '' as string, priceMax: '' as string, isActive: true }
 
 export default function ServiceTypesPage() {
   const [types, setTypes] = useState<ServiceType[]>([])
@@ -150,23 +173,31 @@ export default function ServiceTypesPage() {
   const openEdit = (t: ServiceType) => {
     setEditItem(t)
     setForm({
-      name_uz: t.name_uz,
-      name_ru: t.name_ru,
+      nameUz: t.nameUz,
+      nameRu: t.nameRu,
       icon: t.icon || 'wheel',
-      base_price: t.base_price > 0 ? String(t.base_price) : '',
-      is_active: t.is_active,
+      priceMin: t.priceMin > 0 ? String(t.priceMin) : '',
+      priceMax: t.priceMax > 0 ? String(t.priceMax) : '',
+      isActive: t.isActive,
     })
     setModal(true)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    const min = Number(form.priceMin) || 0
+    const max = Number(form.priceMax) || 0
+    if (max > 0 && max < min) {
+      alert('Максимальная цена не может быть меньше минимальной')
+      return
+    }
     setSaving(true)
     try {
       const payload = {
         ...form,
-        base_price: Number(form.base_price) || 0,
-        slug: editItem?.slug || toSlug(form.name_uz),
+        priceMin: min,
+        priceMax: max,
+        slug: editItem?.slug || toSlug(form.nameUz),
       }
       if (editItem) {
         await api.put(`/admin/service-types/${editItem.id}`, payload)
@@ -207,12 +238,16 @@ export default function ServiceTypesPage() {
                 <div className="w-8 h-8 mb-3 text-text2 group-hover:text-gold transition-colors">
                   {iconNode(t.icon)}
                 </div>
-                <p className="text-text font-semibold text-sm group-hover:text-gold transition-colors truncate">{t.name_uz}</p>
-                <p className="text-text3 text-xs mt-0.5 truncate">{t.name_ru}</p>
-                {t.base_price > 0 && (
-                  <p className="text-text2 text-xs mt-1">{t.base_price.toLocaleString()} сум</p>
+                <p className="text-text font-semibold text-sm group-hover:text-gold transition-colors truncate">{t.nameUz}</p>
+                <p className="text-text3 text-xs mt-0.5 truncate">{t.nameRu}</p>
+                {(t.priceMin > 0 || t.priceMax > 0) && (
+                  <p className="text-text2 text-xs mt-1">
+                    {t.priceMin > 0 ? t.priceMin.toLocaleString() : '?'}
+                    {t.priceMax > 0 && t.priceMax !== t.priceMin ? ` – ${t.priceMax.toLocaleString()}` : ''}
+                    {' '}сум
+                  </p>
                 )}
-                {!t.is_active && (
+                {!t.isActive && (
                   <span className="badge badge-cancelled mt-2 inline-block">Неактивный</span>
                 )}
               </button>
@@ -291,9 +326,9 @@ export default function ServiceTypesPage() {
                 <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1">
                   Название (узбекский) *
                 </label>
-                <input type="text" value={form.name_uz} required className="inp"
+                <input type="text" value={form.nameUz} required className="inp"
                   placeholder="Замена колёс"
-                  onChange={(e) => setForm(f => ({ ...f, name_uz: e.target.value }))} />
+                  onChange={(e) => setForm(f => ({ ...f, nameUz: e.target.value }))} />
               </div>
 
               {/* Nomi RU */}
@@ -301,28 +336,37 @@ export default function ServiceTypesPage() {
                 <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1">
                   Название (русский)
                 </label>
-                <input type="text" value={form.name_ru} className="inp"
-                  placeholder="Ð—Ð°Ð¼ÐµÐ½Ð° ÑˆÐ¸Ð½"
-                  onChange={(e) => setForm(f => ({ ...f, name_ru: e.target.value }))} />
+                <input type="text" value={form.nameRu} className="inp"
+                  placeholder="Замена шин"
+                  onChange={(e) => setForm(f => ({ ...f, nameRu: e.target.value }))} />
               </div>
 
-              {/* Narx */}
+              {/* Narx diapazoni */}
               <div>
                 <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1">
-                  Примерная цена (сум) — необязательно
+                  Диапазон цен (сум) — необязательно
                 </label>
-                <input type="number" min={0} value={form.base_price} className="inp"
-                  placeholder="50000"
-                  onChange={(e) => setForm(f => ({ ...f, base_price: e.target.value }))} />
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={form.priceMin} className="inp"
+                    placeholder="от 20000"
+                    onChange={(e) => setForm(f => ({ ...f, priceMin: e.target.value }))} />
+                  <span className="text-text3 text-sm">—</span>
+                  <input type="number" min={0} value={form.priceMax} className="inp"
+                    placeholder="до 80000"
+                    onChange={(e) => setForm(f => ({ ...f, priceMax: e.target.value }))} />
+                </div>
+                <p className="text-text3 text-[11px] mt-1.5">
+                  Har bir servis o&apos;z narxini alohida belgilaydi — bu shunchaki mijozga umumiy tasavvur berish uchun.
+                </p>
               </div>
 
               {/* Toggle */}
               <label className="flex items-center gap-3 cursor-pointer select-none">
-                <div className={`w-10 h-5 rounded-full transition-colors ${form.is_active ? 'bg-success' : 'bg-surface3'} relative`}>
-                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-text transition-transform ${form.is_active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                <div className={`w-10 h-5 rounded-full transition-colors ${form.isActive ? 'bg-success' : 'bg-surface3'} relative`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-text transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </div>
-                <input type="checkbox" className="hidden" checked={form.is_active}
-                  onChange={(e) => setForm(f => ({ ...f, is_active: e.target.checked }))} />
+                <input type="checkbox" className="hidden" checked={form.isActive}
+                  onChange={(e) => setForm(f => ({ ...f, isActive: e.target.checked }))} />
                 <span className="text-text2 text-sm">Активно</span>
               </label>
 

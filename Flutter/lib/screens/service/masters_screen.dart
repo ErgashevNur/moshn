@@ -9,7 +9,7 @@ import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 
-final _myMastersProvider = FutureProvider.autoDispose<List<Master>>((ref) {
+final myMastersProvider = FutureProvider.autoDispose<List<Master>>((ref) {
   return MasterService().listMyMasters();
 });
 
@@ -22,7 +22,7 @@ class MastersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(_myMastersProvider);
+    final async = ref.watch(myMastersProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -76,7 +76,7 @@ class MastersScreen extends ConsumerWidget {
                     const Center(child: CircularProgressIndicator.adaptive()),
                 error: (_, _) => Center(
                   child: TextButton(
-                    onPressed: () => ref.invalidate(_myMastersProvider),
+                    onPressed: () => ref.invalidate(myMastersProvider),
                     child: const Text('Повторить'),
                   ),
                 ),
@@ -116,9 +116,9 @@ class MastersScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _MasterFormSheet(master: master),
+      builder: (_) => MasterFormSheet(master: master),
     );
-    if (saved == true) ref.invalidate(_myMastersProvider);
+    if (saved == true) ref.invalidate(myMastersProvider);
   }
 }
 
@@ -227,15 +227,15 @@ class _MasterTile extends StatelessWidget {
 
 // ── Add / edit form ─────────────────────────────────────────────────────────
 
-class _MasterFormSheet extends ConsumerStatefulWidget {
+class MasterFormSheet extends ConsumerStatefulWidget {
   final Master? master;
-  const _MasterFormSheet({this.master});
+  const MasterFormSheet({super.key, this.master});
 
   @override
-  ConsumerState<_MasterFormSheet> createState() => _MasterFormSheetState();
+  ConsumerState<MasterFormSheet> createState() => MasterFormSheetState();
 }
 
-class _MasterFormSheetState extends ConsumerState<_MasterFormSheet> {
+class MasterFormSheetState extends ConsumerState<MasterFormSheet> {
   late final TextEditingController _name;
   late final TextEditingController _position;
   final _phone = TextEditingController();

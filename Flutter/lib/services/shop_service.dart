@@ -1,8 +1,16 @@
 import 'package:dio/dio.dart';
+import '../models/master.dart';
 import '../models/review.dart';
 import '../models/shop.dart';
 import '../models/service_type.dart';
 import 'api.dart';
+
+class SearchResult {
+  final List<Shop> shops;
+  final List<Master> masters;
+  const SearchResult({this.shops = const [], this.masters = const []});
+  bool get isEmpty => shops.isEmpty && masters.isEmpty;
+}
 
 class ShopService {
   final Dio _dio = ApiClient.instance.dio;
@@ -11,6 +19,22 @@ class ShopService {
     final resp = await _dio.get('/service-types');
     final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
     return data.map((e) => ServiceType.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// Bosh ekran qidiruv paneli — ism bo'yicha servis + usta aralash natija.
+  Future<SearchResult> search(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return const SearchResult();
+    final resp = await _dio.get('/search', queryParameters: {'q': q});
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+    return SearchResult(
+      shops: ((payload['shops'] ?? []) as List<dynamic>)
+          .map((e) => Shop.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      masters: ((payload['masters'] ?? []) as List<dynamic>)
+          .map((e) => Master.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<List<Shop>> getShops({String? serviceType, double? lat, double? lng}) async {

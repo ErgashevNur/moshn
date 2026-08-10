@@ -22,19 +22,19 @@ Future<void> main() async {
       path: 'assets/translations',
       fallbackLocale: const Locale('ru'),
       startLocale: const Locale('ru'),
-      child: const ProviderScope(child: MoshnApp()),
+      child: const ProviderScope(child: PitGoApp()),
     ),
   );
 }
 
-class MoshnApp extends ConsumerStatefulWidget {
-  const MoshnApp({super.key});
+class PitGoApp extends ConsumerStatefulWidget {
+  const PitGoApp({super.key});
 
   @override
-  ConsumerState<MoshnApp> createState() => _MoshnAppState();
+  ConsumerState<PitGoApp> createState() => _PitGoAppState();
 }
 
-class _MoshnAppState extends ConsumerState<MoshnApp> {
+class _PitGoAppState extends ConsumerState<PitGoApp> {
   @override
   void initState() {
     super.initState();
@@ -58,7 +58,7 @@ class _MoshnAppState extends ConsumerState<MoshnApp> {
     };
 
     return MaterialApp.router(
-      title: 'Shina24',
+      title: 'PitGo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-// Exact SVG icons from the Moshn/Shina24 design system (moshn-icons.jsx)
+// Exact SVG icons from the PitGo design system
 // Stroke icons: strokeWidth=1.8, round caps/joins, 24x24 viewBox
-class MoshnIcon extends StatelessWidget {
-  const MoshnIcon({super.key, required this.name, this.size = 24, this.color});
+class PitGoIcon extends StatelessWidget {
+  const PitGoIcon({super.key, required this.name, this.size = 24, this.color});
 
   final String name;
   final double size;
@@ -122,6 +122,84 @@ class MoshnIcon extends StatelessWidget {
     'flame': '''
       <path d="M12 3c3 3 5 6 5 9a5 5 0 11-10 0c0-1 .3-2 1-3 .2 1.2 1 2 1 2-.4-2.5.8-4.5 2-6-.3 1.3.2 2.2 1 2.6-.6-1.7 0-3.3 0-4.6z" stroke="C" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
     ''',
+    // ── Quyidagilar admin panel (xizmat turlari) icon-tanlagichi bilan bir
+    // xil nomlar — ServiceType.icon maydoni to'g'ridan-to'g'ri shu kalitlarga
+    // mos kelishi kerak (Backend/admin/src/app/service-types/page.tsx).
+    'wheel': '''
+      <circle cx="12" cy="12" r="10" stroke="C" stroke-width="1.6" fill="none"/>
+      <circle cx="12" cy="12" r="3" stroke="C" stroke-width="1.6" fill="none"/>
+      <line x1="12" y1="2" x2="12" y2="9" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="12" y1="15" x2="22" y2="12" transform="rotate(60 12 12)" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="12" y1="15" x2="22" y2="12" transform="rotate(-60 12 12)" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+    ''',
+    'alignment': '''
+      <path d="M3 6h18M3 12h18M3 18h18" stroke="C" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <path d="M8 3l-5 3 5 3" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M16 15l5 3-5 3" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'snowflake': '''
+      <line x1="12" y1="2" x2="12" y2="22" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M17 7l-5 5-5-5" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M17 17l-5-5-5 5" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <line x1="2" y1="12" x2="22" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M7 7l5 5 5-5" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M7 17l5-5 5 5" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'sun': '''
+      <circle cx="12" cy="12" r="5" stroke="C" stroke-width="1.6" fill="none"/>
+      <line x1="12" y1="1" x2="12" y2="3" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="12" y1="21" x2="12" y2="23" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="1" y1="12" x2="3" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="21" y1="12" x2="23" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+    ''',
+    'rim': '''
+      <circle cx="12" cy="12" r="10" stroke="C" stroke-width="1.6" fill="none"/>
+      <circle cx="12" cy="12" r="4" stroke="C" stroke-width="1.6" fill="none"/>
+      <line x1="12" y1="2" x2="12" y2="8" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="12" y1="16" x2="12" y2="22" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="2" y1="12" x2="8" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="16" y1="12" x2="22" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+    ''',
+    'shield': '''
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'check': '''
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="C" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <polyline points="22 4 12 14.01 9 11.01" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'clock': '''
+      <circle cx="12" cy="12" r="10" stroke="C" stroke-width="1.6" fill="none"/>
+      <polyline points="12 6 12 12 16 14" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'zap': '''
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'droplet': '''
+      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'settings': '''
+      <circle cx="12" cy="12" r="3" stroke="C" stroke-width="1.6" fill="none"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'tool': '''
+      <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M13 13l6 6" stroke="C" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    ''',
+    'star': '''
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    ''',
+    'package': '''
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <line x1="12" y1="22.08" x2="12" y2="12" stroke="C" stroke-width="1.6" stroke-linecap="round"/>
+    ''',
   };
 
   String _toHex(Color c) {
@@ -135,7 +213,9 @@ class MoshnIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = color ?? const Color(0xFFFFFFFF);
     final hex = _toHex(c);
-    final body = (_icons[name] ?? '').replaceAll('"C"', '"$hex"');
+    // Noma'lum/hali qo'shilmagan icon nomi kelsa (masalan admin yangi
+    // xizmat turi qo'shganda) — bo'sh joy o'rniga umumiy "wrench" ko'rsatiladi.
+    final body = (_icons[name] ?? _icons['wrench']!).replaceAll('"C"', '"$hex"');
     final svg =
         '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">$body</svg>';
 

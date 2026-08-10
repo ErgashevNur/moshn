@@ -1,13 +1,13 @@
-# Moshn — Serverga Docker bilan deploy
+# PitGo — Serverga Docker bilan deploy
 
-Backend (Go API), Admin (Next.js), PostgreSQL va Nginx — hammasi Docker Compose orqali.
+Backend (NestJS API), Admin (Next.js), PostgreSQL va Nginx — hammasi Docker Compose orqali.
 
 ## 1. Talablar (serverda)
 - Docker + Docker Compose (`docker compose version` ishlashi kerak)
 - Ochiq portlar: 80, 443
 - DNS yozuvlari server IP ga yo'naltirilgan:
-  - `api.moshn.uz`  → backend API (APK shu manzilga ulanadi)
-  - `moshn.uz`, `www.moshn.uz` → admin panel
+  - `api.pitgo.uz`  → backend API (APK shu manzilga ulanadi)
+  - `pitgo.uz`, `www.pitgo.uz` → admin panel
 
 ## 2. Sozlash
 ```bash
@@ -17,8 +17,8 @@ nano .env          # DB_PASSWORD, JWT_SECRET, CLAUDE_API_KEY, SMTP_* ni to'ldiri
 ```
 `.env` da muhim:
 - `DB_PASSWORD`, `JWT_SECRET` — kuchli tasodifiy qiymatlar
-- `NEXT_PUBLIC_API_URL=https://api.moshn.uz/v1`
-- `ALLOWED_ORIGINS=https://moshn.uz,https://www.moshn.uz`
+- `NEXT_PUBLIC_API_URL=https://api.pitgo.uz/v1`
+- `ALLOWED_ORIGINS=https://pitgo.uz,https://www.pitgo.uz`
 
 ## 3. Ishga tushirish
 ```bash
@@ -54,17 +54,34 @@ npx prisma migrate dev --name <ozgarish_nomi>
   bilan bog'langan. Toza bazada `migrate deploy` to'liq sxemani quradi.
 - Migratsiya holatini tekshirish: `npx prisma migrate status`.
 
-> **Eslatma:** SOS moduli (Faza 3) uchun PostGIS kerak bo'ladi. Hozircha
-> postgres imijida postgis paketi yo'q. O'sha vaqtda `postgres:16-alpine` o'rniga
-> `postgis/postgis:16-3.4` imijiga o'tiladi va migratsiyada
-> `CREATE EXTENSION IF NOT EXISTS postgis;` qo'shiladi.
+> **PostGIS (Faza 3, 2026-08-08 dan boshlab faol):** `postgres` xizmati
+> `postgis/postgis:16-3.4` imijiga o'tkazildi (`docker-compose.yml`). Prodga
+> birinchi marta deploy qilinganda: konteyner qayta yaratiladi (imij
+> almashgani uchun `docker compose up -d --build` yetarli, ma'lumot volume'da
+> saqlanadi), so'ng `docker compose exec postgres psql -U $DB_USER -d $DB_NAME
+> -c "CREATE EXTENSION IF NOT EXISTS postgis;"` bir marta qo'lda ishga
+> tushiriladi (extension migratsiya faylida emas — superuser talab qilishi
+> mumkin, `pitgo` prod user superuser emas bo'lsa buyruqni `postgres` superuser
+> bilan bajaring). Shundan keyin oddiy `migrate deploy` davom etadi.
+>
+> Lokal dev: `Backend/docker-compose.dev.yml` — alohida `postgis/postgis:16-3.4`
+> konteyner (port 5433), tizim Postgres'iga tegilmaydi.
+>
+> ⚠️ **GiST indekslar har safar `migrate dev --create-only` chaqirganda
+> xavf ostida:** `shop_profiles_location_gist_idx` va
+> `sos_requests_location_gist_idx` qo'lda (raw SQL) yaratilgan — Prisma bu
+> haqda schema.prisma orqali bilmaydi, shuning uchun **har bir yangi
+> migratsiyada** ularni "ortiqcha" deb `DROP INDEX` taklif qiladi. Har safar
+> generatsiya qilingan `migration.sql`ni qo'llashdan oldin ko'zdan
+> kechiring — bu ikki `DROP INDEX` qatori bo'lsa, o'chirib tashlang (misol:
+> `20260808104446_faza3_5_sos_chat/migration.sql`dagi izoh).
 
 ## 4. Admin foydalanuvchi yaratish
 API orqali admin ro'yxatdan o'tmaydi — konteynerda yaratamiz:
 ```bash
 docker compose exec backend ./server --help 2>/dev/null || true
 # Yoki createadmin tool'ini host'da ishga tushiring (DATABASE_URL ni serverga moslab):
-#   cd backend && go run ./tools/createadmin --phone "+998..." --email "admin@moshn.uz" --password "..."
+#   cd backend && go run ./tools/createadmin --phone "+998..." --email "admin@pitgo.uz" --password "..."
 ```
 (Test ma'lumotlari uchun `go run ./tools/seed`.)
 
@@ -73,7 +90,7 @@ Avval HTTP ishlayotganini tekshiring, keyin:
 ```bash
 docker run --rm -v $PWD/certbot/conf:/etc/letsencrypt -v $PWD/certbot/www:/var/www/certbot \
   certbot/certbot certonly --webroot -w /var/www/certbot \
-  -d api.moshn.uz -d moshn.uz -d www.moshn.uz --email you@moshn.uz --agree-tos --no-eff-email
+  -d api.pitgo.uz -d pitgo.uz -d www.pitgo.uz --email you@pitgo.uz --agree-tos --no-eff-email
 ```
 So'ng `nginx/nginx.conf` dagi `443` (HTTPS) bloklarini oching va:
 ```bash
@@ -90,7 +107,7 @@ docker compose up -d --build
 ## Arxitektura
 ```
 APK ─┐
-     ├─ https://api.moshn.uz/v1  ─► nginx ─► backend:8080 ─► postgres:5432
-Web ─┘  https://moshn.uz        ─► nginx ─► admin:3000
+     ├─ https://api.pitgo.uz/v1  ─► nginx ─► backend:8080 ─► postgres:5432
+Web ─┘  https://pitgo.uz        ─► nginx ─► admin:3000
 ```
 Fayllar (`uploads`) va DB (`pgdata`) Docker volume'larida saqlanadi.

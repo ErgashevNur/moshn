@@ -1,4 +1,4 @@
-# Moshn
+# PitGo
 
 > Farg'ona vodiysi mashina egalari uchun **VIN-markazli servis tarixi platformasi**.
 
@@ -55,13 +55,13 @@ Mashina egalari va ustalar birgalikda avtomobilning texnik tarixini yuritadi. Ma
 
 ```
                        ┌─────────────────────────────┐
-   Android APK ───────►│  api.moshn.uz   (nginx :443) │──► backend  (Go/Gin :8080) ──┐
+   Android APK ───────►│  api.pitgo.uz   (nginx :443) │──► backend  (Go/Gin :8080) ──┐
                        │                              │                              │
-   Admin (brauzer) ───►│  admin.moshn.uz              │──► admin   (Next.js :3000)   │
+   Admin (brauzer) ───►│  admin.pitgo.uz              │──► admin   (Next.js :3000)   │
                        │                              │                              ▼
-   APK yuklab olish ──►│  media.moshn.uz  → moshn.apk │                       postgres :5432
+   APK yuklab olish ──►│  media.pitgo.uz  → pitgo.apk │                       postgres :5432
                        └─────────────────────────────┘
-   moshn.uz / www  →  Vercel (landing, alohida)
+   pitgo.uz / www  →  Vercel (landing, alohida)
 ```
 
 Hammasi bitta serverda **Docker Compose** orqali: `postgres` + `backend` + `admin` + `nginx`. Fayllar (`uploads`) va DB (`pgdata`) Docker volume'larida.
@@ -85,7 +85,7 @@ Xavfsizlik: global rate-limit (120 req/min/IP), auth endpointlarda qattiqroq (10
 ## Repo tuzilishi
 
 ```
-moshn/
+pitgo/
 ├── Backend/
 │   ├── docker-compose.yml      # postgres + backend + admin + nginx
 │   ├── .env.example            # muhit o'zgaruvchilari namunasi
@@ -96,7 +96,7 @@ moshn/
 │   │   ├── config/ models/ handlers/ services/ middleware/ routes/ utils/
 │   │   └── tools/              # createadmin, seed
 │   ├── admin/                  # Next.js admin panel
-│   └── media/                  # media.moshn.uz: index.html + moshn.apk
+│   └── media/                  # media.pitgo.uz: index.html + pitgo.apk
 └── Flutter/                    # Android ilova
     ├── lib/                    # services/api.dart (API_BASE_URL override)
     └── android/                # release signing (key.properties)
@@ -115,7 +115,7 @@ cd Backend/backend
 cp ../.env.example ../.env     # qiymatlarni to'ldiring (lokal uchun DATABASE_URL)
 go run .                       # auto-migrate + server
 # admin yaratish:
-go run ./tools/createadmin --phone "+998..." --email "admin@moshn.uz" --password "..."
+go run ./tools/createadmin --phone "+998..." --email "admin@pitgo.uz" --password "..."
 go run ./tools/seed           # (ixtiyoriy) test ma'lumotlari
 ```
 
@@ -176,10 +176,10 @@ curl -fsSL https://get.docker.com | sh
 
 # 2) Kodni ko'chirish (rsync — .env ni clobber qilmaslik uchun exclude qiling)
 rsync -az --exclude '.env' --exclude 'node_modules' --exclude '.next' \
-  Backend/ root@SERVER:/opt/moshn/Backend/
+  Backend/ root@SERVER:/opt/pitgo/Backend/
 
 # 3) Production .env tayyorlash va ishga tushirish
-cd /opt/moshn/Backend
+cd /opt/pitgo/Backend
 cp .env.example .env && nano .env
 docker compose up -d --build
 
@@ -189,11 +189,11 @@ docker compose exec backend ./createadmin --phone "+998..." --email "..." --pass
 # 5) SSL (DNS server IP ga ishora qilgach)
 docker run --rm -v $PWD/certbot/conf:/etc/letsencrypt -v $PWD/certbot/www:/var/www/certbot \
   certbot/certbot certonly --webroot -w /var/www/certbot \
-  -d api.moshn.uz -d admin.moshn.uz -d media.moshn.uz --email you@moshn.uz --agree-tos
+  -d api.pitgo.uz -d admin.pitgo.uz -d media.pitgo.uz --email you@pitgo.uz --agree-tos
 ```
 
-**DNS (A yozuvlar → server IP):** `api.moshn.uz`, `admin.moshn.uz`, `media.moshn.uz`.
-SSL avtomatik yangilanadi (`/opt/moshn/renew-cert.sh` cron).
+**DNS (A yozuvlar → server IP):** `api.pitgo.uz`, `admin.pitgo.uz`, `media.pitgo.uz`.
+SSL avtomatik yangilanadi (`/opt/pitgo/renew-cert.sh` cron).
 
 ---
 
@@ -201,17 +201,17 @@ SSL avtomatik yangilanadi (`/opt/moshn/renew-cert.sh` cron).
 
 ```bash
 cd Flutter
-flutter build apk --release --dart-define=API_BASE_URL=https://api.moshn.uz/v1
+flutter build apk --release --dart-define=API_BASE_URL=https://api.pitgo.uz/v1
 # natija: build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Release imzo `android/key.properties` orqali (`*.jks` keystore). APK `media.moshn.uz/moshn.apk` ga joylanadi.
+Release imzo `android/key.properties` orqali (`*.jks` keystore). APK `media.pitgo.uz/pitgo.apk` ga joylanadi.
 
 ---
 
 ## API qisqacha
 
-Bazaviy URL: `https://api.moshn.uz/v1` · Sog'liq: `GET /health`
+Bazaviy URL: `https://api.pitgo.uz/v1` · Sog'liq: `GET /health`
 
 | Guruh | Asosiy endpointlar |
 |-------|--------------------|

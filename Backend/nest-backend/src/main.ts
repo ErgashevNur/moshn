@@ -46,7 +46,7 @@ async function bootstrap() {
 
   // Swagger / OpenAPI
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Shina24 API')
+    .setTitle('PitGo API')
     .setDescription('Shinomontaj bron va boshqaruv platformasi — REST API')
     .setVersion('1.0')
     .addBearerAuth(
@@ -79,7 +79,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 8080;
   await app.listen(port);
-  console.log(`Shina24 NestJS server ${port} portida ishga tushdi`);
+  console.log(`PitGo NestJS server ${port} portida ishga tushdi`);
   console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 

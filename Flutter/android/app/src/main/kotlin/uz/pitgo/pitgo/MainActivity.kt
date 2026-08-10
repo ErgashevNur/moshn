@@ -1,4 +1,4 @@
-package uz.moshn.moshn
+package uz.pitgo.pitgo
 
 import io.flutter.embedding.android.FlutterActivity
 

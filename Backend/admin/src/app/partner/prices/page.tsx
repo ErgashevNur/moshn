@@ -163,7 +163,7 @@ export default function PricesPage() {
         }}>
           <div style={{ minWidth:0 }}>
             <div style={{ fontSize:10.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', color:'var(--txt3)' }}>
-              SHINA24 PARTNER
+              PITGO PARTNER
             </div>
             <div style={{ fontSize: isMobile ? 14.5 : 16, fontWeight:700, letterSpacing:'-.02em', color:'var(--txt)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
               Цены на услуги

@@ -34,6 +34,9 @@ class Master {
   final double ratingAvg;
   final int ratingCount;
   final List<MasterServiceRef> serviceTypes;
+  // Faqat `shop` nested obyekti kelgan javoblarda to'ladi (masalan qidiruv
+  // natijasida) — shop kartasi ekranida bo'lmaydi, chunki u allaqachon ma'lum.
+  final String shopName;
 
   Master({
     required this.id,
@@ -46,23 +49,28 @@ class Master {
     required this.ratingAvg,
     required this.ratingCount,
     this.serviceTypes = const [],
+    this.shopName = '',
   });
 
-  factory Master.fromJson(Map<String, dynamic> json) => Master(
-        id: json['id'] as String,
-        shopId: (json['shopId'] ?? json['shop_id'] ?? '') as String,
-        userId: (json['userId'] ?? json['user_id'] ?? '') as String,
-        fullName: (json['fullName'] ?? json['full_name'] ?? '') as String,
-        position: (json['position'] ?? '') as String,
-        avatarUrl: (json['avatarUrl'] ?? json['avatar_url'] ?? '') as String,
-        isActive: (json['isActive'] ?? json['is_active'] ?? true) as bool,
-        ratingAvg: ((json['ratingAvg'] ?? json['rating_avg'] ?? 0.0) as num).toDouble(),
-        ratingCount: ((json['ratingCount'] ?? json['rating_count'] ?? 0) as num).toInt(),
-        serviceTypes: ((json['serviceTypes'] ?? json['service_types']) as List<dynamic>?)
-                ?.map((e) => MasterServiceRef.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+  factory Master.fromJson(Map<String, dynamic> json) {
+    final shop = json['shop'] as Map<String, dynamic>?;
+    return Master(
+      id: json['id'] as String,
+      shopId: (json['shopId'] ?? json['shop_id'] ?? '') as String,
+      userId: (json['userId'] ?? json['user_id'] ?? '') as String,
+      fullName: (json['fullName'] ?? json['full_name'] ?? '') as String,
+      position: (json['position'] ?? '') as String,
+      avatarUrl: (json['avatarUrl'] ?? json['avatar_url'] ?? '') as String,
+      isActive: (json['isActive'] ?? json['is_active'] ?? true) as bool,
+      ratingAvg: ((json['ratingAvg'] ?? json['rating_avg'] ?? 0.0) as num).toDouble(),
+      ratingCount: ((json['ratingCount'] ?? json['rating_count'] ?? 0) as num).toInt(),
+      serviceTypes: ((json['serviceTypes'] ?? json['service_types']) as List<dynamic>?)
+              ?.map((e) => MasterServiceRef.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      shopName: (shop?['shopName'] ?? shop?['shop_name'] ?? '') as String,
+    );
+  }
 
   /// Usta hech qanday xizmat biriktirmagan bo'lsa — har qanday xizmatga
   /// mos deb hisoblaymiz (yakka usta / to'ldirilmagan holat uchun).

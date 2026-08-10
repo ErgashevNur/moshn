@@ -13,7 +13,7 @@ import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_service_tile.dart';
 import '../../widgets/m_tag.dart';
 import '../../widgets/m_workshop_card.dart';
@@ -65,20 +65,6 @@ class _R {
   double get tileAspect  => isLarge ? 1.1 : isWide ? 1.0 : 0.85;
 }
 
-// ── Icon mapping ───────────────────────────────────────────────────────────────
-
-String _iconForSlug(String slug) {
-  switch (slug) {
-    case 'balancing':      return 'balance';
-    case 'disk_repair':    return 'diskWrench';
-    case 'podkachka':      return 'pump';
-    case 'perezobuvka':    return 'tireSwap';
-    case 'tire_storage':   return 'tireStack';
-    case 'vulkanizatsiya': return 'flame';
-    default:                return 'wrench';
-  }
-}
-
 // ── Screen ─────────────────────────────────────────────────────────────────────
 
 class OwnerHomeScreen extends ConsumerWidget {
@@ -123,7 +109,7 @@ class OwnerHomeScreen extends ConsumerWidget {
                   SizedBox(height: r.isSmall ? 12 : 16),
 
                   // Search bar
-                  _SearchBar(onTap: () => context.push('/owner/map'), r: r),
+                  _SearchBar(onTap: () => context.push('/owner/search'), r: r),
                   SizedBox(height: r.isSmall ? 14 : 20),
 
                   // Service type grid
@@ -264,7 +250,7 @@ class _HomeAppBar extends ConsumerWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MoshnIcon(
+                    PitGoIcon(
                       name: 'pin',
                       size: r.isSmall ? 13 : 15,
                       color: AppColors.text(context),
@@ -283,6 +269,26 @@ class _HomeAppBar extends ConsumerWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+          SizedBox(width: r.isSmall ? 6 : 10),
+
+          // SOS
+          GestureDetector(
+            onTap: () => context.push('/owner/sos'),
+            child: Container(
+              width: iconSize, height: iconSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.danger,
+              ),
+              child: Center(
+                child: Text(
+                  'SOS',
+                  style: AppTypography.soraSize(iconSize * 0.24, weight: FontWeight.w800)
+                      .copyWith(color: Colors.white, letterSpacing: -0.2),
+                ),
+              ),
             ),
           ),
           SizedBox(width: r.isSmall ? 6 : 10),
@@ -405,7 +411,7 @@ class _ServiceTypeGrid extends StatelessWidget {
         final locale = context.locale.languageCode;
         return MServiceTile(
           label: t.nameFor(locale),
-          iconName: _iconForSlug(t.slug),
+          iconName: t.icon,
           active: selectedSlug == t.slug,
           onTap: () => onTap(t.slug),
         );

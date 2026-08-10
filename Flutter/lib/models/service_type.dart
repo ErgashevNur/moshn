@@ -4,7 +4,8 @@ class ServiceType {
   final String nameUz;
   final String nameRu;
   final String icon;
-  final int basePrice;
+  final int priceMin;
+  final int priceMax;
 
   ServiceType({
     required this.id,
@@ -12,7 +13,8 @@ class ServiceType {
     required this.nameUz,
     required this.nameRu,
     required this.icon,
-    required this.basePrice,
+    required this.priceMin,
+    required this.priceMax,
   });
 
   factory ServiceType.fromJson(Map<String, dynamic> json) => ServiceType(
@@ -21,26 +23,15 @@ class ServiceType {
         nameUz: (json['nameUz'] ?? json['name_uz'] ?? '') as String,
         nameRu: (json['nameRu'] ?? json['name_ru'] ?? '') as String,
         icon: (json['icon'] ?? '') as String,
-        basePrice: ((json['basePrice'] ?? json['base_price'] ?? 0) as num).toInt(),
+        priceMin: ((json['priceMin'] ?? json['price_min'] ?? 0) as num).toInt(),
+        priceMax: ((json['priceMax'] ?? json['price_max'] ?? 0) as num).toInt(),
       );
-
-  static const _emojiMap = {
-    'balance':       '⚖️',
-    'disk_repair':   '🔩',
-    'tire_inflate':  '💨',
-    'tire_change':   '🔄',
-    'tire_storage':  '📦',
-    'vulcanize':     '🔥',
-    'podkachka':     '💨',
-    'perezobuvka':   '🔄',
-    'vulkanizatsiya':'🔥',
-    'balancing':     '⚖️',
-  };
-
-  String get emoji => _emojiMap[icon] ?? _emojiMap[slug] ?? '🛞';
 
   String get name => nameRu.isNotEmpty ? nameRu : nameUz;
 
   String nameFor(String locale) =>
       nameRu.isNotEmpty ? nameRu : nameUz;
+
+  /// "20 000 – 80 000 so'm" kabi diapazon matni, ikkalasi ham 0 bo'lsa bo'sh.
+  bool get hasPriceRange => priceMin > 0 || priceMax > 0;
 }

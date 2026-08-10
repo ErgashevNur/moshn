@@ -42,8 +42,8 @@ export default function Navbar() {
     >
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-8 h-16">
         <a href="#" className="flex items-center gap-2.5" onClick={() => setMenuOpen(false)}>
-          <Image src="/brand/shina24-mark-white.png" alt="Shina24" width={28} height={28} />
-          <span className="text-[17px] font-bold tracking-tight">Shina24</span>
+          <Image src="/brand/shina24-mark-white.png" alt="PitGo" width={28} height={28} />
+          <span className="text-[17px] font-bold tracking-tight">PitGo</span>
         </a>
 
         <div className="hidden md:flex items-center gap-7">

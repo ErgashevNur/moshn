@@ -16,6 +16,7 @@ import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_plate.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -276,7 +277,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
         typesAsync.valueOrNull
             ?.where((t) => t.id == _serviceTypeId)
             .firstOrNull
-            ?.basePrice ??
+            ?.priceMin ??
         0;
 
     return Scaffold(
@@ -543,7 +544,13 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(t.emoji, style: const TextStyle(fontSize: 14)),
+                            PitGoIcon(
+                              name: t.icon,
+                              size: 14,
+                              color: sel
+                                  ? AppColors.inverseText(context)
+                                  : AppColors.text2(context),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               t.nameFor(context.locale.languageCode),

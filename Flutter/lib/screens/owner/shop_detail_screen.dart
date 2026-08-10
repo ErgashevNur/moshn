@@ -286,7 +286,7 @@ class _HeroSection extends ConsumerWidget {
                 children: [
                   TileLayer(
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'uz.moshn.moshn',
+                    userAgentPackageName: 'uz.pitgo.pitgo',
                   ),
                   MarkerLayer(
                     markers: [

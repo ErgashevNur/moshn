@@ -112,7 +112,9 @@ export class AdminService {
   }
 
   async listServiceTypes() {
-    return this.prisma.serviceType.findMany({ where: { isActive: true }, orderBy: { nameUz: 'asc' } });
+    // Admin nofaol turlarni ham ko'rishi/qayta yoqishi kerak — ommaviy
+    // ro'yxat (ShopsService.getServiceTypes) faqat faollarni qaytaradi.
+    return this.prisma.serviceType.findMany({ orderBy: { nameUz: 'asc' } });
   }
 
   async createServiceType(data: any) {
@@ -122,7 +124,8 @@ export class AdminService {
         nameUz: data.nameUz ?? data.name_uz,
         nameRu: data.nameRu ?? data.name_ru ?? '',
         icon: data.icon ?? '',
-        basePrice: data.basePrice ?? data.base_price ?? 0,
+        priceMin: data.priceMin ?? data.price_min ?? 0,
+        priceMax: data.priceMax ?? data.price_max ?? 0,
         isActive: data.isActive ?? data.is_active ?? true,
       },
     });
@@ -136,7 +139,8 @@ export class AdminService {
         nameUz: data.nameUz ?? data.name_uz,
         nameRu: data.nameRu ?? data.name_ru,
         icon: data.icon,
-        basePrice: data.basePrice ?? data.base_price,
+        priceMin: data.priceMin ?? data.price_min,
+        priceMax: data.priceMax ?? data.price_max,
         isActive: data.isActive ?? data.is_active,
       },
     });

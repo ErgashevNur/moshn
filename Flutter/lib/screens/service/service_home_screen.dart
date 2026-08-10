@@ -222,7 +222,7 @@ class _ServiceHomeScreenState extends ConsumerState<ServiceHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'SHINA24 PARTNER',
+                  'PITGO PARTNER',
                   style: AppTypography.soraSize(10, weight: FontWeight.w600)
                       .copyWith(
                     color: AppColors.text3(context),

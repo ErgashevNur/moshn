@@ -547,7 +547,7 @@ export default function MarketingPage() {
     setSending(true)
     try {
       await api.post('/admin/notifications/broadcast', {
-        title: pushTitle.trim() || 'Shina24',
+        title: pushTitle.trim() || 'PitGo',
         body: pushMsg.trim(),
         segment: seg,
       })
@@ -710,7 +710,7 @@ export default function MarketingPage() {
                 ))}
               </div>
               <input value={pushTitle} onChange={e => setPushTitle(e.target.value)}
-                placeholder="Заголовок (необязательно, по умолчанию: Shina24)"
+                placeholder="Заголовок (необязательно, по умолчанию: PitGo)"
                 style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 11, padding: '10px 14px', fontSize: 14, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', marginBottom: 10 }}/>
               <textarea value={pushMsg} onChange={e => setPushMsg(e.target.value)} placeholder="Текст сообщения…" rows={3}
                 style={{ width: '100%', background: 'var(--surf2)', border: '1px solid var(--hair)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--txt)', fontFamily: 'inherit', outline: 'none', resize: 'none', marginBottom: 12 }}/>

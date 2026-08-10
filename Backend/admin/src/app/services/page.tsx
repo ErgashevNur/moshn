@@ -248,7 +248,7 @@ export default function ServicesPage() {
                 </div>
                 <div>
                   <div style={{fontSize:12,color:'var(--txt3)',marginBottom:5}}>Название сервиса</div>
-                  <input style={inp} placeholder="Shina24 Юнусобод" value={form.shopName}
+                  <input style={inp} placeholder="PitGo Юнусобод" value={form.shopName}
                     onChange={e => setForm(f => ({...f, shopName:e.target.value}))}/>
                 </div>
               </div>

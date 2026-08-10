@@ -20,6 +20,12 @@ export class ShopsController {
     return { data: await this.svc.getServiceTypes() };
   }
 
+  @Get('search')
+  @ApiOperation({ summary: "Ism bo'yicha servis + usta aralash qidiruv (ommaviy)" })
+  async search(@Query('q') q = '') {
+    return { data: await this.svc.search(q) };
+  }
+
   @Get('shops')
   @ApiOperation({ summary: 'Shinomontaj servislarni qidirish (geo + xizmat turi)' })
   async findAll(

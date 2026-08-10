@@ -14,7 +14,7 @@ class AppSpacing {
   static const double xxxl = 32;
   static const double huge = 48;
 
-  // Moshn design system radii (snake_case matches CSS token names intentionally)
+  // PitGo design system radii (snake_case matches CSS token names intentionally)
   // ignore: constant_identifier_names
   static const double r_xs = 8;
   // ignore: constant_identifier_names
