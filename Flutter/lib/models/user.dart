@@ -1,4 +1,4 @@
-enum UserRole { none, owner, service, admin }
+enum UserRole { none, owner, service, master, evacuator, admin }
 
 class User {
   final String id;
@@ -33,6 +33,8 @@ class User {
     switch (r) {
       case 'owner':  return UserRole.owner;
       case 'service': return UserRole.service;
+      case 'master': return UserRole.master;
+      case 'evacuator': return UserRole.evacuator;
       case 'admin':  return UserRole.admin;
       default:       return UserRole.none;
     }

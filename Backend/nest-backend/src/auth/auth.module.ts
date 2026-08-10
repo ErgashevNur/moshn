@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'moshn-secret-key',
+      secret: process.env.JWT_SECRET ?? 'pitgo-secret-key',
       signOptions: { expiresIn: '1h' },
     }),
   ],

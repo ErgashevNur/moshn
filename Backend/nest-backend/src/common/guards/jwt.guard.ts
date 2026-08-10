@@ -22,7 +22,7 @@ export class JwtGuard implements CanActivate {
     try {
       const payload = jwt.verify(
         parts[1],
-        process.env.JWT_SECRET ?? 'moshn-secret-key',
+        process.env.JWT_SECRET ?? 'pitgo-secret-key',
       ) as jwt.JwtPayload;
       request.user = { user_id: payload['user_id'], role: payload['role'] };
       return true;

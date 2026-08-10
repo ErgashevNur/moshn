@@ -145,7 +145,11 @@ class TerminalScreen extends ConsumerWidget {
                                         ),
                                         if (b.vehicle?.plate != null &&
                                             b.vehicle!.plate.isNotEmpty) ...[
-                                          MPlate(plate: b.vehicle!.plate),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child:
+                                                MPlate(plate: b.vehicle!.plate),
+                                          ),
                                           const SizedBox(width: AppSpacing.sm),
                                         ],
                                         Text(

@@ -9,7 +9,7 @@ export class PaymentsService {
     const existing = await this.prisma.payment.findUnique({ where: { bookingId } });
     if (existing) return existing;
 
-    const qrCode = method === 'card_qr' ? `shina24://pay/${bookingId}/${amount}` : '';
+    const qrCode = method === 'card_qr' ? `pitgo://pay/${bookingId}/${amount}` : '';
     return this.prisma.payment.create({
       data: { bookingId, amount, method, status: 'pending', qrCode },
     });
@@ -33,13 +33,13 @@ export class PaymentsService {
           amount: booking.totalPrice,
           method: 'card_qr',
           status: 'pending',
-          qrCode: `shina24://pay/${bookingId}/${booking.totalPrice}`,
+          qrCode: `pitgo://pay/${bookingId}/${booking.totalPrice}`,
         },
       });
     } else if (!payment.qrCode) {
       payment = await this.prisma.payment.update({
         where: { id: payment.id },
-        data: { qrCode: `shina24://pay/${bookingId}/${payment.amount}` },
+        data: { qrCode: `pitgo://pay/${bookingId}/${payment.amount}` },
       });
     }
     return payment;

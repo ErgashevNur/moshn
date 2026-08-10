@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../models/master.dart';
 import '../../models/review.dart';
 import '../../models/shop.dart';
+import '../../services/master_service.dart';
 import '../../services/shop_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -27,6 +29,11 @@ final _shopDetailProvider =
 final _shopReviewsProvider =
     FutureProvider.autoDispose.family<List<Review>, String>(
   (ref, shopId) => ShopService().getShopReviews(shopId),
+);
+
+final _shopMastersProvider =
+    FutureProvider.autoDispose.family<List<Master>, String>(
+  (ref, shopId) => MasterService().getShopMasters(shopId),
 );
 
 final _shopFavoriteProvider =
@@ -146,6 +153,7 @@ class _ShopDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviewsAsync = ref.watch(_shopReviewsProvider(shop.id));
+    final mastersAsync = ref.watch(_shopMastersProvider(shop.id));
 
     return Column(
       children: [
@@ -201,6 +209,22 @@ class _ShopDetailBody extends ConsumerWidget {
                           servicePrices: shop.servicePrices,
                         ),
                         const SizedBox(height: 24),
+
+                        // Masters (ustalar)
+                        mastersAsync.maybeWhen(
+                          data: (masters) => masters.isEmpty
+                              ? const SizedBox.shrink()
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _SectionLabel(label: 'Мастера'),
+                                    const SizedBox(height: 10),
+                                    _MastersCard(masters: masters),
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
+                          orElse: () => const SizedBox.shrink(),
+                        ),
 
                         // Reviews
                         reviewsAsync.when(
@@ -262,7 +286,7 @@ class _HeroSection extends ConsumerWidget {
                 children: [
                   TileLayer(
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'uz.moshn.moshn',
+                    userAgentPackageName: 'uz.pitgo.pitgo',
                   ),
                   MarkerLayer(
                     markers: [
@@ -715,6 +739,103 @@ class _ServicesCard extends StatelessWidget {
     if (p.priceMin > 0) return '${fmt(p.priceMin)} $sym dan';
     if (p.priceMax > 0) return '${fmt(p.priceMax)} $sym gacha';
     return '';
+  }
+}
+
+// ── Masters card ──────────────────────────────────────────────────────────────
+
+class _MastersCard extends StatelessWidget {
+  final List<Master> masters;
+  const _MastersCard({required this.masters});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_md),
+        border: Border.all(color: AppColors.hairline(context)),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < masters.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, color: AppColors.hairline(context)),
+            _MasterRow(master: masters[i]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MasterRow extends StatelessWidget {
+  final Master master;
+  const _MasterRow({required this.master});
+
+  @override
+  Widget build(BuildContext context) {
+    final m = master;
+    final initial = m.fullName.isNotEmpty ? m.fullName[0].toUpperCase() : 'M';
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.goldDim,
+              borderRadius: BorderRadius.circular(AppSpacing.r_xs),
+            ),
+            alignment: Alignment.center,
+            child: Text(initial,
+                style: AppTypography.titleSmall.copyWith(color: AppColors.gold)),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  m.fullName.isNotEmpty ? m.fullName : 'Мастер',
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.text(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  m.position.isNotEmpty ? m.position : 'Мастер',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.text3(context),
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (m.ratingCount > 0) ...[
+            MStars(value: m.ratingAvg, size: 13),
+            const SizedBox(width: 4),
+            Text(
+              m.ratingAvg.toStringAsFixed(1),
+              style: AppTypography.labelSmall
+                  .copyWith(color: AppColors.text2(context)),
+            ),
+          ] else
+            Text(
+              'Нов.',
+              style: AppTypography.labelSmall
+                  .copyWith(color: AppColors.text3(context)),
+            ),
+        ],
+      ),
+    );
   }
 }
 

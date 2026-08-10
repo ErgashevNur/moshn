@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppConfigService } from '../app-config/app-config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,12 +9,15 @@ import { WsHub } from '../ws/ws.hub';
 const BOOKING_INCLUDE = {
   customer: true,
   shop: { include: { user: true } },
+  master: true,
   vehicle: true,
   serviceType: true,
 } as const;
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifSvc: NotificationsService,
@@ -24,6 +28,7 @@ export class BookingsService {
 
   async create(customerId: string, data: {
     shopId: string;
+    masterId: string;
     vehicleId: string;
     serviceTypeId: string;
     scheduledAt: string;
@@ -36,14 +41,22 @@ export class BookingsService {
     if (!vehicle) throw new NotFoundException('Mashina topilmadi');
 
     const shop = await this.prisma.shopProfile.findFirst({
-      where: { id: data.shopId, verificationStatus: 'verified' },
+      where: { id: data.shopId },
     });
     if (!shop) throw new NotFoundException('Servis topilmadi');
+
+    // Mijoz aniq ustaga yoziladi — usta shu servisga tegishli va faol bo'lishi shart
+    if (!data.masterId) throw new BadRequestException('Usta tanlanmagan');
+    const master = await this.prisma.master.findFirst({
+      where: { id: data.masterId, shopId: data.shopId, isActive: true },
+    });
+    if (!master) throw new BadRequestException('Usta topilmadi yoki bu servisga tegishli emas');
 
     const booking = await this.prisma.booking.create({
       data: {
         customerId,
         shopId: data.shopId,
+        masterId: data.masterId,
         vehicleId: data.vehicleId,
         serviceTypeId: data.serviceTypeId,
         scheduledAt: new Date(data.scheduledAt),
@@ -56,6 +69,11 @@ export class BookingsService {
 
     this.wsHub.broadcastToUser(shop.userId, 'new_booking', booking);
     this.notifSvc.sendToUser(shop.userId, 'Yangi bron!', 'Yangi mijoz bron qildi', 'new_booking', booking.id);
+    // Usta alohida login bo'lsa, unga ham xabar (yakka usta = egasi bo'lsa takrorlamaymiz)
+    if (master.userId !== shop.userId) {
+      this.wsHub.broadcastToUser(master.userId, 'new_booking', booking);
+      this.notifSvc.sendToUser(master.userId, 'Yangi bron!', 'Sizga yangi mijoz yozildi', 'new_booking', booking.id);
+    }
     this.shopSvc.upsertCustomerCard(data.shopId, customerId).catch(() => null);
 
     return booking;
@@ -83,6 +101,26 @@ export class BookingsService {
     if (!shop) throw new NotFoundException('Servis topilmadi');
 
     const where: any = { shopId: shop.id };
+    if (status) where.status = status;
+
+    const [items, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        include: { customer: true, vehicle: true, serviceType: true },
+        orderBy: { scheduledAt: 'asc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+    return { bookings: items, total };
+  }
+
+  async getMasterBookings(masterUserId: string, status: string, limit: number, skip: number) {
+    const master = await this.prisma.master.findUnique({ where: { userId: masterUserId } });
+    if (!master) throw new NotFoundException('Usta profili topilmadi');
+
+    const where: any = { masterId: master.id };
     if (status) where.status = status;
 
     const [items, total] = await Promise.all([
@@ -212,5 +250,47 @@ export class BookingsService {
       data: { status: 'cancelled', cancelReason: reason ?? '' },
     });
     this.notifSvc.sendToUser(b.customerId, 'Bron bekor qilindi', 'Servis broningizni bekor qildi', 'booking_cancelled', b.id);
+  }
+
+  // ─── Sharh so'rash: xizmat tugaganidan 2 soat o'tgach mijozga eslatma ────────
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async sendReviewReminders() {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const candidates = await this.prisma.booking.findMany({
+      where: {
+        status: 'completed',
+        completedAt: { lte: twoHoursAgo },
+        reviewReminderSentAt: null,
+      },
+      include: { shop: true },
+      take: 200,
+    });
+
+    for (const b of candidates) {
+      try {
+        const existingReview = await this.prisma.review.findFirst({
+          where: { bookingId: b.id, reviewType: 'owner_to_shop' },
+        });
+
+        if (!existingReview) {
+          this.notifSvc.sendToUser(
+            b.customerId,
+            'Xizmatni baholang',
+            `${b.shop.shopName || 'Shinomontaj'} — xizmat sifatini baholab, fikringizni qoldiring`,
+            'review_reminder',
+            b.id,
+          );
+        }
+
+        await this.prisma.booking.update({
+          where: { id: b.id },
+          data: { reviewReminderSentAt: new Date() },
+        });
+      } catch (err: any) {
+        this.logger.error(`Review reminder xatosi (booking ${b.id}): ${err?.message}`);
+      }
+    }
   }
 }

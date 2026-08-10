@@ -97,7 +97,7 @@ class _Logo extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Image.asset(
-          'assets/images/moshn_logo.png',
+          'assets/images/pitgo_logo.png',
           fit: BoxFit.contain,
         ),
       ),

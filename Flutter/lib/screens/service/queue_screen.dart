@@ -133,11 +133,15 @@ class _QueueCard extends StatelessWidget {
               children: [
                 Text(
                   booking.customer?.name ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.titleSmall,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   booking.serviceType?.name ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),
@@ -146,7 +150,10 @@ class _QueueCard extends StatelessWidget {
           ),
           if (booking.vehicle?.plate != null &&
               booking.vehicle!.plate.isNotEmpty)
-            MPlate(plate: booking.vehicle!.plate),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: MPlate(plate: booking.vehicle!.plate),
+            ),
           const SizedBox(width: AppSpacing.sm),
           Text(
             _fmt(booking.scheduledAt),

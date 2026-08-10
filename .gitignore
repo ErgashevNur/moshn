@@ -22,6 +22,9 @@ Backend/backend/seed
 Backend/nest-backend/dist/
 Backend/nest-backend/uploads/
 
+# ============ Arxiv / meros ============
+Moshn.zip
+
 # ============ Uploads / runtime data ============
 Backend/uploads/*
 !Backend/uploads/.gitkeep

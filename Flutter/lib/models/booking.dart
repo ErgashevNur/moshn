@@ -1,3 +1,4 @@
+import 'master.dart';
 import 'shop.dart';
 import 'service_type.dart';
 import 'user.dart';
@@ -7,6 +8,7 @@ class Booking {
   final String id;
   final String customerId;
   final String shopId;
+  final String? masterId;
   final String vehicleId;
   final String serviceTypeId;
   final DateTime scheduledAt;
@@ -19,6 +21,7 @@ class Booking {
 
   final User? customer;
   final Shop? shop;
+  final Master? master;
   final Vehicle? vehicle;
   final ServiceType? serviceType;
 
@@ -26,6 +29,7 @@ class Booking {
     required this.id,
     required this.customerId,
     required this.shopId,
+    this.masterId,
     required this.vehicleId,
     required this.serviceTypeId,
     required this.scheduledAt,
@@ -37,6 +41,7 @@ class Booking {
     required this.createdAt,
     this.customer,
     this.shop,
+    this.master,
     this.vehicle,
     this.serviceType,
   });
@@ -45,6 +50,7 @@ class Booking {
         id: json['id'] as String,
         customerId: (json['customerId'] ?? json['customer_id'] ?? '') as String,
         shopId: (json['shopId'] ?? json['shop_id'] ?? '') as String,
+        masterId: (json['masterId'] ?? json['master_id']) as String?,
         vehicleId: (json['vehicleId'] ?? json['vehicle_id'] ?? '') as String,
         serviceTypeId: (json['serviceTypeId'] ?? json['service_type_id'] ?? '') as String,
         scheduledAt: DateTime.tryParse(
@@ -65,6 +71,9 @@ class Booking {
             : null,
         shop: json['shop'] != null
             ? Shop.fromJson(json['shop'] as Map<String, dynamic>)
+            : null,
+        master: json['master'] != null
+            ? Master.fromJson(json['master'] as Map<String, dynamic>)
             : null,
         vehicle: json['vehicle'] != null
             ? Vehicle.fromJson(json['vehicle'] as Map<String, dynamic>)

@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } f
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from '../common/decorators/user.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
+import { MasterRoleGuard } from '../common/guards/master-role.guard';
 import { ServiceRoleGuard } from '../common/guards/service-role.guard';
 import { BookingsService } from './bookings.service';
 
@@ -18,6 +19,7 @@ export class BookingsController {
   async create(@User('user_id') userId: string, @Body() body: any) {
     const b = await this.svc.create(userId, {
       shopId: body.shop_id,
+      masterId: body.master_id,
       vehicleId: body.vehicle_id,
       serviceTypeId: body.service_type_id,
       scheduledAt: body.scheduled_at,
@@ -51,6 +53,20 @@ export class BookingsController {
   async cancelBooking(@Param('id') id: string, @User('user_id') userId: string, @Body('reason') reason?: string) {
     await this.svc.cancelByCustomer(id, userId, reason);
     return { data: { message: 'Bron bekor qilindi' } };
+  }
+
+  @UseGuards(MasterRoleGuard)
+  @Get('master/bookings')
+  @ApiOperation({ summary: 'Ustaga tegishli bronlar [master]' })
+  async getMasterBookings(
+    @User('user_id') userId: string,
+    @Query('status') status = '',
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    const p = Math.max(1, Number(page));
+    const l = Math.min(100, Math.max(1, Number(limit)));
+    return { data: { ...await this.svc.getMasterBookings(userId, status, l, (p - 1) * l), page: p, limit: l } };
   }
 
   @UseGuards(ServiceRoleGuard)

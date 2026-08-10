@@ -67,9 +67,20 @@ class CustomerCardScreen extends ConsumerWidget {
               loading: () => const Center(
                   child: CircularProgressIndicator.adaptive()),
               error: (e, _) => Center(
-                child: Text('${'common.error'.tr()}: $e',
-                    style:
-                        AppTypography.body.copyWith(color: AppColors.danger)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('common.error'.tr(),
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.danger)),
+                    const SizedBox(height: AppSpacing.md),
+                    TextButton(
+                      onPressed: () =>
+                          ref.invalidate(_customerCardProvider(customerId)),
+                      child: Text('common.retry'.tr()),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -102,7 +113,7 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   void initState() {
     super.initState();
-    _isVip = (widget.card['is_vip'] ?? false) as bool;
+    _isVip = (widget.card['isVip'] ?? widget.card['is_vip'] ?? false) as bool;
     _notesCtrl = TextEditingController(
         text: (widget.card['notes'] ?? '') as String);
   }
@@ -138,10 +149,22 @@ class _BodyState extends ConsumerState<_Body> {
 
   @override
   Widget build(BuildContext context) {
-    final name = (widget.card['customer_name'] ?? '—') as String;
-    final phone = (widget.card['customer_phone'] ?? '') as String;
-    final visits = (widget.card['visit_count'] ?? 0) as int;
-    final lastVisit = widget.card['last_visit_at'] as String?;
+    final customer = widget.card['customer'] as Map<String, dynamic>?;
+    final name = (customer?['fullName'] ??
+        customer?['full_name'] ??
+        widget.card['customerName'] ??
+        widget.card['customer_name'] ??
+        '—') as String;
+    final phone = (customer?['phone'] ??
+        widget.card['customerPhone'] ??
+        widget.card['customer_phone'] ??
+        '') as String;
+    final visits = ((widget.card['visitCount'] ??
+            widget.card['visit_count'] ??
+            0) as num)
+        .toInt();
+    final lastVisit = (widget.card['lastVisitAt'] ??
+        widget.card['last_visit_at']) as String?;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),

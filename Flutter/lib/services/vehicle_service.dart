@@ -28,6 +28,24 @@ class VehicleService {
     return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
   }
 
+  Future<Vehicle> updateVehicle(
+    String id, {
+    required String plate,
+    String make = '',
+    String model = '',
+    int year = 0,
+    String color = '',
+  }) async {
+    final resp = await _dio.put('/vehicles/$id', data: {
+      'plate': plate,
+      'make': make,
+      'model': model,
+      'year': year,
+      'color': color,
+    });
+    return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
   Future<void> deleteVehicle(String id) async {
     await _dio.delete('/vehicles/$id');
   }

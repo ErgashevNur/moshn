@@ -61,7 +61,7 @@ export default function PartnerQueuePage() {
         {/* Header */}
         <div style={{height:60,display:'flex',alignItems:'center',gap:14,padding:'0 18px',borderBottom:'1px solid var(--hair)',flexShrink:0,background:'var(--bgE)'}}>
           <div style={{flex:1}}>
-            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>SHINA24 PARTNER</div>
+            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--txt3)'}}>PITGO PARTNER</div>
             <div style={{fontSize:16,fontWeight:700,letterSpacing:'-.02em',color:'var(--txt)'}}>Очередь</div>
           </div>
           <button onClick={load} style={{width:34,height:34,borderRadius:9,background:'var(--surf2)',display:'grid',placeItems:'center',border:'none',cursor:'pointer',color:'var(--txt3)',flexShrink:0}}>

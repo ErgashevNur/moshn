@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
-import 'm_moshn_icon.dart';
+import 'm_pitgo_icon.dart';
 
 class MServiceTile extends StatelessWidget {
   const MServiceTile({
@@ -49,7 +49,7 @@ class MServiceTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              MoshnIcon(name: iconName, size: iconSize, color: fg),
+              PitGoIcon(name: iconName, size: iconSize, color: fg),
               SizedBox(height: gap),
               Text(
                 label,

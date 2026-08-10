@@ -216,7 +216,7 @@ export default function LoginPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: 16, background: 'var(--inv)', color: 'var(--invT)', marginBottom: 12 }}>
             <Brand s={30} />
           </div>
-          <p style={{ color: 'var(--txt)', fontWeight: 700, fontSize: 22, letterSpacing: '-.03em' }}>Shina24</p>
+          <p style={{ color: 'var(--txt)', fontWeight: 700, fontSize: 22, letterSpacing: '-.03em' }}>PitGo</p>
           <p style={{ color: 'var(--txt3)', fontSize: 11, fontFamily: "'JetBrains Mono',monospace", marginTop: 4, textTransform: 'uppercase', letterSpacing: '.12em' }}>
             {step === 'phone' ? 'Вход' : step === 'otp' ? 'Подтверждение' : 'Пароль администратора'}
           </p>

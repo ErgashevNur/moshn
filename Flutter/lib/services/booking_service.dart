@@ -8,6 +8,7 @@ class BookingService {
 
   Future<Booking> createBooking({
     required String shopId,
+    required String masterId,
     required String vehicleId,
     required String serviceTypeId,
     required DateTime scheduledAt,
@@ -16,6 +17,7 @@ class BookingService {
   }) async {
     final resp = await _dio.post('/bookings', data: {
       'shop_id': shopId,
+      'master_id': masterId,
       'vehicle_id': vehicleId,
       'service_type_id': serviceTypeId,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
@@ -41,6 +43,17 @@ class BookingService {
 
   Future<void> cancelBooking(String id, {String reason = ''}) async {
     await _dio.put('/bookings/$id/cancel', data: {'reason': reason});
+  }
+
+  // --- Usta roli uchun ---
+
+  Future<List<Booking>> getMasterBookings({String? status}) async {
+    final params = <String, dynamic>{};
+    if (status != null) params['status'] = status;
+    final resp = await _dio.get('/master/bookings', queryParameters: params);
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+    final list = (payload['bookings'] ?? []) as List<dynamic>;
+    return list.map((e) => Booking.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   // --- Для роли сервиса ---

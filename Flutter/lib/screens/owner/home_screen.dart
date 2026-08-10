@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/promo.dart';
+import '../../models/service_category.dart';
 import '../../models/service_type.dart';
 import '../../models/shop.dart';
 import '../../services/notification_service.dart';
@@ -13,8 +14,7 @@ import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
-import '../../widgets/m_ph.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_service_tile.dart';
 import '../../widgets/m_tag.dart';
 import '../../widgets/m_workshop_card.dart';
@@ -66,20 +66,6 @@ class _R {
   double get tileAspect  => isLarge ? 1.1 : isWide ? 1.0 : 0.85;
 }
 
-// ── Icon mapping ───────────────────────────────────────────────────────────────
-
-String _iconForSlug(String slug) {
-  switch (slug) {
-    case 'tire_change':  return 'disc';
-    case 'pumping':      return 'gauge';
-    case 'patch':        return 'wrench';
-    case 'balancing':    return 'disc';
-    case 'rim_repair':   return 'disc';
-    case 'storage':      return 'layers';
-    default:             return 'wrench';
-  }
-}
-
 // ── Screen ─────────────────────────────────────────────────────────────────────
 
 class OwnerHomeScreen extends ConsumerWidget {
@@ -90,7 +76,6 @@ class OwnerHomeScreen extends ConsumerWidget {
     final user        = ref.watch(authProvider).user;
     final typesAsync  = ref.watch(serviceTypesProvider);
     final shopsAsync  = ref.watch(shopsProvider);
-    final selected    = ref.watch(selectedServiceTypeProvider);
     final promosAsync = ref.watch(activePromosProvider);
 
     return Scaffold(
@@ -124,16 +109,16 @@ class OwnerHomeScreen extends ConsumerWidget {
                   SizedBox(height: r.isSmall ? 12 : 16),
 
                   // Search bar
-                  _SearchBar(onTap: () => context.push('/owner/map'), r: r),
+                  _SearchBar(onTap: () => context.push('/owner/search'), r: r),
                   SizedBox(height: r.isSmall ? 14 : 20),
 
-                  // Service type grid
+                  // Service category grid (xizmat turlari endi kategoriyalarga guruhlangan —
+                  // ro'yxat o'sgani sayin bosh ekranda tartibsiz ko'payib ketmasin uchun).
                   typesAsync.when(
-                    data: (types) => _ServiceTypeGrid(
+                    data: (types) => _ServiceCategoryGrid(
                       types: types,
-                      selectedSlug: selected,
                       r: r,
-                      onTap: (slug) => context.push('/owner/services/$slug'),
+                      onTap: (categoryId) => context.push('/owner/category/$categoryId'),
                     ),
                     loading: () => SizedBox(
                       height: r.isSmall ? 120 : 160,
@@ -265,7 +250,7 @@ class _HomeAppBar extends ConsumerWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MoshnIcon(
+                    PitGoIcon(
                       name: 'pin',
                       size: r.isSmall ? 13 : 15,
                       color: AppColors.text(context),
@@ -288,6 +273,8 @@ class _HomeAppBar extends ConsumerWidget {
           ),
           SizedBox(width: r.isSmall ? 6 : 10),
 
+          // SOS endi pastki bar markazida (owner_root.dart, centerDocked FAB).
+
           // Bell
           GestureDetector(
             onTap: () => context.push('/notifications'),
@@ -308,20 +295,6 @@ class _HomeAppBar extends ConsumerWidget {
                     ),
                   ),
               ],
-            ),
-          ),
-          SizedBox(width: r.isSmall ? 6 : 8),
-
-          // Avatar
-          GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: Container(
-              width: iconSize, height: iconSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.hairline(context), width: 1),
-              ),
-              child: ClipOval(child: MPh(width: iconSize, height: iconSize, label: 'AV')),
             ),
           ),
         ],
@@ -388,27 +361,33 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-// ── Service type grid ──────────────────────────────────────────────────────────
+// ── Service category grid ────────────────────────────────────────────────────
+// Xizmat turlari soni o'sib boraveradi (admin istagancha qo'shadi) — bosh
+// ekranda tartibsiz to'planib qolmasin uchun avval kategoriya tanlanadi,
+// keyin o'sha kategoriya ichidagi turlar ko'rsatiladi (service_group_screen.dart).
 
-class _ServiceTypeGrid extends StatelessWidget {
+class _ServiceCategoryGrid extends StatelessWidget {
   final List<ServiceType> types;
-  final String? selectedSlug;
   final _R r;
-  final void Function(String) onTap;
+  final void Function(String categoryId) onTap;
 
-  const _ServiceTypeGrid({
+  const _ServiceCategoryGrid({
     required this.types,
-    required this.selectedSlug,
     required this.r,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Faqat haqiqatan xizmat turi bor kategoriyalar ko'rsatiladi, lug'atdagi tartibda.
+    final present = kServiceCategories
+        .where((c) => types.any((t) => t.categoryOrOther == c.id))
+        .toList();
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: types.length,
+      itemCount: present.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: r.cols,
         crossAxisSpacing: r.isSmall ? 8 : 10,
@@ -416,13 +395,12 @@ class _ServiceTypeGrid extends StatelessWidget {
         childAspectRatio: r.tileAspect,
       ),
       itemBuilder: (context, i) {
-        final t = types[i];
-        final locale = context.locale.languageCode;
+        final c = present[i];
         return MServiceTile(
-          label: t.nameFor(locale),
-          iconName: _iconForSlug(t.slug),
-          active: selectedSlug == t.slug,
-          onTap: () => onTap(t.slug),
+          label: c.labelKey.tr(),
+          iconName: c.icon,
+          active: false,
+          onTap: () => onTap(c.id),
         );
       },
     );

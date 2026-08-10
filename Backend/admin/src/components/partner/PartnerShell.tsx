@@ -201,6 +201,15 @@ export default function PartnerShell({ children, pendingCount = 0 }: Props) {
     } else if (type === 'booking_updated') {
       title = 'Заказ обновлён'
       body  = data.booking?.customer?.fullName || 'Статус заказа изменился'
+    } else if (type === 'sos_dispatch') {
+      title = '🚨 SOS-вызов рядом!'
+      body  = 'Клиенту поблизости нужна помощь — откройте раздел SOS'
+    } else if (type === 'sos_taken') {
+      title = 'SOS-вызов занят'
+      body  = 'Вызов принял другой сервис'
+    } else if (type === 'sos_cancelled') {
+      title = 'SOS-вызов отменён'
+      body  = 'Клиент отменил вызов'
     } else if (data.title || data.message) {
       title = data.title || 'Уведомление'
       body  = data.message || data.body || ''

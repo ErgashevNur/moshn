@@ -5,6 +5,39 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ShopsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Bosh ekrandagi qidiruv paneli — ism bo'yicha servis va usta aralash
+   * natija qaytaradi (CLAUDE.md §4: "mijoz servisni ham, aniq ustani ham
+   * ko'ra oladi").
+   */
+  async search(query: string) {
+    const q = query.trim();
+    if (!q) return { shops: [], masters: [] };
+
+    const [shops, masters] = await Promise.all([
+      this.prisma.shopProfile.findMany({
+        where: {
+          verificationStatus: { in: ['verified', 'pending'] },
+          shopName: { contains: q, mode: 'insensitive' },
+        },
+        orderBy: [{ ratingAvg: 'desc' }],
+        take: 10,
+      }),
+      this.prisma.master.findMany({
+        where: {
+          isActive: true,
+          fullName: { contains: q, mode: 'insensitive' },
+          shop: { verificationStatus: { in: ['verified', 'pending'] } },
+        },
+        include: { shop: true },
+        orderBy: [{ ratingAvg: 'desc' }],
+        take: 10,
+      }),
+    ]);
+
+    return { shops, masters };
+  }
+
   async findMany(filter: {
     serviceType?: string;
     lat?: number;
@@ -167,6 +200,18 @@ export class ShopsService {
       }),
     );
     return Promise.all(ops);
+  }
+
+  async getBookedSlots(shopId: string, dateFrom: string, dateTo: string) {
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        shopId,
+        status: { in: ['pending', 'confirmed', 'in_progress'] },
+        scheduledAt: { gte: new Date(dateFrom), lt: new Date(dateTo) },
+      },
+      select: { scheduledAt: true },
+    });
+    return bookings.map((b) => b.scheduledAt.toISOString());
   }
 
   private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {

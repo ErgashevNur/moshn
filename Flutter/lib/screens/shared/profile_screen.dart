@@ -10,7 +10,7 @@ import '../../store/theme_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/m_moshn_icon.dart';
+import '../../widgets/m_pitgo_icon.dart';
 
 void _showComingSoon(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +110,10 @@ Future<void> _showEditProfile(BuildContext context, WidgetRef ref, User? user) a
                                 data: {'full_name': name},
                               );
                               await ref.read(authProvider.notifier).refreshUser();
-                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (ctx.mounted) {
+                                FocusScope.of(ctx).unfocus();
+                                Navigator.pop(ctx);
+                              }
                             } catch (e) {
                               if (ctx.mounted) {
                                 setModalState(() => saving = false);
@@ -178,12 +181,17 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Внешний вид ─────────────────────────────────────────────────
-            // Переключатель языка скрыт: интерфейс работает только на
-            // русском. Локаль 'uz' остаётся в инфраструктуре (main.dart,
-            // assets/translations/uz.json) на случай, если её понадобится
-            // включить в будущем.
+            // ── Внешний вид и язык ────────────────────────────────────────────
             _Group(children: [
+              _SegmentRow(
+                icon: Icons.language_rounded,
+                label: 'profile.language'.tr(),
+                options: const ["O'zbek", 'Русский'],
+                activeIndex: context.locale.languageCode == 'uz' ? 0 : 1,
+                onSelect: (i) =>
+                    context.setLocale(i == 0 ? const Locale('uz') : const Locale('ru')),
+              ),
+              _Hairline(indent: 62),
               _SegmentRow(
                 icon: Icons.nightlight_round,
                 label: 'profile.appearance'.tr(),
@@ -222,10 +230,6 @@ class ProfileScreen extends ConsumerWidget {
                 label: 'profile.help'.tr(),
               ),
             ]),
-            const SizedBox(height: 12),
-
-            // ── Для сервисов ───────────────────────────────────────────────
-            _ServiceCard(),
             const SizedBox(height: 36),
 
             // ── Выход ───────────────────────────────────────────────────────
@@ -333,7 +337,7 @@ class _UserCard extends StatelessWidget {
                 border: Border.all(color: AppColors.hairline(context), width: 1),
               ),
               alignment: Alignment.center,
-              child: MoshnIcon(
+              child: PitGoIcon(
                 name: 'user',
                 size: 24,
                 color: AppColors.text3(context),
@@ -548,63 +552,3 @@ class _Hairline extends StatelessWidget {
       );
 }
 
-// ── Карточка для сервисов ─────────────────────────────────────────────────────
-
-class _ServiceCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showComingSoon(context),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(AppSpacing.r_lg),
-          border: Border.all(color: AppColors.hairline(context), width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.surface2(context),
-                borderRadius: BorderRadius.circular(AppSpacing.r_xs),
-              ),
-              alignment: Alignment.center,
-              child: MoshnIcon(
-                name: 'wrench',
-                size: 20,
-                color: AppColors.text2(context),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'profile.for_services'.tr(),
-                    style: AppTypography.soraSize(14.5, weight: FontWeight.w600)
-                        .copyWith(color: AppColors.text(context)),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'profile.for_services_sub'.tr(),
-                    style: AppTypography.body.copyWith(
-                        color: AppColors.text3(context), fontSize: 12),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded,
-                size: 20, color: AppColors.text3(context)),
-          ],
-        ),
-      ),
-    );
-  }
-}

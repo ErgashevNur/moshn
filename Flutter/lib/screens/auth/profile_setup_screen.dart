@@ -7,12 +7,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../models/service_type.dart';
 import '../../models/user.dart';
 import '../../services/api.dart';
+import '../../services/evacuator_service.dart';
 import '../../services/shop_service.dart';
+import '../../services/sos_service.dart' show sosErrorMessage;
 import '../../services/vehicle_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
@@ -20,7 +23,9 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/m_button.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/plate_input.dart';
+import '../service/masters_screen.dart' show MasterFormSheet, myMastersProvider;
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   final UserRole role;
@@ -46,12 +51,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   // ─── Service wizard ───────────────────────────────────────
   final _pageCtrl      = PageController();
   int _currentStep     = 0;
-  static const _totalSteps = 4;
+  static const _totalSteps = 5;
 
   final _shopNameCtrl = TextEditingController();
   final _addressCtrl  = TextEditingController();
   String? _shopNameError;
   String? _addressError;
+  bool _shopCreated = false;
 
   // ─── Map / location ──────────────────────────────────────
   final _mapCtrl = MapController();
@@ -66,6 +72,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   bool _typesLoading = false;
 
   bool get _isOwner => widget.role == UserRole.owner;
+  bool get _isEvacuator => widget.role == UserRole.evacuator;
+
+  // ─── Evacuator ───────────────────────────────────────────
+  final _evacPhoneCtrl = TextEditingController();
+  final _evacPlateCtrl = TextEditingController();
+  String? _evacPhoneError;
 
   @override
   void initState() {
@@ -87,6 +99,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _shopNameCtrl.dispose();
     _addressCtrl.dispose();
     _pageCtrl.dispose();
+    _evacPhoneCtrl.dispose();
+    _evacPlateCtrl.dispose();
     super.dispose();
   }
 
@@ -254,6 +268,71 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // EVACUATOR
+  // ═══════════════════════════════════════════════════════════
+
+  bool _validateEvacuator() {
+    final name = _fullNameCtrl.text.trim();
+    final phone = _evacPhoneCtrl.text.trim();
+    String? nameErr;
+    String? phoneErr;
+    if (name.isEmpty || name.length < 3) nameErr = 'Ismingizni kiriting';
+    if (phone.isEmpty || phone.length < 7) phoneErr = 'Telefon raqamini kiriting';
+    setState(() {
+      _fullNameError = nameErr;
+      _evacPhoneError = phoneErr;
+    });
+    return nameErr == null && phoneErr == null;
+  }
+
+  Future<void> _submitEvacuator() async {
+    if (!_validateEvacuator() || _loading) return;
+    setState(() => _loading = true);
+
+    try {
+      final resp = await ApiClient.instance.dio.put('/profile/role', data: {
+        'role': 'evacuator',
+        'full_name': _fullNameCtrl.text.trim(),
+      });
+      final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>;
+      final accessToken = payload['access_token'] as String?;
+      final refreshToken = payload['refresh_token'] as String?;
+      if (accessToken != null && refreshToken != null) {
+        await ApiClient.instance.saveTokens(access: accessToken, refresh: refreshToken);
+      }
+      final userMap = (payload['user'] ?? payload) as Map<String, dynamic>;
+      final updatedUser = User.fromJson(userMap);
+      ref.read(authProvider.notifier).setAuthenticated(updatedUser);
+
+      try {
+        await EvacuatorService().createProfile(
+          fullName: _fullNameCtrl.text.trim(),
+          phone: _evacPhoneCtrl.text.trim(),
+          vehiclePlate: _evacPlateCtrl.text.trim().toUpperCase(),
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(sosErrorMessage(e, fallback: 'Profil saqlanmadi — keyinroq qayta urining')),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      }
+      // Router (authenticated, role='evacuator') → /evacuator ga o'tkazadi.
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Произошла ошибка. Попробуйте снова.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // SERVICE WIZARD
   // ═══════════════════════════════════════════════════════════
 
@@ -297,6 +376,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         }
         return true;
 
+      // 4-qadam (ustalar) — ixtiyoriy, hech narsa tanlanmagan/qo'shilmagan
+      // bo'lsa ham davom etish mumkin (keyinroq kabinetdan qo'shsa bo'ladi).
       default:
         return true;
     }
@@ -304,6 +385,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   void _nextStep() {
     if (!_validateStep()) return;
+
+    // Xizmat turlari qadami tugadi — servis profili shu yerda yaratiladi,
+    // chunki keyingi (ustalar) qadami uchun servis allaqachon mavjud bo'lishi
+    // va foydalanuvchi 'service' roli bilan autentifikatsiyadan o'tgan
+    // bo'lishi kerak (POST /service/masters shularga tayanadi).
+    if (_currentStep == 3 && !_shopCreated) {
+      _createShopProfile();
+      return;
+    }
+
     if (_currentStep < _totalSteps - 1) {
       setState(() => _currentStep++);
       _pageCtrl.animateToPage(
@@ -312,7 +403,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      _submitService();
+      // Ustalar qadami (oxirgi) — bu yerga faqat servis allaqachon
+      // yaratilgandan keyin kelinadi, shunchaki kabinetga o'tamiz.
+      context.go('/service');
     }
   }
 
@@ -329,7 +422,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     }
   }
 
-  Future<void> _submitService() async {
+  Future<void> _createShopProfile() async {
     if (_loading) return;
     setState(() => _loading = true);
 
@@ -362,7 +455,21 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'longitude':    _lng,
       });
 
-      // Router (authenticated) → перенаправит на /service
+      // 3. Servis tayyor — endi "ustalar" qadamiga o'tamiz (Router bu
+      // yerda /service ga majburiy ko'chirmaydi, chunki role=='service' +
+      // loc=='/profile-setup' alohida istisno qilingan).
+      if (mounted) {
+        setState(() {
+          _shopCreated = true;
+          _loading = false;
+          _currentStep++;
+        });
+        _pageCtrl.animateToPage(
+          _currentStep,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _loading = false);
@@ -384,8 +491,87 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: _isOwner ? _buildOwnerForm() : _buildServiceWizard(),
+        child: _isOwner
+            ? _buildOwnerForm()
+            : _isEvacuator
+                ? _buildEvacuatorForm()
+                : _buildServiceWizard(),
       ),
+    );
+  }
+
+  // ─── Evacuator ───────────────────────────────────────────
+
+  Widget _buildEvacuatorForm() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: Row(
+            children: [
+              _BackButton(onTap: () => Navigator.of(context).pop()),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Evakuator sifatida ro\'yxatdan o\'ting',
+                  style: AppTypography.displaySmall.copyWith(color: AppColors.text(context), height: 1.1),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'SOS chaqiruvlarida hech kim topilmaganda mijozlarga siz yordam berasiz',
+                  style: AppTypography.bodyMedium.copyWith(color: AppColors.text2(context)),
+                ),
+                const SizedBox(height: 32),
+                _SectionLabel(icon: CupertinoIcons.person_fill, label: 'Shaxsiy ma\'lumotlar'),
+                const SizedBox(height: 14),
+                AppTextField(
+                  controller: _fullNameCtrl,
+                  placeholder: 'Ism Familiya',
+                  icon: CupertinoIcons.person,
+                  errorText: _fullNameError,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) {
+                    if (_fullNameError != null) setState(() => _fullNameError = null);
+                  },
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: _evacPhoneCtrl,
+                  placeholder: 'Telefon raqami',
+                  icon: CupertinoIcons.phone,
+                  keyboardType: TextInputType.phone,
+                  errorText: _evacPhoneError,
+                  onChanged: (_) {
+                    if (_evacPhoneError != null) setState(() => _evacPhoneError = null);
+                  },
+                ),
+                const SizedBox(height: 28),
+                _SectionLabel(icon: CupertinoIcons.car_detailed, label: 'Evakuator mashinasi'),
+                const SizedBox(height: 14),
+                PlateInput(controller: _evacPlateCtrl),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: MButton(
+            label: 'Подтвердить',
+            onTap: _submitEvacuator,
+            enabled: true,
+            loading: _loading,
+            trailing: const Icon(Icons.check_rounded),
+          ),
+        ),
+      ],
     );
   }
 
@@ -530,6 +716,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               _stepShopName(),
               _stepAddress(),
               _stepServiceTypes(),
+              _stepMasters(),
             ],
           ),
         ),
@@ -538,10 +725,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           child: MButton(
-            label: isLast ? 'Завершить' : 'Продолжить',
+            label: isLast ? 'Готово' : 'Продолжить',
             onTap: _nextStep,
             enabled: true,
-            loading: _loading && isLast,
+            loading: _loading,
             trailing: Icon(isLast ? Icons.check_rounded : Icons.arrow_forward_rounded),
           ),
         ),
@@ -596,7 +783,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           const SizedBox(height: 32),
           AppTextField(
             controller: _shopNameCtrl,
-            placeholder: 'Например: Shina24 Юнусабад',
+            placeholder: 'Например: PitGo Юнусабад',
             icon: CupertinoIcons.briefcase,
             errorText: _shopNameError,
             textCapitalization: TextCapitalization.sentences,
@@ -647,7 +834,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   TileLayer(
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'uz.moshn.moshn',
+                    userAgentPackageName: 'uz.pitgo.pitgo',
                   ),
                 ],
               ),
@@ -813,7 +1000,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(type.emoji, style: const TextStyle(fontSize: 18)),
+                        PitGoIcon(
+                          name: type.icon,
+                          size: 18,
+                          color: selected
+                              ? AppColors.inverseText(context)
+                              : AppColors.text(context),
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           type.nameRu.isNotEmpty ? type.nameRu : type.nameUz,
@@ -833,6 +1026,133 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         ],
       ),
     );
+  }
+
+  // ─── Шаг 4: Мастера (ixtiyoriy) ────────────────────────────
+
+  Widget _stepMasters() {
+    // Servis hali yaratilmagan bo'lsa (masalan PageView ushbu sahifani
+    // oldindan quryapti) — provider'ni umuman ushlab turmaymiz, chunki
+    // /service/masters hali huquqsiz (servis yo'q) xato qaytaradi va bu
+    // xato Riverpod'da keshlanib qoladi.
+    if (!_shopCreated) {
+      return const SizedBox.shrink();
+    }
+
+    final async = ref.watch(myMastersProvider);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Добавьте мастеров',
+              style: AppTypography.displaySmall.copyWith(
+                  color: AppColors.text(context), height: 1.1)),
+          const SizedBox(height: 8),
+          Text(
+            'Каждый мастер получает свой отдельный вход. Можно пропустить и добавить позже, в кабинете сервиса.',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.text2(context)),
+          ),
+          const SizedBox(height: 24),
+
+          async.when(
+            data: (masters) => Column(
+              children: [
+                ...masters.map((m) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface(context),
+                          borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                          border: Border.all(color: AppColors.hairline(context)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppColors.goldDim,
+                                borderRadius: BorderRadius.circular(AppSpacing.r_xs),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                m.fullName.isNotEmpty ? m.fullName[0].toUpperCase() : 'M',
+                                style: AppTypography.labelMedium.copyWith(color: AppColors.gold),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(m.fullName,
+                                      style: AppTypography.labelMedium.copyWith(
+                                        color: AppColors.text(context),
+                                        fontWeight: FontWeight.w600,
+                                      )),
+                                  if (m.position.isNotEmpty)
+                                    Text(m.position,
+                                        style: AppTypography.body.copyWith(
+                                          color: AppColors.text3(context),
+                                          fontSize: 12,
+                                        )),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+                GestureDetector(
+                  onTap: () => _openMasterForm(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                      border: Border.all(
+                        color: AppColors.hairline2(context),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_rounded, color: AppColors.text(context), size: 20),
+                        const SizedBox(width: 8),
+                        Text('Добавить мастера',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.text(context),
+                              fontWeight: FontWeight.w600,
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+            error: (_, _) => Center(
+              child: TextButton(
+                onPressed: () => ref.invalidate(myMastersProvider),
+                child: const Text('Повторить'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openMasterForm(BuildContext context) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const MasterFormSheet(),
+    );
+    if (saved == true) ref.invalidate(myMastersProvider);
   }
 }
 

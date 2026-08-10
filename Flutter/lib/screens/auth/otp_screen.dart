@@ -129,7 +129,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (result.user.role == UserRole.none) {
         context.go('/role-select');
       } else {
-        context.go(result.user.role == UserRole.service ? '/service' : '/owner');
+        switch (result.user.role) {
+          case UserRole.service:
+            context.go('/service');
+          case UserRole.master:
+            context.go('/mechanic');
+          default:
+            context.go('/owner');
+        }
       }
     } catch (e) {
       String msg;

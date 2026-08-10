@@ -1,31 +1,41 @@
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/master.dart';
 import '../../models/service_type.dart';
 import '../../models/vehicle.dart';
 import '../../services/booking_service.dart';
+import '../../services/master_service.dart';
 import '../../services/shop_service.dart';
 import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_plate.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final _vehiclesForBookingProvider =
-    FutureProvider.autoDispose<List<Vehicle>>((ref) {
+final _vehiclesForBookingProvider = FutureProvider.autoDispose<List<Vehicle>>((
+  ref,
+) {
   return VehicleService().getVehicles();
 });
 
 final _serviceTypesForBookingProvider =
     FutureProvider.autoDispose<List<ServiceType>>((ref) {
-  return ShopService().getServiceTypes();
-});
+      return ShopService().getServiceTypes();
+    });
+
+final _mastersForBookingProvider =
+    FutureProvider.autoDispose.family<List<Master>, String>((ref, shopId) {
+      return MasterService().getShopMasters(shopId);
+    });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -51,16 +61,20 @@ class CreateBookingScreen extends ConsumerStatefulWidget {
 class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   String? _vehicleId;
   String? _serviceTypeId;
+  String? _masterId;
   DateTime _selectedDate = DateTime.now();
   String? _selectedTime;
   bool _saving = false;
+
+  Set<String> _bookedSlots = {};
+  bool _slotsLoading = false;
+  int _slotsRequestId = 0;
 
   final _chipScrollCtrl = ScrollController();
   final _dateScrollCtrl = ScrollController();
   final _chipFrac = ValueNotifier<double>(0);
   final _dateFrac = ValueNotifier<double>(0);
 
-  static const _unavailableSlots = <String>{};
   static final _timeSlots = _buildSlots();
 
   static List<String> _buildSlots() {
@@ -69,7 +83,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       for (final m in [0, 30]) {
         if (h == 18 && m == 30) break;
         slots.add(
-            '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}');
+          '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}',
+        );
       }
     }
     return slots;
@@ -80,6 +95,36 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     super.initState();
     _chipScrollCtrl.addListener(_onChipScroll);
     _dateScrollCtrl.addListener(_onDateScroll);
+    _loadBookedSlots();
+  }
+
+  Future<void> _loadBookedSlots() async {
+    final requestId = ++_slotsRequestId;
+    setState(() => _slotsLoading = true);
+    try {
+      // Bandlik endi usta bo'yicha hisoblanadi. Usta tanlanmagan bo'lsa —
+      // servis darajasidagi umumiy bandlikni ko'rsatamiz (taxminiy).
+      final booked = _masterId != null
+          ? await MasterService().getBookedSlots(_masterId!, _selectedDate)
+          : await ShopService().getBookedSlots(widget.shopId, _selectedDate);
+      if (!mounted || requestId != _slotsRequestId) return;
+      final slots = booked
+          .map(
+            (d) =>
+                '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}',
+          )
+          .toSet();
+      setState(() {
+        _bookedSlots = slots;
+        _slotsLoading = false;
+        if (_selectedTime != null && _bookedSlots.contains(_selectedTime)) {
+          _selectedTime = null;
+        }
+      });
+    } catch (_) {
+      if (!mounted || requestId != _slotsRequestId) return;
+      setState(() => _slotsLoading = false);
+    }
   }
 
   void _onChipScroll() {
@@ -120,6 +165,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       _toast('Выберите тип услуги');
       return;
     }
+    if (_masterId == null) {
+      _toast('Выберите мастера');
+      return;
+    }
     if (_selectedTime == null) {
       _toast('Выберите время');
       return;
@@ -138,6 +187,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     try {
       final booking = await BookingService().createBooking(
         shopId: widget.shopId,
+        masterId: _masterId!,
         vehicleId: _vehicleId!,
         serviceTypeId: _serviceTypeId!,
         scheduledAt: scheduledAt,
@@ -146,21 +196,39 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       if (!mounted) return;
       context.push('/owner/bookings/${booking.id}/pay?amount=$price');
     } catch (e) {
-      if (mounted) _toast(e.toString());
+      if (!mounted) return;
+      String msg = 'Xatolik yuz berdi';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map) {
+          msg = (data['message'] ?? data['error'] ?? msg).toString();
+        } else if (e.response?.statusCode != null) {
+          msg = 'Server xatosi (${e.response?.statusCode})';
+        } else {
+          msg = 'Tarmoq xatosi. Internetni tekshiring';
+        }
+      }
+      _toast(msg);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: AppTypography.body.copyWith(color: Colors.white)),
-      backgroundColor: AppColors.danger,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.all(AppSpacing.lg),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.r_xs)),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          msg,
+          style: AppTypography.body.copyWith(color: Colors.white),
+        ),
+        backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.r_xs),
+        ),
+      ),
+    );
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -168,9 +236,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   List<DateTime> get _dates {
     final today = DateTime.now();
     return List.generate(
-        14,
-        (i) =>
-            DateTime(today.year, today.month, today.day).add(Duration(days: i)));
+      14,
+      (i) =>
+          DateTime(today.year, today.month, today.day).add(Duration(days: i)),
+    );
   }
 
   String _dayLabel(DateTime date) {
@@ -204,10 +273,11 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   Widget build(BuildContext context) {
     final vehiclesAsync = ref.watch(_vehiclesForBookingProvider);
     final typesAsync = ref.watch(_serviceTypesForBookingProvider);
-    final price = typesAsync.valueOrNull
+    final price =
+        typesAsync.valueOrNull
             ?.where((t) => t.id == _serviceTypeId)
             .firstOrNull
-            ?.basePrice ??
+            ?.priceMin ??
         0;
 
     return Scaffold(
@@ -225,6 +295,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                   _shopCard(context),
                   const SizedBox(height: AppSpacing.xl),
                   _serviceSection(context, typesAsync),
+                  const SizedBox(height: AppSpacing.xl),
+                  _masterSection(context),
                   const SizedBox(height: AppSpacing.xl),
                   _vehicleSection(context, vehiclesAsync),
                   const SizedBox(height: AppSpacing.xl),
@@ -249,7 +321,11 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
         child: Row(
           children: [
             GestureDetector(
@@ -261,15 +337,19 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                   color: AppColors.surface(context),
                   borderRadius: BorderRadius.circular(AppSpacing.r_xs),
                 ),
-                child: Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.text(context), size: 17),
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.text(context),
+                  size: 17,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
             Text(
               'Запись на время',
-              style: AppTypography.appbarTitle
-                  .copyWith(color: AppColors.text(context)),
+              style: AppTypography.appbarTitle.copyWith(
+                color: AppColors.text(context),
+              ),
             ),
           ],
         ),
@@ -280,8 +360,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   // ── Shop card ─────────────────────────────────────────────────────────────
 
   Widget _shopCard(BuildContext context) {
-    final initial =
-        widget.shopName.isNotEmpty ? widget.shopName[0].toUpperCase() : 'S';
+    final initial = widget.shopName.isNotEmpty
+        ? widget.shopName[0].toUpperCase()
+        : 'S';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -312,8 +393,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               children: [
                 Text(
                   widget.shopName.isNotEmpty ? widget.shopName : 'Шиномонтаж',
-                  style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.text(context)),
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.text(context),
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -321,14 +403,19 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 11, color: AppColors.text3(context)),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 11,
+                        color: AppColors.text3(context),
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           widget.shopAddress,
                           style: AppTypography.body.copyWith(
-                              color: AppColors.text3(context), fontSize: 12),
+                            color: AppColors.text3(context),
+                            fontSize: 12,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -351,17 +438,20 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   // ── Eyebrow label ─────────────────────────────────────────────────────────
 
   Widget _label(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Text(
-          text,
-          style: AppTypography.eyebrow.copyWith(color: AppColors.text3(context)),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+    child: Text(
+      text,
+      style: AppTypography.eyebrow.copyWith(color: AppColors.text3(context)),
+    ),
+  );
 
   // ── Scroll indicator ──────────────────────────────────────────────────────
 
   Widget _scrollBar(
-      BuildContext context, ValueNotifier<double> frac, int count) {
+    BuildContext context,
+    ValueNotifier<double> frac,
+    int count,
+  ) {
     const trackW = 72.0;
     const h = 3.0;
     final thumbW = (trackW / max(count, 1)).clamp(14.0, trackW);
@@ -398,7 +488,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   // ── Service type chips ────────────────────────────────────────────────────
 
   Widget _serviceSection(
-      BuildContext context, AsyncValue<List<ServiceType>> async) {
+    BuildContext context,
+    AsyncValue<List<ServiceType>> async,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -412,8 +504,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                 child: ListView.separated(
                   controller: _chipScrollCtrl,
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.sm),
                   itemCount: types.length,
@@ -421,17 +514,27 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                     final t = types[i];
                     final sel = _serviceTypeId == t.id;
                     return GestureDetector(
-                      onTap: () => setState(() => _serviceTypeId = t.id),
+                      onTap: () {
+                        setState(() {
+                          _serviceTypeId = t.id;
+                          // Usta shu xizmatni bajarishi shart — qayta tanlanadi
+                          _masterId = null;
+                          _selectedTime = null;
+                        });
+                        _loadBookedSlots();
+                      },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md),
+                          horizontal: AppSpacing.md,
+                        ),
                         decoration: BoxDecoration(
                           color: sel
                               ? AppColors.inverseBg(context)
                               : AppColors.surface(context),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.r_full),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.r_full,
+                          ),
                           border: Border.all(
                             color: sel
                                 ? Colors.transparent
@@ -441,8 +544,13 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(t.emoji,
-                                style: const TextStyle(fontSize: 14)),
+                            PitGoIcon(
+                              name: t.icon,
+                              size: 14,
+                              color: sel
+                                  ? AppColors.inverseText(context)
+                                  : AppColors.text2(context),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               t.nameFor(context.locale.languageCode),
@@ -466,11 +574,169 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: SizedBox(
-                height: 44,
-                child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2))),
+              height: 44,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
           ),
           error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  // ── Master (usta) list ────────────────────────────────────────────────────
+
+  Widget _masterSection(BuildContext context) {
+    final async = ref.watch(_mastersForBookingProvider(widget.shopId));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(context, 'ВЫБЕРИТЕ МАСТЕРА'),
+        const SizedBox(height: AppSpacing.sm),
+        async.when(
+          data: (masters) {
+            final list = _serviceTypeId == null
+                ? masters
+                : masters.where((m) => m.offersService(_serviceTypeId!)).toList();
+            if (list.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                  ),
+                  child: Text(
+                    'Для этой услуги нет свободных мастеров',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.text3(context),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: List.generate(list.length, (i) {
+                final m = list[i];
+                final sel = _masterId == m.id;
+                final initial =
+                    m.fullName.isNotEmpty ? m.fullName[0].toUpperCase() : 'M';
+                return Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom: i < list.length - 1 ? AppSpacing.sm : 0,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _masterId = m.id;
+                        _selectedTime = null;
+                      });
+                      _loadBookedSlots();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: sel
+                            ? AppColors.surface2(context)
+                            : AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                        border: Border.all(
+                          color: sel
+                              ? AppColors.inverseBg(context)
+                                  .withValues(alpha: 0.25)
+                              : AppColors.hairline(context),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColors.goldDim,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.r_xs),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initial,
+                              style: AppTypography.labelLarge
+                                  .copyWith(color: AppColors.gold),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  m.fullName.isNotEmpty ? m.fullName : 'Мастер',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: AppColors.text(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  m.position.isNotEmpty ? m.position : 'Мастер',
+                                  style: AppTypography.body.copyWith(
+                                    color: AppColors.text3(context),
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _masterRating(context, m),
+                          const SizedBox(width: AppSpacing.md),
+                          _RadioDot(selected: sel, context: context),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _masterRating(BuildContext context, Master m) {
+    if (m.ratingCount == 0) {
+      return Text(
+        'Нов.',
+        style: AppTypography.body.copyWith(
+          color: AppColors.text3(context),
+          fontSize: 12,
+        ),
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('⭐', style: TextStyle(fontSize: 12)),
+        const SizedBox(width: 3),
+        Text(
+          m.ratingAvg.toStringAsFixed(1),
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.text2(context),
+          ),
         ),
       ],
     );
@@ -479,7 +745,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   // ── Vehicle list ──────────────────────────────────────────────────────────
 
   Widget _vehicleSection(
-      BuildContext context, AsyncValue<List<Vehicle>> async) {
+    BuildContext context,
+    AsyncValue<List<Vehicle>> async,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -489,18 +757,19 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           data: (vehicles) => vehicles.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg),
+                    horizontal: AppSpacing.lg,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.surface(context),
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.r_md),
+                      borderRadius: BorderRadius.circular(AppSpacing.r_md),
                     ),
                     child: Text(
                       'Автомобиль не добавлен. Сначала добавьте авто.',
-                      style: AppTypography.body
-                          .copyWith(color: AppColors.text3(context)),
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.text3(context),
+                      ),
                     ),
                   ),
                 )
@@ -523,12 +792,14 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                             color: sel
                                 ? AppColors.surface2(context)
                                 : AppColors.surface(context),
-                            borderRadius:
-                                BorderRadius.circular(AppSpacing.r_md),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.r_md,
+                            ),
                             border: Border.all(
                               color: sel
-                                  ? AppColors.inverseBg(context)
-                                      .withValues(alpha: 0.25)
+                                  ? AppColors.inverseBg(
+                                      context,
+                                    ).withValues(alpha: 0.25)
                                   : AppColors.hairline(context),
                             ),
                           ),
@@ -539,25 +810,26 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                                 height: 42,
                                 decoration: BoxDecoration(
                                   color: AppColors.surface3(context),
-                                  borderRadius:
-                                      BorderRadius.circular(AppSpacing.r_xs),
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.r_xs,
+                                  ),
                                 ),
-                                child: Icon(Icons.directions_car_rounded,
-                                    size: 20,
-                                    color: AppColors.text2(context)),
+                                child: Icon(
+                                  Icons.directions_car_rounded,
+                                  size: 20,
+                                  color: AppColors.text2(context),
+                                ),
                               ),
                               const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       '${v.make} ${v.model}'.trim().isEmpty
                                           ? v.plate
                                           : '${v.make} ${v.model}'.trim(),
-                                      style:
-                                          AppTypography.labelMedium.copyWith(
+                                      style: AppTypography.labelMedium.copyWith(
                                         color: AppColors.text(context),
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -566,18 +838,20 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                                     Text(
                                       'R15 185/65',
                                       style: AppTypography.body.copyWith(
-                                          color: AppColors.text3(context),
-                                          fontSize: 12),
+                                        color: AppColors.text3(context),
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
-                              MPlate(plate: v.plate),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: MPlate(plate: v.plate),
+                              ),
                               const SizedBox(width: AppSpacing.md),
-                              _RadioDot(
-                                  selected: sel,
-                                  context: context),
+                              _RadioDot(selected: sel, context: context),
                             ],
                           ),
                         ),
@@ -587,8 +861,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                 ),
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child:
-                Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
           error: (_, _) => const SizedBox.shrink(),
         ),
@@ -617,10 +890,13 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               final d = dates[i];
               final sel = _dateSelected(d);
               return GestureDetector(
-                onTap: () => setState(() {
-                  _selectedDate = d;
-                  _selectedTime = null;
-                }),
+                onTap: () {
+                  setState(() {
+                    _selectedDate = d;
+                    _selectedTime = null;
+                  });
+                  _loadBookedSlots();
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 52,
@@ -643,22 +919,25 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         style: AppTypography.eyebrow.copyWith(
                           fontSize: 9,
                           color: sel
-                              ? AppColors.inverseText(context)
-                                  .withValues(alpha: 0.55)
+                              ? AppColors.inverseText(
+                                  context,
+                                ).withValues(alpha: 0.55)
                               : AppColors.text3(context),
                         ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         '${d.day}',
-                        style: AppTypography.soraSize(22,
-                                weight: FontWeight.w700)
-                            .copyWith(
-                          color: sel
-                              ? AppColors.inverseText(context)
-                              : AppColors.text(context),
-                          letterSpacing: -0.5,
-                        ),
+                        style:
+                            AppTypography.soraSize(
+                              22,
+                              weight: FontWeight.w700,
+                            ).copyWith(
+                              color: sel
+                                  ? AppColors.inverseText(context)
+                                  : AppColors.text(context),
+                              letterSpacing: -0.5,
+                            ),
                       ),
                     ],
                   ),
@@ -679,7 +958,22 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(context, 'booking.free_slots'.tr()),
+        Row(
+          children: [
+            _label(context, 'booking.free_slots'.tr()),
+            if (_slotsLoading) ...[
+              const SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 11,
+                height: 11,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: AppColors.text3(context),
+                ),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: AppSpacing.sm),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -692,11 +986,12 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                 spacing: gap,
                 runSpacing: gap,
                 children: _timeSlots.map((slot) {
-                  final unavail = _unavailableSlots.contains(slot);
+                  final unavail = _bookedSlots.contains(slot);
                   final sel = _selectedTime == slot && !unavail;
                   return GestureDetector(
-                    onTap:
-                        unavail ? null : () => setState(() => _selectedTime = slot),
+                    onTap: unavail
+                        ? null
+                        : () => setState(() => _selectedTime = slot),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       width: cellW,
@@ -705,18 +1000,17 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                         color: sel
                             ? AppColors.inverseBg(context)
                             : unavail
-                                ? AppColors.surface(context)
-                                    .withValues(alpha: 0.4)
-                                : AppColors.surface(context),
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.r_xs),
+                            ? AppColors.surface(context).withValues(alpha: 0.4)
+                            : AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(AppSpacing.r_xs),
                         border: Border.all(
                           color: sel
                               ? Colors.transparent
                               : unavail
-                                  ? AppColors.hairline(context)
-                                      .withValues(alpha: 0.35)
-                                  : AppColors.hairline(context),
+                              ? AppColors.hairline(
+                                  context,
+                                ).withValues(alpha: 0.35)
+                              : AppColors.hairline(context),
                         ),
                       ),
                       child: Center(
@@ -727,8 +1021,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                             color: sel
                                 ? AppColors.inverseText(context)
                                 : unavail
-                                    ? AppColors.text3(context)
-                                    : AppColors.text(context),
+                                ? AppColors.text3(context)
+                                : AppColors.text(context),
                             decoration: unavail
                                 ? TextDecoration.lineThrough
                                 : null,
@@ -758,7 +1052,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           border: Border(top: BorderSide(color: AppColors.hairline(context))),
         ),
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         child: Row(
           children: [
             Column(
@@ -767,14 +1063,18 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               children: [
                 Text(
                   'ИТОГО',
-                  style: AppTypography.eyebrow
-                      .copyWith(color: AppColors.text3(context)),
+                  style: AppTypography.eyebrow.copyWith(
+                    color: AppColors.text3(context),
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  price > 0 ? "${_fmtPrice(price)} ${'common.sum'.tr()}" : "— ${'common.sum'.tr()}",
-                  style: AppTypography.titleSmall
-                      .copyWith(color: AppColors.text(context)),
+                  price > 0
+                      ? "${_fmtPrice(price)} ${'common.sum'.tr()}"
+                      : "— ${'common.sum'.tr()}",
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.text(context),
+                  ),
                 ),
               ],
             ),
@@ -806,8 +1106,11 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_rounded,
-                              size: 18, color: AppColors.text(context)),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                            color: AppColors.text(context),
+                          ),
                         ],
                 ),
               ),
@@ -835,8 +1138,7 @@ class _RadioDot extends StatelessWidget {
       height: 20,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color:
-            selected ? AppColors.inverseBg(context) : Colors.transparent,
+        color: selected ? AppColors.inverseBg(context) : Colors.transparent,
         border: Border.all(
           color: selected
               ? AppColors.inverseBg(context)
@@ -845,8 +1147,11 @@ class _RadioDot extends StatelessWidget {
         ),
       ),
       child: selected
-          ? Icon(Icons.check_rounded,
-              size: 11, color: AppColors.inverseText(context))
+          ? Icon(
+              Icons.check_rounded,
+              size: 11,
+              color: AppColors.inverseText(context),
+            )
           : null,
     );
   }

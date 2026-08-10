@@ -12,6 +12,6 @@ export default function Brand({ s = 26, theme = 'dark' }: { s?: number; theme?: 
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="Shina24" width={s} height={s} style={{ width: s, height: s, objectFit: 'contain' }} />
+    <img src={src} alt="PitGo" width={s} height={s} style={{ width: s, height: s, objectFit: 'contain' }} />
   )
 }

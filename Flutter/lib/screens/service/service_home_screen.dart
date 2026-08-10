@@ -18,6 +18,7 @@ import '../../widgets/m_plate.dart';
 import '../../widgets/section_card.dart';
 import 'report_screen.dart';
 import 'prices_screen.dart';
+import 'masters_screen.dart';
 
 final _shopProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
   (_) => ShopService().getMyShop(),
@@ -221,7 +222,7 @@ class _ServiceHomeScreenState extends ConsumerState<ServiceHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'SHINA24 PARTNER',
+                  'PITGO PARTNER',
                   style: AppTypography.soraSize(10, weight: FontWeight.w600)
                       .copyWith(
                     color: AppColors.text3(context),
@@ -493,7 +494,10 @@ class _BookingCard extends StatelessWidget {
                     if (booking.vehicle?.plate != null &&
                         booking.vehicle!.plate.isNotEmpty) ...[
                       const SizedBox(width: 8),
-                      MPlate(plate: booking.vehicle!.plate),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: MPlate(plate: booking.vehicle!.plate),
+                      ),
                     ],
                   ],
                 ),
@@ -502,12 +506,16 @@ class _BookingCard extends StatelessWidget {
                   booking.serviceType
                           ?.nameFor(context.locale.languageCode) ??
                       '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   booking.customer?.name ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.text3(context)),
                 ),
@@ -672,6 +680,16 @@ class _BurgerSheet extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const PricesScreen()));
+            },
+          ),
+          _BurgerDivider(),
+          _MenuItem(
+            icon: Icons.engineering_rounded,
+            label: 'Мастера',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MastersScreen()));
             },
           ),
           _BurgerDivider(),
