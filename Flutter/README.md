@@ -1,6 +1,6 @@
-# moshn
+# pitgo
 
-Moshn — VIN-based car service history platform
+PitGo — avtoservis ustalarini topish, bron qilish va boshqarish platformasi
 
 ## Getting Started
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/user.dart';
+import '../models/vehicle.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/otp_screen.dart';
@@ -18,8 +19,15 @@ import '../screens/owner/create_booking_screen.dart';
 import '../screens/owner/map_screen.dart';
 import '../screens/owner/owner_root.dart';
 import '../screens/owner/payment_screen.dart';
+import '../screens/owner/search_screen.dart';
+import '../screens/owner/service_group_screen.dart';
 import '../screens/owner/service_category_screen.dart';
 import '../screens/owner/shop_detail_screen.dart';
+import '../screens/owner/sos_request_screen.dart';
+import '../screens/owner/sos_tracking_screen.dart';
+import '../screens/mechanic/mechanic_root.dart';
+import '../screens/mechanic/mechanic_sos_detail_screen.dart';
+import '../screens/evacuator/evacuator_root.dart';
 import '../screens/service/customer_card_screen.dart';
 import '../screens/service/service_booking_detail_screen.dart';
 import '../screens/service/service_root.dart';
@@ -58,7 +66,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (loc == '/role-select' || loc == '/profile-setup') return null;
           return '/role-select';
         }
-        return role == UserRole.service ? '/service' : '/owner';
+        // Servis egasi profile-setup ustasini davom ettirsin (rol allaqachon
+        // 'service' ga o'zgargan bo'lsa ham — usta qo'shish qadami bor,
+        // ekranning o'zi tugagach /service ga ko'chadi).
+        if (role == UserRole.service && loc == '/profile-setup') return null;
+        switch (role) {
+          case UserRole.service:
+            return '/service';
+          case UserRole.master:
+            return '/mechanic';
+          case UserRole.evacuator:
+            return '/evacuator';
+          default:
+            return '/owner';
+        }
       }
 
       return null;
@@ -106,6 +127,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const MapScreen(),
           ),
           GoRoute(
+            path: 'search',
+            builder: (_, _) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: 'category/:id',
+            builder: (ctx, st) => ServiceGroupScreen(
+              categoryId: st.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
             path: 'services/:slug',
             builder: (ctx, st) => ServiceCategoryScreen(
               slug: st.pathParameters['slug']!,
@@ -114,6 +145,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'vehicles/new',
             builder: (_, _) => const AddVehicleScreen(),
+          ),
+          GoRoute(
+            path: 'vehicles/edit',
+            builder: (_, st) => AddVehicleScreen(vehicle: st.extra as Vehicle),
           ),
           GoRoute(
             path: 'shops/:id',
@@ -156,6 +191,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          GoRoute(
+            path: 'sos',
+            builder: (_, _) => const SosRequestScreen(),
+          ),
+          GoRoute(
+            path: 'sos/:id',
+            builder: (ctx, st) => SosTrackingScreen(
+              sosId: st.pathParameters['id']!,
+            ),
+          ),
         ],
       ),
 
@@ -174,6 +219,34 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'customers/:id',
             builder: (ctx, st) => CustomerCardScreen(
               customerId: st.pathParameters['id']!,
+            ),
+          ),
+        ],
+      ),
+
+      // Mechanic (usta) shell
+      GoRoute(
+        path: '/mechanic',
+        builder: (_, _) => const MechanicRoot(),
+        routes: [
+          GoRoute(
+            path: 'sos/:id',
+            builder: (ctx, st) => MechanicSosDetailScreen(
+              sosId: st.pathParameters['id']!,
+            ),
+          ),
+        ],
+      ),
+
+      // Evakuator shell
+      GoRoute(
+        path: '/evacuator',
+        builder: (_, _) => const EvacuatorRoot(),
+        routes: [
+          GoRoute(
+            path: 'sos/:id',
+            builder: (ctx, st) => MechanicSosDetailScreen(
+              sosId: st.pathParameters['id']!,
             ),
           ),
         ],

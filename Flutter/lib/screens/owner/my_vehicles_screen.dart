@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -123,6 +124,10 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
                     vehicle: primary,
                     isActive: _isActive,
                     onToggle: (v) => setState(() => _isActive = v),
+                    onEdit: () =>
+                        context.push('/owner/vehicles/edit', extra: primary).then((_) {
+                      ref.invalidate(_vehiclesProvider);
+                    }),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _FeatureGrid(vehicle: primary),
@@ -151,11 +156,13 @@ class _CarCard extends StatelessWidget {
   final Vehicle vehicle;
   final bool isActive;
   final ValueChanged<bool> onToggle;
+  final VoidCallback onEdit;
 
   const _CarCard({
     required this.vehicle,
     required this.isActive,
     required this.onToggle,
+    required this.onEdit,
   });
 
   @override
@@ -211,8 +218,12 @@ class _CarCard extends StatelessWidget {
                       .copyWith(color: AppColors.text2(context)),
                 ),
                 const Spacer(),
-                Icon(CupertinoIcons.settings,
-                    size: 18, color: AppColors.text3(context)),
+                GestureDetector(
+                  onTap: onEdit,
+                  behavior: HitTestBehavior.opaque,
+                  child: Icon(CupertinoIcons.settings,
+                      size: 18, color: AppColors.text3(context)),
+                ),
               ],
             ),
           ),
@@ -251,10 +262,11 @@ class _PhotoArea extends StatelessWidget {
     if (photoUrl != null && photoUrl!.isNotEmpty) {
       return AspectRatio(
         aspectRatio: 16 / 9,
-        child: Image.network(
-          photoUrl!,
+        child: CachedNetworkImage(
+          imageUrl: photoUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stack) => _PlaceholderArea(),
+          placeholder: (context, url) => _PlaceholderArea(),
+          errorWidget: (context, url, error) => _PlaceholderArea(),
         ),
       );
     }
@@ -331,10 +343,9 @@ class _FeatureGrid extends StatelessWidget {
   List<Widget> _tiles(BuildContext context) => [
         _FeatureTile(
           icon: Icons.warning_amber_rounded,
-          iconColor: AppColors.danger,
+          iconColor: AppColors.text3(context),
           title: 'owner.feature.jarimalar'.tr(),
-          subtitle: 'owner.feature.jarimalar_sub'.tr(),
-          subtitleColor: AppColors.danger,
+          locked: true,
         ),
         _FeatureTile(
           icon: CupertinoIcons.scope,
@@ -349,67 +360,92 @@ class _FeatureTile extends StatelessWidget {
   final IconData icon;
   final Color? iconColor;
   final String title;
-  final String subtitle;
-  final Color? subtitleColor;
+  final String? subtitle;
   final VoidCallback? onTap;
+  final bool locked;
 
   const _FeatureTile({
     required this.icon,
     this.iconColor,
     required this.title,
-    required this.subtitle,
-    this.subtitleColor,
+    this.subtitle,
     this.onTap,
+    this.locked = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(AppSpacing.r_md),
-          border: Border.all(color: AppColors.hairline(context)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    icon,
-                    size: 22,
-                    color: iconColor ?? AppColors.text2(context),
-                  ),
-                  const Spacer(),
-                  Text(
-                    title,
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.text(context),
-                      fontWeight: FontWeight.w700,
+      onTap: locked ? null : onTap,
+      child: Opacity(
+        opacity: locked ? 0.6 : 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface(context),
+            borderRadius: BorderRadius.circular(AppSpacing.r_md),
+            border: Border.all(color: AppColors.hairline(context)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      locked ? Icons.lock_rounded : icon,
+                      size: 22,
+                      color: iconColor ?? AppColors.text2(context),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTypography.eyebrow.copyWith(
-                      color: subtitleColor ?? AppColors.text3(context),
+                    const Spacer(),
+                    Text(
+                      title,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.text(context),
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: AppTypography.eyebrow.copyWith(
+                          color: AppColors.text3(context),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
 
-          ],
+              if (locked)
+                Positioned(
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface2(context),
+                      borderRadius: BorderRadius.circular(AppSpacing.r_full),
+                      border: Border.all(color: AppColors.hairline(context)),
+                    ),
+                    child: Text(
+                      'profile.coming_soon'.tr(),
+                      style: AppTypography.eyebrow.copyWith(
+                        color: AppColors.text2(context),
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -141,10 +141,20 @@ class _CustomerCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(carLabel, style: AppTypography.titleSmall),
+                    Text(carLabel,
+                        style: AppTypography.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     if (v?.plate != null && v!.plate.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      MPlate(plate: v.plate),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: MPlate(plate: v.plate),
+                        ),
+                      ),
                     ],
                   ],
                 ),

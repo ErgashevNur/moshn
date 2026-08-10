@@ -51,10 +51,15 @@ class CrmScreen extends ConsumerWidget {
                               const SizedBox(height: AppSpacing.sm),
                           itemBuilder: (ctx, i) {
                             final c = customers[i] as Map<String, dynamic>;
+                            final customerId = (c['customerId'] ??
+                                c['customer_id'] ??
+                                (c['customer']
+                                    as Map<String, dynamic>?)?['id'] ??
+                                c['id']) as String;
                             return _CustomerCard(
                               data: c,
                               onTap: () => ctx.push(
-                                  '/service/customers/${c['id']}'),
+                                  '/service/customers/$customerId'),
                             );
                           },
                         ),
@@ -84,10 +89,19 @@ class _CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isVip = (data['is_vip'] ?? false) as bool;
-    final name = (data['customer_name'] ?? '—') as String;
-    final phone = (data['customer_phone'] ?? '') as String;
-    final visits = (data['visit_count'] ?? 0) as int;
+    final customer = data['customer'] as Map<String, dynamic>?;
+    final isVip = (data['isVip'] ?? data['is_vip'] ?? false) as bool;
+    final name = (customer?['fullName'] ??
+        customer?['full_name'] ??
+        data['customerName'] ??
+        data['customer_name'] ??
+        '—') as String;
+    final phone = (customer?['phone'] ??
+        data['customerPhone'] ??
+        data['customer_phone'] ??
+        '') as String;
+    final visits = ((data['visitCount'] ?? data['visit_count'] ?? 0) as num)
+        .toInt();
 
     return SectionCard(
       onTap: onTap,

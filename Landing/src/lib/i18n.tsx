@@ -42,7 +42,7 @@ const uz: Dict = {
     titlePre: 'Eng yaqin shinomontajni',
     titleHi: 'bir necha bosishda',
     titlePost: 'toping',
-    subtitle: 'Shina24 — mijoz va shinomontaj servislarini bog‘laydigan platforma.',
+    subtitle: 'PitGo — mijoz va avtoservislarni bog‘laydigan platforma.',
     btnDownload: 'Ilovani yuklab olish',
     btnHow: 'Qanday ishlaydi?',
     scroll: 'Pastga aylantiring',
@@ -92,7 +92,7 @@ const uz: Dict = {
     ],
   },
   cta: {
-    titlePre: 'Shina24’ni hoziroq',
+    titlePre: 'PitGo’ni hoziroq',
     titleHi: 'yuklab oling',
     desc: 'Mijoz sifatida bron qiling yoki shinomontaj sifatida o‘z servisingizni ro‘yxatga oling — bitta ilovada ikki rol.',
     btn: 'Android uchun yuklab olish (APK)',
@@ -118,7 +118,7 @@ const ru: Dict = {
     titlePre: 'Найдите ближайший шиномонтаж',
     titleHi: 'в несколько кликов',
     titlePost: '',
-    subtitle: 'Shina24 — платформа, соединяющая клиентов и шиномонтажные сервисы.',
+    subtitle: 'PitGo — платформа, соединяющая клиентов и автосервисы.',
     btnDownload: 'Скачать приложение',
     btnHow: 'Как это работает?',
     scroll: 'Прокрутите вниз',
@@ -168,7 +168,7 @@ const ru: Dict = {
     ],
   },
   cta: {
-    titlePre: 'Скачайте Shina24',
+    titlePre: 'Скачайте PitGo',
     titleHi: 'прямо сейчас',
     desc: 'Бронируйте как клиент или зарегистрируйте свой шиномонтаж как сервис — две роли в одном приложении.',
     btn: 'Скачать для Android (APK)',
@@ -192,13 +192,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>('ru')
 
   useEffect(() => {
-    const saved = window.localStorage.getItem('shina24-lang')
+    const saved = window.localStorage.getItem('pitgo-lang')
     if (saved === 'ru') setLangState(saved)
   }, [])
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l)
-    window.localStorage.setItem('shina24-lang', l)
+    window.localStorage.setItem('pitgo-lang', l)
     document.documentElement.lang = l
   }, [])
 

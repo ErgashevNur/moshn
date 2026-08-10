@@ -28,7 +28,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       payload = jwt.verify(
         token,
-        process.env.JWT_SECRET ?? 'moshn-secret-key',
+        process.env.JWT_SECRET ?? 'pitgo-secret-key',
       ) as jwt.JwtPayload;
     } catch {
       socket.close(1008, 'invalid token');

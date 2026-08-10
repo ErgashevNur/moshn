@@ -1,5 +1,5 @@
 {
-  "app_name": "Shina24",
+  "app_name": "PitGo",
   "common": {
     "ok": "OK",
     "cancel": "Bekor qilish",
@@ -30,7 +30,7 @@
     "page_not_found": "Sahifa topilmadi"
   },
   "auth": {
-    "welcome_title": "Shina24",
+    "welcome_title": "PitGo",
     "welcome_subtitle": "Shinomontaj — tez, qulay, ishonchli",
     "login": "Kirish",
     "register": "Ro'yxatdan o'tish",
@@ -42,8 +42,8 @@
     "name_hint": "Ali Valiyev",
     "role_owner": "Mashina egasi",
     "role_service": "Shinomontaj servis",
-    "role_select_title": "Rolingizni tanlang",
-    "role_select_subtitle": "Siz kim sifatida kirasiz?",
+    "role_select_title": "Siz qanday roldasiz?",
+    "role_select_subtitle": "Rolni keyinchalik o'zgartirish mumkin emas",
     "forgot_password": "Parolni unutdingizmi?",
     "no_account": "Hisobingiz yo'qmi?",
     "have_account": "Hisobingiz bormi?",
@@ -55,13 +55,13 @@
     "email_required": "Email manzilingizni kiriting",
     "email_invalid": "Email manzili noto'g'ri",
     "email_hint": "example@gmail.com",
-    "role_select_title": "Siz qanday roldasiz?",
-    "role_select_subtitle": "Rolni keyinchalik o'zgartirish mumkin emas",
     "role_owner_sub": "Shinomontaj topaman, bron qilaman, to'layman",
     "role_service_sub": "Bronlarni qabul qilaman, mijozlarni boshqaraman",
     "continue_btn": "Davom etish",
     "otp_wrong": "Noto'g'ri tasdiqlash kodi. Qayta urinib ko'ring.",
-    "network_error": "Internetga ulanib bo'lmadi. Aloqani tekshiring."
+    "network_error": "Internetga ulanib bo'lmadi. Aloqani tekshiring.",
+    "role_evacuator": "Evakuator",
+    "role_evacuator_sub": "SOS chaqiruviga hech kim javob bermaganda yordam beraman"
   },
   "owner": {
     "home_title": "Salom",
@@ -97,7 +97,20 @@
     "error_label": "Xatolik yuz berdi",
     "nearby_count": "{count} ta yaqin atrofda",
     "location_all": "O'zbekiston",
-    "service_types_error": "Xizmat turlari yuklanmadi"
+    "service_types_error": "Xizmat turlari yuklanmadi",
+    "location_service_disabled": "Qurilmada geolokatsiyani yoqing",
+    "location_permission_denied": "Joylashuvga ruxsat yo'q. Sozlamalardan ruxsat bering"
+  },
+  "category": {
+    "tires": "Shinalar",
+    "engine": "Dvigatel",
+    "brakes": "Tormoz",
+    "transmission": "Transmissiya",
+    "electrics": "Elektrika",
+    "body": "Kuzov",
+    "other": "Boshqa",
+    "back_to_categories": "Kategoriyalar",
+    "empty": "Bu kategoriyada xizmat turi yo'q"
   },
   "booking": {
     "title": "Bron qilish",
@@ -268,6 +281,7 @@
     "year": "Yil",
     "color": "Rang",
     "add": "Mashina qo'shish",
+    "edit": "Mashinani tahrirlash",
     "plate_required": "Davlat raqamini kiriting",
     "make_hint": "Chevrolet",
     "model_hint": "Cobalt",
@@ -280,7 +294,7 @@
     "days_ago": "{count} kun oldin"
   },
   "calendar": {
-    "booked_via": "Shina24 orqali band qilingan"
+    "booked_via": "PitGo orqali band qilingan"
   },
   "shop": {
     "about": "Servis haqida",
@@ -299,5 +313,81 @@
     "price_on_request": "Narx so'raladi",
     "is_verified": "Tasdiqlangan"
   },
-  "payment_error": "To'lovda xatolik yuz berdi"
+  "review": {
+    "title": "Sharh qoldirish",
+    "subtitle": "{shop} xizmatini qanday baholaysiz?",
+    "comment_hint": "Fikringizni yozing (ixtiyoriy)",
+    "submit": "Yuborish",
+    "thanks": "Rahmat! Sharhingiz yuborildi",
+    "already_done": "Siz bu bron uchun sharh qoldirgansiz",
+    "rating_required": "Baho tanlang"
+  },
+  "payment_error": "To'lovda xatolik yuz berdi",
+  "sos": {
+    "intro": "So'rovingiz eng yaqin avtoservislarga yuboriladi. Birinchi javob bergan usta sizga keladi.",
+    "your_car": "MASHINANGIZ",
+    "no_vehicles": "Avtomobil qo'shilmagan. Avval mashina qo'shing.",
+    "what_happened": "NIMA BO'LDI?",
+    "pick_vehicle": "Avtomobilni tanlang",
+    "pick_service": "Muammo turini tanlang",
+    "call_button": "SOS chaqirish",
+    "calling": "Yuborilmoqda...",
+    "create_error": "SOS yuborilmadi. Qayta urinib ko'ring.",
+    "searching_title": "Eng yaqin usta qidirilmoqda",
+    "searching_body": "So'rov {count} ta avtoservisga yuborildi. Javobni kuting.",
+    "searching_body_zero": "Yaqin atrofdagi avtoservislar qidirilmoqda...",
+    "searching_evacuator_title": "Eng yaqin evakuator qidirilmoqda",
+    "searching_evacuator_body": "So'rov {count} ta evakuatorga yuborildi. Javobni kuting.",
+    "searching_evacuator_body_zero": "Yaqin atrofdagi evakuatorlar qidirilmoqda...",
+    "no_master_title": "Hech kim javob bermadi",
+    "no_master_body": "Afsuski, yaqin atrofda bo'sh usta topilmadi. Evakuator chaqirishingiz mumkin.",
+    "no_evacuator_title": "Evakuator topilmadi",
+    "no_evacuator_body": "Afsuski, yaqin atrofda bo'sh evakuator topilmadi. Birozdan so'ng qayta urinib ko'ring.",
+    "call_evacuator_button": "Evakuator chaqirish",
+    "give_up_button": "Yopish",
+    "try_again": "Qayta urinish",
+    "cancel_button": "SOSni bekor qilish",
+    "cancel_confirm_title": "SOS bekor qilinsinmi?",
+    "cancel_confirm_body": "Chaqiruvni bekor qilishga ishonchingiz komilmi?",
+    "dont_know_button": "Mashinamga nima bo'lganini bilmayman",
+    "support_sent": "Qo'llab-quvvatlashga xabar yuborildi",
+    "status_cancelled": "Chaqiruv bekor qilindi",
+    "status_completed": "Xizmat yakunlandi",
+    "step_accepted": "Qabul qilindi",
+    "step_on_the_way": "Yo'lda",
+    "step_arrived": "Yetib keldi",
+    "step_completed": "Tayyor",
+    "chat_title": "Usta bilan chat",
+    "chat_empty": "Hali xabar yo'q",
+    "chat_hint": "Xabar yozish...",
+    "title": "SOS chaqiruv",
+    "customer": "Mijoz",
+    "new_request_arrived": "Yaqin atrofda yangi SOS chaqiruvi!",
+    "no_incoming_title": "So'rovlar yo'q",
+    "no_incoming_body": "Yangi SOS chaqiruvlari shu yerda ko'rinadi",
+    "active_job_title": "Joriy chaqiruv",
+    "continue_button": "Davom ettirish",
+    "accept_button": "Qabul qilish",
+    "mark_on_the_way": "Yo'ldaman",
+    "mark_arrived": "Yetib keldim",
+    "mark_completed": "Yakunlash",
+    "price_title": "Xizmat narxini kiriting",
+    "price_subtitle": "Mijoz shu summani QR/NFC orqali to'laydi",
+    "price_hint": "Masalan: 150000",
+    "price_submit": "Narxni kiritish",
+    "price_invalid": "Narxni to'g'ri kiriting",
+    "price_paid": "Mijoz to'ladi",
+    "price_pending": "To'lov kutilmoqda",
+    "payment_title": "To'lov",
+    "payment_pending_body": "Xizmat narxini ustaga QR yoki NFC orqali to'lang, so'ng pastdagi tugmani bosing",
+    "payment_paid_body": "To'lov qabul qilindi",
+    "pay_button": "To'ladim",
+    "payment_paid": "Rahmat! To'lov tasdiqlandi"
+  },
+  "search": {
+    "prompt": "Servis yoki usta ismini kiriting",
+    "empty": "Hech narsa topilmadi",
+    "masters": "USTALAR",
+    "shops": "SERVISLAR"
+  }
 }

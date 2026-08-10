@@ -9,8 +9,8 @@ final _localNotifications = FlutterLocalNotificationsPlugin();
 
 // Notification channel (Android)
 const _channel = AndroidNotificationChannel(
-  'shina24_main',
-  'Уведомления Shina24',
+  'pitgo_main',
+  'Уведомления PitGo',
   description: 'Уведомления о бронированиях и услугах',
   importance: Importance.high,
   playSound: true,
@@ -89,7 +89,7 @@ class PushService {
   }
 
   void _onForegroundMessage(RemoteMessage message) {
-    final title = message.notification?.title ?? 'Shina24';
+    final title = message.notification?.title ?? 'PitGo';
     final body = message.notification?.body ?? '';
     if (kDebugMode) debugPrint('Foreground message: $title');
     showLocalNotification(title: title, body: body);

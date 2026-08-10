@@ -37,13 +37,13 @@ export class EmailService {
   private otpContent(code: string, lang: string): [string, string] {
     if (lang === 'ru') {
       return [
-        'Shina24 — Код подтверждения',
-        `Здравствуйте!\n\nВаш код подтверждения: ${code}\n\nКод действителен 10 минут.\n\n— Shina24`,
+        'PitGo — Код подтверждения',
+        `Здравствуйте!\n\nВаш код подтверждения: ${code}\n\nКод действителен 10 минут.\n\n— PitGo`,
       ];
     }
     return [
-      'Shina24 — Tasdiqlash kodi',
-      `Salom!\n\nSizning tasdiqlash kodingiz: ${code}\n\nKod 10 daqiqa amal qiladi.\n\n— Shina24`,
+      'PitGo — Tasdiqlash kodi',
+      `Salom!\n\nSizning tasdiqlash kodingiz: ${code}\n\nKod 10 daqiqa amal qiladi.\n\n— PitGo`,
     ];
   }
 

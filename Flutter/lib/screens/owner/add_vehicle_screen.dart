@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/vehicle.dart';
 import '../../services/vehicle_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -13,18 +14,24 @@ import '../../widgets/plate_input.dart';
 import '../../widgets/primary_button.dart';
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
-  const AddVehicleScreen({super.key});
+  final Vehicle? vehicle;
+  const AddVehicleScreen({super.key, this.vehicle});
 
   @override
   ConsumerState<AddVehicleScreen> createState() => _AddVehicleScreenState();
 }
 
 class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
-  final _plate = TextEditingController();
-  final _make = TextEditingController();
-  final _model = TextEditingController();
-  final _year = TextEditingController();
-  final _color = TextEditingController();
+  bool get _isEditing => widget.vehicle != null;
+
+  late final _plate = TextEditingController(text: widget.vehicle?.plate ?? '');
+  late final _make = TextEditingController(text: widget.vehicle?.make ?? '');
+  late final _model = TextEditingController(text: widget.vehicle?.model ?? '');
+  late final _year = TextEditingController(
+      text: widget.vehicle != null && widget.vehicle!.year > 0
+          ? widget.vehicle!.year.toString()
+          : '');
+  late final _color = TextEditingController(text: widget.vehicle?.color ?? '');
   bool _saving = false;
 
   @override
@@ -44,13 +51,24 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     }
     setState(() => _saving = true);
     try {
-      await VehicleService().createVehicle(
-        plate: _plate.text.trim().toUpperCase(),
-        make: _make.text.trim(),
-        model: _model.text.trim(),
-        year: int.tryParse(_year.text) ?? 0,
-        color: _color.text.trim(),
-      );
+      if (_isEditing) {
+        await VehicleService().updateVehicle(
+          widget.vehicle!.id,
+          plate: _plate.text.trim().toUpperCase(),
+          make: _make.text.trim(),
+          model: _model.text.trim(),
+          year: int.tryParse(_year.text) ?? 0,
+          color: _color.text.trim(),
+        );
+      } else {
+        await VehicleService().createVehicle(
+          plate: _plate.text.trim().toUpperCase(),
+          make: _make.text.trim(),
+          model: _model.text.trim(),
+          year: int.tryParse(_year.text) ?? 0,
+          color: _color.text.trim(),
+        );
+      }
       if (!mounted) return;
       context.pop();
     } catch (e) {
@@ -130,7 +148,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: Text('vehicle.add'.tr(),
+                    child: Text(
+                        _isEditing ? 'vehicle.edit'.tr() : 'vehicle.add'.tr(),
                         style: AppTypography.titleLarge),
                   ),
                 ],

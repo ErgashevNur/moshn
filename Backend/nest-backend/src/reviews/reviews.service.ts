@@ -9,15 +9,22 @@ export class ReviewsService {
     bookingId: string;
     rating: number;
     comment?: string;
-    reviewType: 'owner_to_shop' | 'shop_to_owner';
+    reviewType: 'owner_to_shop' | 'owner_to_master' | 'shop_to_owner';
   }) {
     const booking = await this.prisma.booking.findFirst({
       where: { id: data.bookingId, status: 'completed' },
     });
     if (!booking) throw new NotFoundException('Tugallangan bron topilmadi');
 
-    if (data.reviewType === 'owner_to_shop' && booking.customerId !== authorId) {
+    // owner → shop / owner → master: faqat bron egasi (mijoz) yoza oladi
+    if (
+      (data.reviewType === 'owner_to_shop' || data.reviewType === 'owner_to_master') &&
+      booking.customerId !== authorId
+    ) {
       throw new BadRequestException('Faqat bron egasi sharh yoza oladi');
+    }
+    if (data.reviewType === 'owner_to_master' && !booking.masterId) {
+      throw new BadRequestException('Bu bron ustaga bog\'lanmagan');
     }
     if (data.reviewType === 'shop_to_owner') {
       const shop = await this.prisma.shopProfile.findFirst({
@@ -31,7 +38,12 @@ export class ReviewsService {
     });
     if (existing) throw new BadRequestException('Bu bron uchun sharh allaqachon yozilgan');
 
-    const targetId = data.reviewType === 'shop_to_owner' ? booking.customerId : booking.shopId;
+    const targetId =
+      data.reviewType === 'shop_to_owner'
+        ? booking.customerId
+        : data.reviewType === 'owner_to_master'
+          ? booking.masterId!
+          : booking.shopId;
 
     const review = await this.prisma.review.create({
       data: {
@@ -47,9 +59,18 @@ export class ReviewsService {
 
     if (data.reviewType === 'owner_to_shop') {
       await this.updateShopRating(booking.shopId);
+    } else if (data.reviewType === 'owner_to_master') {
+      await this.updateMasterRating(booking.masterId!);
     }
 
     return review;
+  }
+
+  async getByBooking(bookingId: string, reviewType: string) {
+    return this.prisma.review.findFirst({
+      where: { bookingId, reviewType },
+      include: { author: true },
+    });
   }
 
   async getById(id: string) {
@@ -93,6 +114,22 @@ export class ReviewsService {
     return { reviews: items, total };
   }
 
+  async getMasterReviews(masterId: string, limit: number, skip: number) {
+    const [items, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where: { targetId: masterId, reviewType: 'owner_to_master' },
+        include: { author: true },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.review.count({
+        where: { targetId: masterId, reviewType: 'owner_to_master' },
+      }),
+    ]);
+    return { reviews: items, total };
+  }
+
   private async updateShopRating(shopId: string) {
     const agg = await this.prisma.review.aggregate({
       where: { targetId: shopId, reviewType: 'owner_to_shop' },
@@ -101,6 +138,21 @@ export class ReviewsService {
     });
     await this.prisma.shopProfile.update({
       where: { id: shopId },
+      data: {
+        ratingAvg: agg._avg.rating ?? 0,
+        ratingCount: agg._count.rating,
+      },
+    });
+  }
+
+  private async updateMasterRating(masterId: string) {
+    const agg = await this.prisma.review.aggregate({
+      where: { targetId: masterId, reviewType: 'owner_to_master' },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    await this.prisma.master.update({
+      where: { id: masterId },
       data: {
         ratingAvg: agg._avg.rating ?? 0,
         ratingCount: agg._count.rating,

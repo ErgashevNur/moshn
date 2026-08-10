@@ -1,15 +1,15 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-moshn}
-      POSTGRES_USER: ${DB_USER:-moshn}
+      POSTGRES_DB: ${DB_NAME:-pitgo}
+      POSTGRES_USER: ${DB_USER:-pitgo}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD .env da kerak}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-moshn} -d ${DB_NAME:-moshn}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pitgo} -d ${DB_NAME:-pitgo}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,7 +21,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-moshn}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-moshn}
+      - DATABASE_URL=postgresql://${DB_USER:-pitgo}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-pitgo}
       - JWT_SECRET=${JWT_SECRET}
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       - UZBEKVOICE_API_KEY=${UZBEKVOICE_API_KEY}

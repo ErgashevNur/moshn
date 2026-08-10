@@ -262,7 +262,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           ],
                           if (vehicle?.plate != null &&
                               vehicle!.plate.isNotEmpty)
-                            MPlate(plate: vehicle.plate),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: MPlate(plate: vehicle.plate),
+                            ),
                         ],
                       ),
                     ],

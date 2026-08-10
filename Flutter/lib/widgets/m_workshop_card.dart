@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
@@ -63,12 +64,14 @@ class WorkshopCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: imageUrl != null
-                    ? Image.network(
-                        imageUrl!,
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
                         width: imgSize,
                         height: imgSize,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, e, s) =>
+                        placeholder: (context, url) =>
+                            MPh(width: imgSize, height: imgSize, label: 'SERVIS'),
+                        errorWidget: (context, url, e) =>
                             MPh(width: imgSize, height: imgSize, label: 'SERVIS'),
                       )
                     : MPh(width: imgSize, height: imgSize, label: 'SERVIS'),

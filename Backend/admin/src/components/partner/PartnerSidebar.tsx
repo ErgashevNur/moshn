@@ -7,6 +7,7 @@ import Brand from '../ui/Brand'
 const NAV = [
   {id:'today',     icon:'cal'    as const, label:'Сегодня',  href:'/partner'},
   {id:'queue',     icon:'list'   as const, label:'Очередь',  href:'/partner/queue'},
+  {id:'sos',       icon:'bolt'   as const, label:'SOS',      href:'/partner/sos'},
   {id:'customers', icon:'users'  as const, label:'Клиенты',  href:'/partner/customers'},
   {id:'terminal',  icon:'card'   as const, label:'Терминал', href:'/partner/terminal'},
   {id:'profile',   icon:'user'   as const, label:'Профиль',  href:'/partner/profile'},

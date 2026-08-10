@@ -1,5 +1,5 @@
 {
-  "app_name": "Shina24",
+  "app_name": "PitGo",
   "common": {
     "ok": "OK",
     "cancel": "Отмена",
@@ -30,7 +30,7 @@
     "page_not_found": "Страница не найдена"
   },
   "auth": {
-    "welcome_title": "Shina24",
+    "welcome_title": "PitGo",
     "welcome_subtitle": "Шиномонтаж — быстро, удобно, надёжно",
     "login": "Войти",
     "register": "Регистрация",
@@ -59,7 +59,9 @@
     "name_required": "Введите ваше имя",
     "email_required": "Введите email",
     "email_invalid": "Неверный email",
-    "email_hint": "example@gmail.com"
+    "email_hint": "example@gmail.com",
+    "role_evacuator": "Эвакуатор",
+    "role_evacuator_sub": "Помогаю, когда никто не откликнулся на SOS"
   },
   "owner": {
     "home_title": "Привет",
@@ -95,7 +97,20 @@
     "error_label": "Ошибка",
     "nearby_count": "{count} рядом",
     "location_all": "Узбекистан",
-    "service_types_error": "Типы услуг не загружены"
+    "service_types_error": "Типы услуг не загружены",
+    "location_service_disabled": "Включите геолокацию на устройстве",
+    "location_permission_denied": "Нет доступа к геолокации. Разрешите в настройках"
+  },
+  "category": {
+    "tires": "Шины",
+    "engine": "Двигатель",
+    "brakes": "Тормоза",
+    "transmission": "Трансмиссия",
+    "electrics": "Электрика",
+    "body": "Кузов",
+    "other": "Прочее",
+    "back_to_categories": "Категории",
+    "empty": "В этой категории пока нет услуг"
   },
   "booking": {
     "title": "Запись",
@@ -266,6 +281,7 @@
     "year": "Год",
     "color": "Цвет",
     "add": "Добавить авто",
+    "edit": "Редактировать авто",
     "plate_required": "Введите гос. номер",
     "make_hint": "Chevrolet",
     "model_hint": "Cobalt",
@@ -278,7 +294,7 @@
     "days_ago": "{count} дн. назад"
   },
   "calendar": {
-    "booked_via": "Забронировано через Shina24"
+    "booked_via": "Забронировано через PitGo"
   },
   "shop": {
     "about": "О сервисе",
@@ -297,5 +313,81 @@
     "price_on_request": "Цена по запросу",
     "is_verified": "Проверено"
   },
-  "payment_error": "Ошибка при оплате"
+  "review": {
+    "title": "Оставить отзыв",
+    "subtitle": "Как вы оцениваете сервис {shop}?",
+    "comment_hint": "Напишите отзыв (необязательно)",
+    "submit": "Отправить",
+    "thanks": "Спасибо! Ваш отзыв отправлен",
+    "already_done": "Вы уже оставили отзыв по этой записи",
+    "rating_required": "Выберите оценку"
+  },
+  "payment_error": "Ошибка при оплате",
+  "sos": {
+    "intro": "Ваша заявка будет отправлена ближайшим автосервисам. Первый, кто откликнется — приедет к вам.",
+    "your_car": "ВАШ АВТОМОБИЛЬ",
+    "no_vehicles": "Автомобиль не добавлен. Сначала добавьте авто.",
+    "what_happened": "ЧТО СЛУЧИЛОСЬ?",
+    "pick_vehicle": "Выберите автомобиль",
+    "pick_service": "Выберите тип проблемы",
+    "call_button": "Вызвать SOS",
+    "calling": "Отправка...",
+    "create_error": "Не удалось отправить SOS. Попробуйте ещё раз.",
+    "searching_title": "Ищем ближайшего мастера",
+    "searching_body": "Заявка отправлена в {count} автосервис(ов). Ждите отклика.",
+    "searching_body_zero": "Ищем ближайшие автосервисы...",
+    "searching_evacuator_title": "Ищем ближайший эвакуатор",
+    "searching_evacuator_body": "Заявка отправлена в {count} эвакуатор(ов). Ждите отклика.",
+    "searching_evacuator_body_zero": "Ищем ближайшие эвакуаторы...",
+    "no_master_title": "Никто не откликнулся",
+    "no_master_body": "К сожалению, поблизости не нашлось свободного мастера. Вы можете вызвать эвакуатор.",
+    "no_evacuator_title": "Эвакуатор не найден",
+    "no_evacuator_body": "К сожалению, поблизости не нашлось свободного эвакуатора. Попробуйте позже.",
+    "call_evacuator_button": "Вызвать эвакуатор",
+    "give_up_button": "Закрыть",
+    "try_again": "Попробовать снова",
+    "cancel_button": "Отменить SOS",
+    "cancel_confirm_title": "Отменить SOS?",
+    "cancel_confirm_body": "Вы уверены, что хотите отменить вызов?",
+    "dont_know_button": "Не знаю, что с машиной",
+    "support_sent": "Служба поддержки уведомлена",
+    "status_cancelled": "Вызов отменён",
+    "status_completed": "Услуга завершена",
+    "step_accepted": "Принято",
+    "step_on_the_way": "В пути",
+    "step_arrived": "На месте",
+    "step_completed": "Готово",
+    "chat_title": "Чат с мастером",
+    "chat_empty": "Сообщений пока нет",
+    "chat_hint": "Написать сообщение...",
+    "title": "SOS-вызов",
+    "customer": "Клиент",
+    "new_request_arrived": "Новый SOS-вызов рядом с вами!",
+    "no_incoming_title": "Заявок нет",
+    "no_incoming_body": "Новые SOS-вызовы появятся здесь",
+    "active_job_title": "Текущий вызов",
+    "continue_button": "Продолжить",
+    "accept_button": "Принять",
+    "mark_on_the_way": "В пути",
+    "mark_arrived": "Я на месте",
+    "mark_completed": "Завершить",
+    "price_title": "Укажите стоимость услуги",
+    "price_subtitle": "Клиент оплатит эту сумму через QR/NFC",
+    "price_hint": "Например: 150000",
+    "price_submit": "Указать цену",
+    "price_invalid": "Введите корректную цену",
+    "price_paid": "Клиент оплатил",
+    "price_pending": "Ожидается оплата",
+    "payment_title": "Оплата",
+    "payment_pending_body": "Оплатите мастеру сумму через QR или NFC, затем нажмите кнопку ниже",
+    "payment_paid_body": "Оплата принята",
+    "pay_button": "Я оплатил",
+    "payment_paid": "Спасибо! Оплата подтверждена"
+  },
+  "search": {
+    "prompt": "Введите имя сервиса или мастера",
+    "empty": "Ничего не найдено",
+    "masters": "МАСТЕРА",
+    "shops": "СЕРВИСЫ"
+  }
 }
