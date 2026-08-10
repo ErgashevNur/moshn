@@ -4,6 +4,7 @@ class ServiceType {
   final String nameUz;
   final String nameRu;
   final String icon;
+  final String category;
   final int priceMin;
   final int priceMax;
 
@@ -13,6 +14,7 @@ class ServiceType {
     required this.nameUz,
     required this.nameRu,
     required this.icon,
+    this.category = '',
     required this.priceMin,
     required this.priceMax,
   });
@@ -23,9 +25,13 @@ class ServiceType {
         nameUz: (json['nameUz'] ?? json['name_uz'] ?? '') as String,
         nameRu: (json['nameRu'] ?? json['name_ru'] ?? '') as String,
         icon: (json['icon'] ?? '') as String,
+        category: (json['category'] ?? '') as String,
         priceMin: ((json['priceMin'] ?? json['price_min'] ?? 0) as num).toInt(),
         priceMax: ((json['priceMax'] ?? json['price_max'] ?? 0) as num).toInt(),
       );
+
+  /// Bo'sh/tanilmagan kategoriya "other"ga tushadi (admin/ServiceCategories bilan bir xil qoida).
+  String get categoryOrOther => category.isNotEmpty ? category : 'other';
 
   String get name => nameRu.isNotEmpty ? nameRu : nameUz;
 

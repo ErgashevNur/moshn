@@ -131,6 +131,10 @@ model ServiceType {
   nameUz   String  @map("name_uz")
   nameRu   String  @map("name_ru")
   icon     String  @default("")
+  /// Bosh ekrandagi guruhlash uchun kategoriya slug'i. Lug'at kod darajasida
+  /// (icon kutubxonasi bilan bir xil andoza): tires | engine | brakes |
+  /// transmission | electrics | body | other. Bo'sh = other.
+  category String  @default("") @db.VarChar(30)
   /// Katalog darajasidagi taxminiy narx diapazoni ("...dan — ...gacha"),
   /// mijozga xizmatni tanlashdan oldin umumiy tasavvur berish uchun.
   /// Har bir servisning haqiqiy narxi alohida — CLAUDE.md §6.

@@ -9,10 +9,22 @@ interface ServiceType {
   nameUz: string
   nameRu: string
   icon: string
+  category: string
   priceMin: number
   priceMax: number
   isActive: boolean
 }
+
+// ── Kategoriyalar — Flutter (home_screen.dart) bilan bir xil lug'at ──────────
+const CATEGORIES: { id: string; label: string }[] = [
+  { id: 'tires',        label: 'Шины' },
+  { id: 'engine',       label: 'Двигатель' },
+  { id: 'brakes',       label: 'Тормоза' },
+  { id: 'transmission', label: 'Трансмиссия' },
+  { id: 'electrics',    label: 'Электрика' },
+  { id: 'body',         label: 'Кузов' },
+  { id: 'other',        label: 'Прочее' },
+]
 
 // â”€â”€ SVG icon library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ICON_LIST: { id: string; label: string; svg: React.ReactNode }[] = [
@@ -143,7 +155,7 @@ const ICON_LIST: { id: string; label: string; svg: React.ReactNode }[] = [
 const toSlug = (s: string) =>
   s.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').substring(0, 40) || `type_${Date.now()}`
 
-const emptyForm = { nameUz: '', nameRu: '', icon: 'wheel', priceMin: '' as string, priceMax: '' as string, isActive: true }
+const emptyForm = { nameUz: '', nameRu: '', icon: 'wheel', category: 'tires', priceMin: '' as string, priceMax: '' as string, isActive: true }
 
 export default function ServiceTypesPage() {
   const [types, setTypes] = useState<ServiceType[]>([])
@@ -176,6 +188,7 @@ export default function ServiceTypesPage() {
       nameUz: t.nameUz,
       nameRu: t.nameRu,
       icon: t.icon || 'wheel',
+      category: t.category || 'tires',
       priceMin: t.priceMin > 0 ? String(t.priceMin) : '',
       priceMax: t.priceMax > 0 ? String(t.priceMax) : '',
       isActive: t.isActive,
@@ -231,27 +244,40 @@ export default function ServiceTypesPage() {
         ) : types.length === 0 ? (
           <div className="card p-10 text-center text-text3">Нет типов услуг</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {types.map((t) => (
-              <button key={t.id} onClick={() => openEdit(t)}
-                className="card p-4 text-left hover:bg-surface2 transition-colors group">
-                <div className="w-8 h-8 mb-3 text-text2 group-hover:text-gold transition-colors">
-                  {iconNode(t.icon)}
-                </div>
-                <p className="text-text font-semibold text-sm group-hover:text-gold transition-colors truncate">{t.nameUz}</p>
-                <p className="text-text3 text-xs mt-0.5 truncate">{t.nameRu}</p>
-                {(t.priceMin > 0 || t.priceMax > 0) && (
-                  <p className="text-text2 text-xs mt-1">
-                    {t.priceMin > 0 ? t.priceMin.toLocaleString() : '?'}
-                    {t.priceMax > 0 && t.priceMax !== t.priceMin ? ` – ${t.priceMax.toLocaleString()}` : ''}
-                    {' '}сум
+          <div className="space-y-6">
+            {CATEGORIES.map(cat => {
+              const items = types.filter(t => (t.category || 'other') === cat.id)
+              if (items.length === 0) return null
+              return (
+                <div key={cat.id}>
+                  <p className="text-text3 text-xs font-mono uppercase tracking-widest mb-2">
+                    {cat.label} <span className="text-text3/60">· {items.length}</span>
                   </p>
-                )}
-                {!t.isActive && (
-                  <span className="badge badge-cancelled mt-2 inline-block">Неактивный</span>
-                )}
-              </button>
-            ))}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {items.map((t) => (
+                      <button key={t.id} onClick={() => openEdit(t)}
+                        className="card p-4 text-left hover:bg-surface2 transition-colors group">
+                        <div className="w-8 h-8 mb-3 text-text2 group-hover:text-gold transition-colors">
+                          {iconNode(t.icon)}
+                        </div>
+                        <p className="text-text font-semibold text-sm group-hover:text-gold transition-colors truncate">{t.nameUz}</p>
+                        <p className="text-text3 text-xs mt-0.5 truncate">{t.nameRu}</p>
+                        {(t.priceMin > 0 || t.priceMax > 0) && (
+                          <p className="text-text2 text-xs mt-1">
+                            {t.priceMin > 0 ? t.priceMin.toLocaleString() : '?'}
+                            {t.priceMax > 0 && t.priceMax !== t.priceMin ? ` – ${t.priceMax.toLocaleString()}` : ''}
+                            {' '}сум
+                          </p>
+                        )}
+                        {!t.isActive && (
+                          <span className="badge badge-cancelled mt-2 inline-block">Неактивный</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -339,6 +365,17 @@ export default function ServiceTypesPage() {
                 <input type="text" value={form.nameRu} className="inp"
                   placeholder="Замена шин"
                   onChange={(e) => setForm(f => ({ ...f, nameRu: e.target.value }))} />
+              </div>
+
+              {/* Kategoriya */}
+              <div>
+                <label className="block text-text3 text-xs font-mono uppercase tracking-widest mb-1">
+                  Категория (для группировки в приложении)
+                </label>
+                <select value={form.category} className="inp"
+                  onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}>
+                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
               </div>
 
               {/* Narx diapazoni */}

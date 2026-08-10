@@ -5,12 +5,13 @@ import Icon from '../ui/Icon'
 import Brand from '../ui/Brand'
 
 const NAV = [
-  { id:'dashboard', icon:'dash'   as const, label:'Дашборд',      labelShort:'Главная',  href:'/dashboard',  group:0 },
-  { id:'services',  icon:'store'  as const, label:'Сервисы',       labelShort:'Сервисы',  href:'/services',   group:0, badge:2 },
-  { id:'bookings',  icon:'list'   as const, label:'Заказы',        labelShort:'Заказы',   href:'/bookings',   group:0 },
-  { id:'users',     icon:'users'  as const, label:'Пользователи',  labelShort:'Клиенты',  href:'/users',      group:1 },
-  { id:'finance',   icon:'wallet' as const, label:'Финансы',       labelShort:'Финансы',  href:'/finance',    group:1 },
-  { id:'marketing', icon:'bolt'   as const, label:'Маркетинг',     labelShort:'Маркетинг',href:'/marketing',  group:1 },
+  { id:'dashboard',     icon:'dash'     as const, label:'Дашборд',      labelShort:'Главная',  href:'/dashboard',     group:0 },
+  { id:'services',      icon:'store'    as const, label:'Сервисы',       labelShort:'Сервисы',  href:'/services',      group:0, badge:2 },
+  { id:'service-types', icon:'settings' as const, label:'Типы услуг',    labelShort:'Услуги',   href:'/service-types', group:0 },
+  { id:'bookings',      icon:'list'     as const, label:'Заказы',        labelShort:'Заказы',   href:'/bookings',      group:0 },
+  { id:'users',         icon:'users'    as const, label:'Пользователи',  labelShort:'Клиенты',  href:'/users',         group:1 },
+  { id:'finance',       icon:'wallet'   as const, label:'Финансы',       labelShort:'Финансы',  href:'/finance',       group:1 },
+  { id:'marketing',     icon:'bolt'     as const, label:'Маркетинг',     labelShort:'Маркетинг',href:'/marketing',     group:1 },
 ]
 
 // Bottom nav shows only top 5 (marketing dropped)

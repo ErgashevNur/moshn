@@ -5,9 +5,11 @@ Backend (NestJS API), Admin (Next.js), PostgreSQL va Nginx — hammasi Docker Co
 ## 1. Talablar (serverda)
 - Docker + Docker Compose (`docker compose version` ishlashi kerak)
 - Ochiq portlar: 80, 443
-- DNS yozuvlari server IP ga yo'naltirilgan:
-  - `api.pitgo.uz`  → backend API (APK shu manzilga ulanadi)
-  - `pitgo.uz`, `www.pitgo.uz` → admin panel
+- DNS yozuvlari server IP ga yo'naltirilgan (A-yozuv, `nginx/nginx.conf` bilan bir xil):
+  - `api.pitgo.uz`   → backend API (APK va admin shu manzilga ulanadi)
+  - `admin.pitgo.uz` → admin panel
+  - `media.pitgo.uz` → APK/statik fayllar (ixtiyoriy, agar shu server orqali tarqatilsa)
+  - `pitgo.uz`, `www.pitgo.uz` — bu yerda EMAS, Vercel'da landing (alohida deploy)
 
 ## 2. Sozlash
 ```bash
@@ -77,13 +79,20 @@ npx prisma migrate dev --name <ozgarish_nomi>
 > `20260808104446_faza3_5_sos_chat/migration.sql`dagi izoh).
 
 ## 4. Admin foydalanuvchi yaratish
-API orqali admin ro'yxatdan o'tmaydi — konteynerda yaratamiz:
+API orqali admin ro'yxatdan o'tmaydi. Parolni `backend` konteyneri ichida
+(bcrypt kutubxonasi shu yerda mavjud) hash qilib, to'g'ridan-to'g'ri bazaga
+yozamiz:
 ```bash
-docker compose exec backend ./server --help 2>/dev/null || true
-# Yoki createadmin tool'ini host'da ishga tushiring (DATABASE_URL ni serverga moslab):
-#   cd backend && go run ./tools/createadmin --phone "+998..." --email "admin@pitgo.uz" --password "..."
+HASH=$(docker compose exec -T backend node -e "require('bcrypt').hash(process.argv[1],12).then(h=>console.log(h))" "KUCHLI_PAROL")
+docker compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -c "
+INSERT INTO users (id, phone, email, password_hash, role, full_name, language, email_verified, created_at, updated_at)
+VALUES (gen_random_uuid(), '+998900000000', 'admin@pitgo.uz', '$HASH', 'admin', 'Super Admin', 'uz', true, now(), now())
+ON CONFLICT (phone) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+"
 ```
-(Test ma'lumotlari uchun `go run ./tools/seed`.)
+Telefon/email/parolni o'zingizga moslab o'zgartiring. Keyinroq parolni
+yangilash uchun ham xuddi shu ikki buyruqni qayta ishga tushirasiz (yangi
+parol bilan) — `ON CONFLICT` mavjud yozuvni yangilaydi.
 
 ## 5. SSL (Let's Encrypt)
 Avval HTTP ishlayotganini tekshiring, keyin:

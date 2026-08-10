@@ -101,6 +101,17 @@
     "location_service_disabled": "Включите геолокацию на устройстве",
     "location_permission_denied": "Нет доступа к геолокации. Разрешите в настройках"
   },
+  "category": {
+    "tires": "Шины",
+    "engine": "Двигатель",
+    "brakes": "Тормоза",
+    "transmission": "Трансмиссия",
+    "electrics": "Электрика",
+    "body": "Кузов",
+    "other": "Прочее",
+    "back_to_categories": "Категории",
+    "empty": "В этой категории пока нет услуг"
+  },
   "booking": {
     "title": "Запись",
     "list_title": "Записи",

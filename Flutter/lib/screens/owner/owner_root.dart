@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
@@ -38,9 +39,47 @@ class _OwnerRootState extends ConsumerState<OwnerRoot> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: IndexedStack(index: _index, children: _pages),
+      // SOS — pastki bar markazida, yarmi bardan yuqorida turadi (centerDocked).
+      floatingActionButton: _SosFab(onTap: () => context.push('/owner/sos')),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _BottomBar(
         index: _index,
         onTap: _onTabTap,
+      ),
+    );
+  }
+}
+
+class _SosFab extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SosFab({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 62,
+        height: 62,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.danger,
+          border: Border.all(color: AppColors.bg(context), width: 4),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.danger.withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            'SOS',
+            style: AppTypography.soraSize(15, weight: FontWeight.w800)
+                .copyWith(color: Colors.white, letterSpacing: -0.2),
+          ),
+        ),
       ),
     );
   }
@@ -68,6 +107,8 @@ class _BottomBar extends StatelessWidget {
             children: [
               _NavItem(icon: 'home',     label: 'tabs.home'.tr(),     active: index == 0, onTap: () => onTap(0)),
               _NavItem(icon: 'calendar', label: 'tabs.bookings'.tr(), active: index == 1, onTap: () => onTap(1)),
+              // Markazdagi SOS tugmasi uchun joy
+              const SizedBox(width: 70),
               _NavItem(icon: 'car',      label: 'tabs.garage'.tr(),   active: index == 2, onTap: () => onTap(2)),
               _NavItem(icon: 'user',     label: 'tabs.profile'.tr(),  active: index == 3, onTap: () => onTap(3)),
             ],

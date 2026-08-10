@@ -20,6 +20,7 @@ import '../screens/owner/map_screen.dart';
 import '../screens/owner/owner_root.dart';
 import '../screens/owner/payment_screen.dart';
 import '../screens/owner/search_screen.dart';
+import '../screens/owner/service_group_screen.dart';
 import '../screens/owner/service_category_screen.dart';
 import '../screens/owner/shop_detail_screen.dart';
 import '../screens/owner/sos_request_screen.dart';
@@ -128,6 +129,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'search',
             builder: (_, _) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: 'category/:id',
+            builder: (ctx, st) => ServiceGroupScreen(
+              categoryId: st.pathParameters['id']!,
+            ),
           ),
           GoRoute(
             path: 'services/:slug',

@@ -101,6 +101,17 @@
     "location_service_disabled": "Qurilmada geolokatsiyani yoqing",
     "location_permission_denied": "Joylashuvga ruxsat yo'q. Sozlamalardan ruxsat bering"
   },
+  "category": {
+    "tires": "Shinalar",
+    "engine": "Dvigatel",
+    "brakes": "Tormoz",
+    "transmission": "Transmissiya",
+    "electrics": "Elektrika",
+    "body": "Kuzov",
+    "other": "Boshqa",
+    "back_to_categories": "Kategoriyalar",
+    "empty": "Bu kategoriyada xizmat turi yo'q"
+  },
   "booking": {
     "title": "Bron qilish",
     "list_title": "Yozuvlar",

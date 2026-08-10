@@ -4,6 +4,7 @@ import { User } from '../common/decorators/user.decorator';
 import { EvacuatorRoleGuard } from '../common/guards/evacuator-role.guard';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { MasterRoleGuard } from '../common/guards/master-role.guard';
+import { ServiceRoleGuard } from '../common/guards/service-role.guard';
 import { SosService } from './sos.service';
 
 @ApiTags('sos')
@@ -51,6 +52,27 @@ export class SosController {
   @ApiOperation({ summary: "SOS so'rovini qabul qilish (atomik, kech qolish mumkin) [master]" })
   async accept(@User('user_id') userId: string, @Param('id') id: string) {
     return { data: await this.svc.acceptSosRequest(userId, id) };
+  }
+
+  @UseGuards(ServiceRoleGuard)
+  @Get('service/sos-requests')
+  @ApiOperation({ summary: "Servisimga yuborilgan, hali javobsiz SOS so'rovlari (web-panel) [service]" })
+  async listForShopOwner(@User('user_id') userId: string) {
+    return { data: await this.svc.listForShopOwner(userId) };
+  }
+
+  @UseGuards(ServiceRoleGuard)
+  @Get('service/sos-requests/active')
+  @ApiOperation({ summary: "Servisning joriy (qabul qilingan) SOS ishi, bo'lmasa null (web-panel) [service]" })
+  async getActiveForShopOwner(@User('user_id') userId: string) {
+    return { data: await this.svc.getActiveForShopOwner(userId) };
+  }
+
+  @UseGuards(ServiceRoleGuard)
+  @Post('service/sos-requests/:id/accept')
+  @ApiOperation({ summary: "SOS so'rovini servis egasi sifatida qabul qilish (web-panel) [service]" })
+  async acceptAsShopOwner(@User('user_id') userId: string, @Param('id') id: string) {
+    return { data: await this.svc.acceptAsShopOwner(userId, id) };
   }
 
   @Post('sos/:id/status')

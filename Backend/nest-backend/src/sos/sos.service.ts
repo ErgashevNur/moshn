@@ -582,6 +582,83 @@ export class SosService {
     }));
   }
 
+  // ── Servis egasi (web-panel) uchun (Faza 3.9) ───────────────────────────────
+  // Partner web-panelida egasi role='service' bilan kiradi. SOS'ni ko'rish
+  // uchun master profili shart emas (dispatch shop darajasida), qabul qilish
+  // uchun esa egasining o'z master yozuvi ishlatiladi — yo'q bo'lsa
+  // backfill (Faza 2.2) andozasi bo'yicha avtomatik yaratiladi
+  // ("yakka usta ham servis" qoidasi, CLAUDE.md §3).
+
+  private async requireOwnerShop(ownerUserId: string) {
+    const shop = await this.prisma.shopProfile.findUnique({ where: { userId: ownerUserId } });
+    if (!shop) throw new NotFoundException('Servis profili topilmadi');
+    return shop;
+  }
+
+  async listForShopOwner(ownerUserId: string) {
+    const shop = await this.requireOwnerShop(ownerUserId);
+
+    const dispatches = await this.prisma.sosDispatch.findMany({
+      where: {
+        shopId: shop.id,
+        status: 'sent',
+        sosRequest: { status: { in: ['pending', 'dispatching'] } },
+      },
+      include: {
+        sosRequest: {
+          include: { serviceType: true, vehicle: true, customer: { select: { fullName: true, phone: true } } },
+        },
+      },
+      orderBy: { sentAt: 'desc' },
+    });
+
+    return dispatches.map((d) => ({
+      dispatchId: d.id,
+      sosRequestId: d.sosRequestId,
+      wave: d.wave,
+      distanceMeters: d.distanceMeters,
+      sentAt: d.sentAt,
+      serviceType: d.sosRequest.serviceType,
+      vehicle: d.sosRequest.vehicle,
+      customer: d.sosRequest.customer,
+    }));
+  }
+
+  /** Servisning joriy (qabul qilingan, tugallanmagan) SOS ishi — qaysi ustasi olganidan qat'i nazar. */
+  async getActiveForShopOwner(ownerUserId: string) {
+    const shop = await this.requireOwnerShop(ownerUserId);
+
+    const request = await this.prisma.sosRequest.findFirst({
+      where: {
+        acceptedMaster: { shopId: shop.id },
+        status: { in: ['accepted', 'on_the_way', 'arrived'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    if (!request) return null;
+    return this.getStatus(request.id);
+  }
+
+  async acceptAsShopOwner(ownerUserId: string, sosRequestId: string) {
+    const shop = await this.requireOwnerShop(ownerUserId);
+
+    let master = await this.prisma.master.findUnique({ where: { userId: ownerUserId } });
+    if (!master) {
+      const owner = await this.prisma.user.findUnique({ where: { id: ownerUserId } });
+      master = await this.prisma.master.create({
+        data: {
+          shopId: shop.id,
+          userId: ownerUserId,
+          fullName: owner?.fullName || shop.shopName,
+          position: 'Usta',
+        },
+      });
+    }
+
+    return this.acceptSosRequest(ownerUserId, sosRequestId);
+  }
+
   // ── Kuzatuv va yakun (Faza 3.5) ──────────────────────────────────────────────
 
   /**

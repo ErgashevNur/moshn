@@ -21,9 +21,16 @@ export default function ProfilePage() {
   const [saving,  setSaving]  = useState(false)
   const [saved,   setSaved]   = useState(false)
   const [form,    setForm]    = useState({ shopName:'', address:'', phone:'', workingHours:'' })
+  const [typeNames, setTypeNames] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!localStorage.getItem('partner_access_token')) { router.push('/partner/login'); return }
+    // Slug -> odam o'qiydigan nom (katalogdan)
+    partnerApi.get('/service-types').then(r => {
+      const map: Record<string, string> = {}
+      for (const t of r.data?.data || []) map[t.slug] = t.nameRu || t.nameUz || t.slug
+      setTypeNames(map)
+    }).catch(() => {})
     partnerApi.get('/service/profile').then(r => {
       const d: Profile = r.data?.data || r.data
       setData(d)
@@ -118,7 +125,7 @@ export default function ProfilePage() {
                   <div className="slbl" style={{ marginBottom:10 }}>ВИДЫ УСЛУГ</div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
                     {data.serviceTypes.map(s => (
-                      <span key={s} className="chip" style={{ background:'var(--surf2)', color:'var(--txt2)', fontSize:12 }}>{s}</span>
+                      <span key={s} className="chip" style={{ background:'var(--surf2)', color:'var(--txt2)', fontSize:12 }}>{typeNames[s] || s}</span>
                     ))}
                   </div>
                 </div>
