@@ -62,7 +62,9 @@ export class SmsService {
         body: JSON.stringify({ mobile_phone: digits, message, from: '4546' }),
       });
       const data: any = await res.json();
-      if (data?.id) {
+      // Eskiz xato bo'lganda ham ba'zan `id` qaytaradi — shuning uchun
+      // `status` maydoni tekshiriladi, faqat `id` borligi yetarli emas.
+      if (data?.id && data?.status !== 'error') {
         this.logger.log(`SMS yuborildi: ${digits} (eskiz id: ${data.id})`);
         return true;
       }

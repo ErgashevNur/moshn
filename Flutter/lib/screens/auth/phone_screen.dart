@@ -85,8 +85,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
     });
     final phone = '+998$_digits';
     try {
-      await AuthService().sendOtp(phone);
+      final devCode = await AuthService().sendOtp(phone);
       if (mounted) {
+        _showDevCodeIfAny(devCode);
         context.go('/otp?phone=${Uri.encodeComponent(phone)}');
       }
     } catch (e) {
@@ -95,6 +96,21 @@ class _PhoneScreenState extends State<PhoneScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// SMS xizmati ishlamasa (yoki hali sozlanmagan bo'lsa) backend kodni
+  /// javobda qaytaradi — vaqtinchalik shu yerda ko'rsatiladi, aks holda
+  /// foydalanuvchi kodni hech qayerdan ololmay bloklanib qolardi.
+  void _showDevCodeIfAny(String? devCode) {
+    if (devCode == null || devCode.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('SMS xizmati vaqtincha ishlamayapti. Kod: $devCode'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 15),
+      ),
+    );
   }
 
   @override

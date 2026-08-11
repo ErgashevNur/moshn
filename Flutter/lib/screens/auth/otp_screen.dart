@@ -160,7 +160,19 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   }
 
   Future<void> _resend() async {
-    try { await AuthService().sendOtp(widget.phone); } catch (_) {}
+    try {
+      final devCode = await AuthService().sendOtp(widget.phone);
+      if (mounted && devCode != null && devCode.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('SMS xizmati vaqtincha ishlamayapti. Kod: $devCode'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 15),
+          ),
+        );
+      }
+    } catch (_) {}
     _startCountdown();
   }
 
