@@ -19,8 +19,13 @@ import '../../widgets/m_brand_mark.dart';
 import '../../widgets/m_button.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({super.key, required this.phone});
+  const OtpScreen({super.key, required this.phone, this.initialDevCode});
   final String phone;
+  /// SMS xizmati ishlamasa (yoki hali sozlanmagan bo'lsa) backend kodni
+  /// javobda qaytaradi — shunda foydalanuvchi bloklanib qolmasin uchun
+  /// ekranda doimiy ko'rsatiladi (SnackBar emas — ekran almashtirilganda
+  /// yo'qolib ketmasin uchun).
+  final String? initialDevCode;
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -37,6 +42,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   String _error = '';
   int _countdown = _resendSecs;
   Timer? _timer;
+  late String? _devCode = widget.initialDevCode;
 
   String get _code => _controllers.map((c) => c.text).join();
   bool get _filled => _code.length == _len;
@@ -162,18 +168,24 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _resend() async {
     try {
       final devCode = await AuthService().sendOtp(widget.phone);
-      if (mounted && devCode != null && devCode.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('SMS xizmati vaqtincha ishlamayapti. Kod: $devCode'),
-            backgroundColor: Colors.orange,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 15),
-          ),
-        );
+      if (mounted) setState(() => _devCode = devCode);
+      _startCountdown();
+    } catch (e) {
+      if (!mounted) return;
+      String msg = 'Xatolik yuz berdi. Qayta urinib ko\'ring.';
+      if (e is DioException) {
+        final data = e.response?.data;
+        final backendMsg = (data is Map ? (data['error'] ?? data['message']) : null) as String?;
+        if (backendMsg != null && backendMsg.isNotEmpty) msg = backendMsg;
       }
-    } catch (_) {}
-    _startCountdown();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   String _maskedPhone() {
@@ -260,6 +272,27 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   ],
                 ),
               ),
+              // ── dev code (SMS ishlamasa) ────────────────────────────────
+              if (_devCode != null && _devCode!.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppSpacing.r_md),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    'SMS xizmati vaqtincha ishlamayapti. Kod: $_devCode',
+                    style: AppTypography.body.copyWith(
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+
               SizedBox(height: keyboardOpen ? 20 : 32),
 
               // ── OTP boxes ────────────────────────────────────────────
