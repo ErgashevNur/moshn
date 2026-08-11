@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { SmsService } from '../sms/sms.service';
 import { RegisterDto } from './dto/register.dto';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -18,6 +19,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -117,7 +119,11 @@ export class AuthService {
       data: { emailOtpCode: code, emailOtpExpiresAt: expiresAt, emailOtpLastSentAt: new Date() },
     });
 
-    return code;
+    const smsSent = this.smsService.isConfigured ? await this.smsService.sendOtp(phone, code) : false;
+    // SMS sozlangan-sozlanmaganidan qat'i nazar kodni ham qaytaramiz —
+    // controller SMS muvaffaqiyatli bo'lsa uni javobga qo'shmaydi (ishlab
+    // chiqarishda kodni tarmoq orqali oshkor qilmaslik uchun).
+    return { code, smsSent };
   }
 
   async verifyOtpByPhone(phone: string, code: string) {
