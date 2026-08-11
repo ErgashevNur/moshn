@@ -96,7 +96,7 @@ const uz: Dict = {
     titleHi: 'yuklab oling',
     desc: 'Mijoz sifatida bron qiling yoki shinomontaj sifatida o‘z servisingizni ro‘yxatga oling — bitta ilovada ikki rol.',
     btn: 'Android uchun yuklab olish (APK)',
-    note: 'iOS versiyasi tez kunda. So‘rovlar uchun: support@shina24.uz',
+    note: 'iOS versiyasi tez kunda. So‘rovlar uchun: support@pitgo.uz',
   },
   footer: {
     rights: 'Barcha huquqlar himoyalangan.',
@@ -172,7 +172,7 @@ const ru: Dict = {
     titleHi: 'прямо сейчас',
     desc: 'Бронируйте как клиент или зарегистрируйте свой шиномонтаж как сервис — две роли в одном приложении.',
     btn: 'Скачать для Android (APK)',
-    note: 'Версия для iOS скоро. По вопросам: support@shina24.uz',
+    note: 'Версия для iOS скоро. По вопросам: support@pitgo.uz',
   },
   footer: {
     rights: 'Все права защищены.',

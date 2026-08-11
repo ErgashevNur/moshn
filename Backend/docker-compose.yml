@@ -49,12 +49,20 @@ services:
     depends_on:
       - backend
 
+  landing:
+    build:
+      context: ../Landing
+      args:
+        NEXT_PUBLIC_APK_URL: ${NEXT_PUBLIC_APK_URL:-https://media.pitgo.uz/pitgo-1.1.0.apk}
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
     depends_on:
       - backend
       - admin
+      - landing
     ports:
       - "80:80"
       - "443:443"
