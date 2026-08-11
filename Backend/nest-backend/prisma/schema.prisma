@@ -1,5 +1,8 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // node:20-alpine (Docker) — musl libc + OpenSSL 3.x, lokal dev esa Debian/glibc.
+  // "native" ikkalasini ham qamrab olmaydi, shuning uchun aniq qo'shildi.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
