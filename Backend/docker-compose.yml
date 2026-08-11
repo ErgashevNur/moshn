@@ -32,6 +32,8 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM=${SMTP_FROM}
+      - ESKIZ_EMAIL=${ESKIZ_EMAIL}
+      - ESKIZ_PASSWORD=${ESKIZ_PASSWORD}
       - PORT=8080
       - NODE_ENV=production
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
