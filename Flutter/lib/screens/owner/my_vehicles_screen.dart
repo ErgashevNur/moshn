@@ -14,7 +14,8 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_plate.dart';
 
-final _vehiclesProvider = FutureProvider.autoDispose<List<Vehicle>>((ref) {
+/// Bosh ekrandagi mashina karuseli ham shu providerdan foydalanadi (home_screen.dart).
+final vehiclesProvider = FutureProvider.autoDispose<List<Vehicle>>((ref) {
   return VehicleService().getVehicles();
 });
 
@@ -31,7 +32,7 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vehiclesAsync = ref.watch(_vehiclesProvider);
+    final vehiclesAsync = ref.watch(vehiclesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -43,7 +44,7 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
               const Center(child: CircularProgressIndicator.adaptive()),
           error: (e, _) => Center(
             child: TextButton(
-              onPressed: () => ref.invalidate(_vehiclesProvider),
+              onPressed: () => ref.invalidate(vehiclesProvider),
               child: Text('common.retry'.tr()),
             ),
           ),
@@ -95,7 +96,7 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
               IconButton(
                 onPressed: () =>
                     context.push('/owner/vehicles/new').then((_) {
-                  ref.invalidate(_vehiclesProvider);
+                  ref.invalidate(vehiclesProvider);
                 }),
                 icon: Icon(Icons.add_rounded,
                     color: AppColors.text(context), size: 26),
@@ -126,7 +127,7 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
                     onToggle: (v) => setState(() => _isActive = v),
                     onEdit: () =>
                         context.push('/owner/vehicles/edit', extra: primary).then((_) {
-                      ref.invalidate(_vehiclesProvider);
+                      ref.invalidate(vehiclesProvider);
                     }),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -138,7 +139,7 @@ class _MyVehiclesScreenState extends ConsumerState<MyVehiclesScreen> {
                 _AddVehicleButton(
                   onTap: () =>
                       context.push('/owner/vehicles/new').then((_) {
-                    ref.invalidate(_vehiclesProvider);
+                    ref.invalidate(vehiclesProvider);
                   }),
                 ),
               ],

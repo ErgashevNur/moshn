@@ -99,18 +99,28 @@
     "location_all": "O'zbekiston",
     "service_types_error": "Xizmat turlari yuklanmadi",
     "location_service_disabled": "Qurilmada geolokatsiyani yoqing",
-    "location_permission_denied": "Joylashuvga ruxsat yo'q. Sozlamalardan ruxsat bering"
+    "location_permission_denied": "Joylashuvga ruxsat yo'q. Sozlamalardan ruxsat bering",
+    "greeting": "Salom, {name}",
+    "greeting_plain": "Salom!",
+    "reviews_count": "({count} sharh)"
   },
   "category": {
-    "tires": "Shinalar",
-    "engine": "Dvigatel",
-    "brakes": "Tormoz",
-    "transmission": "Transmissiya",
-    "electrics": "Elektrika",
-    "body": "Kuzov",
-    "other": "Boshqa",
+    "service": "Avto servis",
+    "oil": "Moy almashtirish",
+    "tires": "Shinamontaj",
+    "body": "Kuzov ustasi",
+    "electrics": "Elektrik",
+    "sos": "AutoTouch",
     "back_to_categories": "Kategoriyalar",
-    "empty": "Bu kategoriyada xizmat turi yo'q"
+    "empty": "Bu kategoriyada xizmat turi yo'q",
+    "service_sub": "motor, xodovaya, KPP",
+    "oil_sub": "moy, antifriz, suyuqliklar",
+    "tires_sub": "mavsumiy almashtirish",
+    "body_sub": "bo'yash, botiqlar",
+    "electrics_sub": "diagnostika, akkumulyator",
+    "sos_sub": "yoningizga boramiz",
+    "all_services": "Barcha xizmatlar",
+    "title": "Servislar"
   },
   "booking": {
     "title": "Bron qilish",
@@ -285,7 +295,13 @@
     "plate_required": "Davlat raqamini kiriting",
     "make_hint": "Chevrolet",
     "model_hint": "Cobalt",
-    "color_hint": "Oq"
+    "color_hint": "Oq",
+    "mileage": "Probeg, km",
+    "next_service": "Keyingi TO, km",
+    "active": "Faol",
+    "mileage_short": "Probeg",
+    "next_service_short": "Keyingi TO",
+    "in_km": "{km} km dan keyin"
   },
   "dates": {
     "today": "Bugun",

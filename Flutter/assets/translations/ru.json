@@ -99,18 +99,28 @@
     "location_all": "Узбекистан",
     "service_types_error": "Типы услуг не загружены",
     "location_service_disabled": "Включите геолокацию на устройстве",
-    "location_permission_denied": "Нет доступа к геолокации. Разрешите в настройках"
+    "location_permission_denied": "Нет доступа к геолокации. Разрешите в настройках",
+    "greeting": "Привет, {name}",
+    "greeting_plain": "Привет!",
+    "reviews_count": "({count} отзывов)"
   },
   "category": {
-    "tires": "Шины",
-    "engine": "Двигатель",
-    "brakes": "Тормоза",
-    "transmission": "Трансмиссия",
-    "electrics": "Электрика",
-    "body": "Кузов",
-    "other": "Прочее",
+    "service": "Авто сервис",
+    "oil": "Замена масла",
+    "tires": "Шино монтаж",
+    "body": "Кузовщик",
+    "electrics": "Электрик",
+    "sos": "AutoTouch",
     "back_to_categories": "Категории",
-    "empty": "В этой категории пока нет услуг"
+    "empty": "В этой категории пока нет услуг",
+    "service_sub": "мотор, ходовая, КПП",
+    "oil_sub": "масло, антифриз, жидкости",
+    "tires_sub": "сезонная замена",
+    "body_sub": "покраска, вмятины",
+    "electrics_sub": "диагностика, аккумулятор",
+    "sos_sub": "приедем к вам",
+    "all_services": "Все услуги",
+    "title": "Сервисы"
   },
   "booking": {
     "title": "Запись",
@@ -285,7 +295,13 @@
     "plate_required": "Введите гос. номер",
     "make_hint": "Chevrolet",
     "model_hint": "Cobalt",
-    "color_hint": "Белый"
+    "color_hint": "Белый",
+    "mileage": "Пробег, км",
+    "next_service": "Следующее ТО, км",
+    "active": "Активен",
+    "mileage_short": "Пробег",
+    "next_service_short": "Следующее ТО",
+    "in_km": "через {km} км"
   },
   "dates": {
     "today": "Сегодня",
