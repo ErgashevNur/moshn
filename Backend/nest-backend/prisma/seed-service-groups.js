@@ -1,10 +1,11 @@
 // Bosh sahifa kategoriya taksonomiyasini 7 tekis kategoriyadan 5 chuqur
 // guruhga o'tkazish (2026-08, "Bosh sahifani qayta qurish" rejasi).
 // Qayta ishga tushirish xavfsiz — slug bo'yicha upsert qilinadi.
-// tsconfig.json runner konteynerida yo'qligi sababli ts-node o'rniga
-// oddiy CommonJS (`node prisma/seed-service-groups.js`) ishlatiladi —
-// mazmuni prisma/seed-service-groups.ts bilan bir xil, shu faylni tahrirlasangiz
-// ikkalasini ham yangilang.
+// Ataylab oddiy CommonJS (`node prisma/seed-service-groups.js`): konteynerda
+// ts-node/tsconfig yo'q. Ilgari yonida `.ts` nusxasi ham bor edi — u
+// `src/` dan tashqaridagi .ts fayl sifatida `nest build` chiqishini
+// `dist/src/` ga surib, prodda uzilishga sabab bo'ldi. Endi tsconfig
+// `prisma/` ni istisno qiladi va bu yerda faqat `.js` saqlanadi.
 //
 // Ishga tushirish: DATABASE_URL to'g'ri o'rnatilgan holda
 //   node prisma/seed-service-groups.js

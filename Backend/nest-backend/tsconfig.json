@@ -17,5 +17,12 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  // Faqat `src/` kompilyatsiya qilinadi. `src` dan tashqaridagi biror `.ts`
+  // fayl (masalan prisma/ ichidagi bir martalik skript) qo'shilsa,
+  // TypeScript chiqish ildizini yuqoriga suradi va natija `dist/main.js`
+  // o'rniga `dist/src/main.js` bo'lib qoladi — Dockerfile'dagi
+  // `node dist/main` esa ishlamay qoladi (prodda shu sabab uzilish bo'lgan).
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "prisma", "test"]
 }
