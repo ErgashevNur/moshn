@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:dio/dio.dart';
 
+import '../../config/app_flavor.dart';
 import '../../models/user.dart';
 import '../../services/api.dart';
 import '../../services/auth_service.dart';
@@ -132,18 +133,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       );
       ref.read(authProvider.notifier).setAuthenticated(result.user);
       if (!mounted) return;
-      if (result.user.role == UserRole.none) {
-        context.go('/role-select');
-      } else {
-        switch (result.user.role) {
-          case UserRole.service:
-            context.go('/service');
-          case UserRole.master:
-            context.go('/mechanic');
-          default:
-            context.go('/owner');
-        }
-      }
+      _navigateAfterAuth(result.user.role);
     } catch (e) {
       String msg;
       if (e is DioException &&
@@ -162,6 +152,36 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         c.clear();
       }
       if (mounted) _nodes[0].requestFocus();
+    }
+  }
+
+  /// PitGo va PitGo Pro alohida ilovalar bo'lgani uchun (`AppFlavorConfig`)
+  /// login'dan keyingi yo'nalish ham shunga qarab ajraladi — mos kelmagan
+  /// rol bo'lsa boshqa ilovaga yo'naltirish kerakligi haqida xabar beriladi.
+  void _navigateAfterAuth(UserRole role) {
+    if (AppFlavorConfig.isCustomer) {
+      if (role == UserRole.none) {
+        context.go('/profile-setup', extra: UserRole.owner);
+      } else if (role == UserRole.owner) {
+        context.go('/owner');
+      } else {
+        context.go('/wrong-app');
+      }
+      return;
+    }
+
+    // PitGo Pro
+    switch (role) {
+      case UserRole.none:
+        context.go('/role-select');
+      case UserRole.service:
+        context.go('/service');
+      case UserRole.master:
+        context.go('/mechanic');
+      case UserRole.evacuator:
+        context.go('/evacuator');
+      default:
+        context.go('/wrong-app');
     }
   }
 

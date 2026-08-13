@@ -25,7 +25,7 @@ type Dict = {
     clients: BenefitItem[]
     services: BenefitItem[]
   }
-  cta: { titlePre: string; titleHi: string; desc: string; btn: string; note: string }
+  cta: { titlePre: string; titleHi: string; desc: string; btn: string; btnSub: string; btnPro: string; btnProSub: string; note: string }
   footer: { rights: string; howItWorks: string; download: string }
 }
 
@@ -66,9 +66,9 @@ const uz: Dict = {
     {
       tag: null,
       title: 'Ilovani hoziroq yuklab oling',
-      desc: 'Mijoz sifatida bron qiling yoki shinomontaj sifatida ro‘yxatga oling — bitta ilovada ikki rol.',
+      desc: 'Mijozmisiz? PitGo orqali bron qiling. Servis yoki usta bo‘lsangiz — PitGo Pro sizga kerak (pastda).',
       cta: true,
-      ctaBtn: 'Android uchun yuklab olish',
+      ctaBtn: 'PitGo — mijozlar uchun',
     },
   ],
   benefits: {
@@ -94,8 +94,11 @@ const uz: Dict = {
   cta: {
     titlePre: 'PitGo’ni hoziroq',
     titleHi: 'yuklab oling',
-    desc: 'Mijoz sifatida bron qiling yoki shinomontaj sifatida o‘z servisingizni ro‘yxatga oling — bitta ilovada ikki rol.',
-    btn: 'Android uchun yuklab olish (APK)',
+    desc: 'Mijozmisiz — PitGo orqali bron qiling. Servis yoki ustamisiz — PitGo Pro orqali o‘z ishingizni boshqaring.',
+    btn: 'PitGo (APK)',
+    btnSub: 'Mijozlar uchun',
+    btnPro: 'PitGo Pro (APK)',
+    btnProSub: 'Servis va ustalar uchun',
     note: 'iOS versiyasi tez kunda. So‘rovlar uchun: support@pitgo.uz',
   },
   footer: {
@@ -142,9 +145,9 @@ const ru: Dict = {
     {
       tag: null,
       title: 'Скачайте приложение прямо сейчас',
-      desc: 'Бронируйте как клиент или регистрируйтесь как шиномонтаж — две роли в одном приложении.',
+      desc: 'Вы клиент? Бронируйте через PitGo. Вы сервис или мастер — вам нужен PitGo Pro (ниже).',
       cta: true,
-      ctaBtn: 'Скачать для Android',
+      ctaBtn: 'PitGo — для клиентов',
     },
   ],
   benefits: {
@@ -170,8 +173,11 @@ const ru: Dict = {
   cta: {
     titlePre: 'Скачайте PitGo',
     titleHi: 'прямо сейчас',
-    desc: 'Бронируйте как клиент или зарегистрируйте свой шиномонтаж как сервис — две роли в одном приложении.',
-    btn: 'Скачать для Android (APK)',
+    desc: 'Вы клиент — бронируйте через PitGo. Вы сервис или мастер — управляйте работой через PitGo Pro.',
+    btn: 'PitGo (APK)',
+    btnSub: 'Для клиентов',
+    btnPro: 'PitGo Pro (APK)',
+    btnProSub: 'Для сервисов и мастеров',
     note: 'Версия для iOS скоро. По вопросам: support@pitgo.uz',
   },
   footer: {

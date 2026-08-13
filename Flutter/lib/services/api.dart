@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, kReleaseMode;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
@@ -54,6 +54,7 @@ class ApiClient {
   );
 
   static const _ngrokUrl = 'https://snore-likewise-aground.ngrok-free.dev';
+  static const _prodUrl = 'https://api.pitgo.uz';
 
   static String get baseUrl {
     if (_baseOverride.isNotEmpty) return _baseOverride;
@@ -61,6 +62,10 @@ class ApiClient {
       return 'http://$_hostOverride:$_portOverride/v1';
     }
     if (kIsWeb) return 'http://localhost:8080/v1';
+    // Release build (APK/App Store) — --dart-define unutilsa ham productionga
+    // (o'lik ngrok tunneliga emas) ulanadi. Faqat debug/profile rejimida,
+    // --dart-define berilmasa, dev ngrok tunneliga tushadi.
+    if (kReleaseMode) return '$_prodUrl/v1';
     return '$_ngrokUrl/v1';
   }
 

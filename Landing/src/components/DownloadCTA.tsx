@@ -5,6 +5,7 @@ import Icon from './Icon'
 import { useI18n } from '@/lib/i18n'
 
 const APK_URL = process.env.NEXT_PUBLIC_APK_URL || 'https://media.pitgo.uz/pitgo-1.1.0.apk'
+const APK_PRO_URL = process.env.NEXT_PUBLIC_APK_PRO_URL || 'https://media.pitgo.uz/pitgo-pro-1.0.0.apk'
 
 export default function DownloadCTA() {
   const { t } = useI18n()
@@ -21,13 +22,26 @@ export default function DownloadCTA() {
           {t.cta.titlePre} <span className="text-gold">{t.cta.titleHi}</span>
         </h2>
         <p className="text-[14.5px] sm:text-[16px] text-txt2 leading-relaxed mb-9 max-w-lg mx-auto">{t.cta.desc}</p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
+        <div className="flex flex-wrap items-stretch justify-center gap-4">
           <a
             href={APK_URL}
             className="h-[54px] w-full sm:w-auto px-8 rounded-full bg-gold text-bg font-bold text-[14.5px] sm:text-[15px] flex items-center justify-center gap-2.5 hover:brightness-110 transition-all"
           >
             <Icon name="download" size={20} />
-            {t.cta.btn}
+            <span className="flex flex-col items-start leading-tight">
+              <span>{t.cta.btn}</span>
+              <span className="text-[10.5px] font-medium opacity-70">{t.cta.btnSub}</span>
+            </span>
+          </a>
+          <a
+            href={APK_PRO_URL}
+            className="h-[54px] w-full sm:w-auto px-8 rounded-full border border-white/[.16] text-txt font-bold text-[14.5px] sm:text-[15px] flex items-center justify-center gap-2.5 hover:bg-white/[.06] transition-all"
+          >
+            <Icon name="download" size={20} />
+            <span className="flex flex-col items-start leading-tight">
+              <span>{t.cta.btnPro}</span>
+              <span className="text-[10.5px] font-medium opacity-70">{t.cta.btnProSub}</span>
+            </span>
           </a>
         </div>
         <p className="text-[12px] text-txt3 mt-5">{t.cta.note}</p>

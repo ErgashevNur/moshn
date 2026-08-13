@@ -5,14 +5,14 @@ import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 import 'app.dart';
 import 'config/app_flavor.dart';
-import 'navigation/router_customer.dart';
+import 'navigation/router_pro.dart';
 import 'services/push_service.dart';
 
-/// PitGo (mijoz) ilovasining entry point'i.
-/// PitGo Pro uchun: `lib/main_pro.dart`.
+/// PitGo Pro (servis egasi / usta / evakuator) ilovasining entry point'i.
+/// Mijoz ilovasi uchun: `lib/main.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  AppFlavorConfig.current = AppFlavor.customer;
+  AppFlavorConfig.current = AppFlavor.pro;
   await EasyLocalization.ensureInitialized();
   await initLocalNotifications();
   AndroidYandexMap.useAndroidViewSurface = true;
@@ -24,7 +24,7 @@ Future<void> main() async {
       fallbackLocale: const Locale('ru'),
       startLocale: const Locale('ru'),
       child: ProviderScope(
-        child: PitGoApp(routerProvider: routerCustomerProvider),
+        child: PitGoApp(routerProvider: routerProProvider),
       ),
     ),
   );

@@ -42,6 +42,22 @@ android {
         versionName = flutter.versionName
     }
 
+    // PitGo (mijoz) va PitGo Pro (servis/usta/evakuator) — ikkita alohida ilova,
+    // bitta kod bazasidan. Har biri o'z applicationId + nomi + ikonkasi bilan.
+    flavorDimensions += "app"
+    productFlavors {
+        create("customer") {
+            dimension = "app"
+            applicationId = "uz.pitgo.pitgo"
+            resValue("string", "app_name", "PitGo")
+        }
+        create("pro") {
+            dimension = "app"
+            applicationId = "uz.pitgo.pitgo.pro"
+            resValue("string", "app_name", "PitGo Pro")
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {

@@ -47,14 +47,10 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    _RoleCard(
-                      selected: _selected == UserRole.owner,
-                      icon: Icons.directions_car_rounded,
-                      title: 'auth.role_owner'.tr(),
-                      subtitle: 'auth.role_owner_sub'.tr(),
-                      onTap: () => setState(() => _selected = UserRole.owner),
-                    ),
-                    const SizedBox(height: 12),
+                    // Bu ekran endi faqat PitGo Pro (servis/usta/evakuator)
+                    // ilovasida ishlatiladi — "Mijoz" kartasi PitGo (mijoz)
+                    // ilovasida umuman kerak emas (u yerda faqat "owner"
+                    // roli bor, otp_screen.dart avtomatik shuni tanlaydi).
                     _RoleCard(
                       selected: _selected == UserRole.service,
                       icon: Icons.tire_repair_rounded,

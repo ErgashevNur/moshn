@@ -9,6 +9,8 @@ FROM node:20-alpine AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_APK_URL=https://media.pitgo.uz/pitgo-1.1.0.apk
 ENV NEXT_PUBLIC_APK_URL=$NEXT_PUBLIC_APK_URL
+ARG NEXT_PUBLIC_APK_PRO_URL=https://media.pitgo.uz/pitgo-pro-1.0.0.apk
+ENV NEXT_PUBLIC_APK_PRO_URL=$NEXT_PUBLIC_APK_PRO_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
