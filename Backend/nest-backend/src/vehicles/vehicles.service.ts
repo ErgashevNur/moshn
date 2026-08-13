@@ -12,6 +12,8 @@ export class VehiclesService {
     year?: number;
     color?: string;
     photoUrl?: string;
+    mileageKm?: number;
+    nextServiceKm?: number;
   }) {
     const count = await this.prisma.vehicle.count({ where: { ownerId } });
     if (count >= 5) throw new BadRequestException("Maksimal 5 ta mashina ro'yxatga olish mumkin");
@@ -25,8 +27,19 @@ export class VehiclesService {
         year: data.year ?? 0,
         color: data.color ?? '',
         photoUrl: data.photoUrl ?? '',
+        mileageKm: this.normalizeKm(data.mileageKm),
+        nextServiceKm: this.normalizeKm(data.nextServiceKm),
       },
     });
+  }
+
+  /// Probeg manfiy yoki aql bovar qilmaydigan bo'lmasligi kerak —
+  /// forma erkin raqam kiritishga ruxsat beradi.
+  private normalizeKm(v?: number): number {
+    if (v === undefined || v === null || Number.isNaN(v)) return 0;
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(n, 10_000_000);
   }
 
   async findAll(ownerId: string) {
@@ -46,6 +59,10 @@ export class VehiclesService {
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (data[key] !== undefined) update[key] = data[key];
+    }
+    // Probeg maydonlari alohida — tozalanadi (create bilan bir xil qoida).
+    for (const key of ['mileageKm', 'nextServiceKm']) {
+      if (data[key] !== undefined) update[key] = this.normalizeKm(data[key]);
     }
     return this.prisma.vehicle.update({ where: { id }, data: update });
   }

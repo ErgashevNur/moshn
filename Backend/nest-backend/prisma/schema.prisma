@@ -110,16 +110,21 @@ model MasterServiceType {
 }
 
 model Vehicle {
-  id        String   @id @default(uuid()) @db.Uuid
-  plate     String   @unique
-  ownerId   String   @map("owner_id") @db.Uuid
-  make      String   @default("")
-  model     String   @default("")
-  year      Int      @default(0)
-  color     String   @default("")
-  photoUrl  String   @default("") @map("photo_url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  plate         String   @unique
+  ownerId       String   @map("owner_id") @db.Uuid
+  make          String   @default("")
+  model         String   @default("")
+  year          Int      @default(0)
+  color         String   @default("")
+  photoUrl      String   @default("") @map("photo_url")
+  /// Joriy probeg, km. 0 — mijoz hali kiritmagan.
+  mileageKm     Int      @default(0) @map("mileage_km")
+  /// Keyingi TO qaysi probegda kerak, km. 0 — belgilanmagan.
+  /// "Через X km" = nextServiceKm - mileageKm (ilova tomonida hisoblanadi).
+  nextServiceKm Int      @default(0) @map("next_service_km")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   owner       User         @relation("VehicleOwner", fields: [ownerId], references: [id])
   bookings    Booking[]    @relation("BookingVehicle")

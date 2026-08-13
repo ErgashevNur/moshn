@@ -17,6 +17,8 @@ class VehicleService {
     String model = '',
     int year = 0,
     String color = '',
+    int mileageKm = 0,
+    int nextServiceKm = 0,
   }) async {
     final resp = await _dio.post('/vehicles', data: {
       'plate': plate,
@@ -24,6 +26,8 @@ class VehicleService {
       'model': model,
       'year': year,
       'color': color,
+      'mileageKm': mileageKm,
+      'nextServiceKm': nextServiceKm,
     });
     return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
   }
@@ -35,6 +39,8 @@ class VehicleService {
     String model = '',
     int year = 0,
     String color = '',
+    int mileageKm = 0,
+    int nextServiceKm = 0,
   }) async {
     final resp = await _dio.put('/vehicles/$id', data: {
       'plate': plate,
@@ -42,6 +48,8 @@ class VehicleService {
       'model': model,
       'year': year,
       'color': color,
+      'mileageKm': mileageKm,
+      'nextServiceKm': nextServiceKm,
     });
     return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
   }

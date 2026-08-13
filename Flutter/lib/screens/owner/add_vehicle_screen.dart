@@ -32,6 +32,14 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           ? widget.vehicle!.year.toString()
           : '');
   late final _color = TextEditingController(text: widget.vehicle?.color ?? '');
+  late final _mileage = TextEditingController(
+      text: (widget.vehicle?.mileageKm ?? 0) > 0
+          ? widget.vehicle!.mileageKm.toString()
+          : '');
+  late final _nextService = TextEditingController(
+      text: (widget.vehicle?.nextServiceKm ?? 0) > 0
+          ? widget.vehicle!.nextServiceKm.toString()
+          : '');
   bool _saving = false;
 
   @override
@@ -41,6 +49,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     _model.dispose();
     _year.dispose();
     _color.dispose();
+    _mileage.dispose();
+    _nextService.dispose();
     super.dispose();
   }
 
@@ -59,6 +69,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           model: _model.text.trim(),
           year: int.tryParse(_year.text) ?? 0,
           color: _color.text.trim(),
+          mileageKm: int.tryParse(_mileage.text.replaceAll(' ', '')) ?? 0,
+          nextServiceKm: int.tryParse(_nextService.text.replaceAll(' ', '')) ?? 0,
         );
       } else {
         await VehicleService().createVehicle(
@@ -67,6 +79,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           model: _model.text.trim(),
           year: int.tryParse(_year.text) ?? 0,
           color: _color.text.trim(),
+          mileageKm: int.tryParse(_mileage.text.replaceAll(' ', '')) ?? 0,
+          nextServiceKm: int.tryParse(_nextService.text.replaceAll(' ', '')) ?? 0,
         );
       }
       if (!mounted) return;
@@ -219,6 +233,41 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                             AppTextField(
                               controller: _color,
                               placeholder: 'vehicle.color_hint'.tr(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  // Probeg va keyingi TO — bosh ekrandagi mashina kartasida
+                  // ko'rsatiladi. Ixtiyoriy: bo'sh qoldirilsa karta faqat
+                  // model/raqamni chiqaradi.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('vehicle.mileage'.tr()),
+                            AppTextField(
+                              controller: _mileage,
+                              placeholder: '84200',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('vehicle.next_service'.tr()),
+                            AppTextField(
+                              controller: _nextService,
+                              placeholder: '86000',
+                              keyboardType: TextInputType.number,
                             ),
                           ],
                         ),
