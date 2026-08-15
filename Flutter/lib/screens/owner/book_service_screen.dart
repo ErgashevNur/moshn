@@ -427,7 +427,8 @@ class _BookServiceScreenState extends ConsumerState<BookServiceScreen> {
 
   Widget _datePicker() {
     final days = List.generate(14, (i) => _dayOnly(DateTime.now()).add(Duration(days: i)));
-    const wd = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+    // Kun qisqartmalari interfeys tiliga qarab (`booking.wd_*`).
+    final wd = List.generate(7, (i) => 'booking.wd_$i'.tr());
     return SizedBox(
       height: 62,
       child: ListView.separated(

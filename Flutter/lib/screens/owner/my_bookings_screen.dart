@@ -9,6 +9,8 @@ import '../../services/booking_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../widgets/m_service_tile.dart';
+import 'home_screen.dart' show serviceTypesProvider;
 import '../../widgets/m_plate.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -27,6 +29,8 @@ class MyBookingsScreen extends ConsumerStatefulWidget {
 }
 
 class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
+  /// 0 = mening bronlarim, 1 = yangi zapis (xizmat tanlash).
+  int _mode = 0;
   int _tab = 0; // 0=Будущие, 1=Прошедшие
 
   static const _upcomingStatuses = {'pending', 'confirmed', 'in_progress'};
@@ -50,6 +54,12 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _header(context),
+            const SizedBox(height: AppSpacing.md),
+            _modeTabs(context),
+            if (_mode == 1) ...[
+              const SizedBox(height: AppSpacing.md),
+              Expanded(child: _NewBookingPicker()),
+            ] else ...[
             const SizedBox(height: AppSpacing.md),
             _tabs(context),
             const SizedBox(height: AppSpacing.lg),
@@ -96,7 +106,54 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                 ),
               ),
             ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Yuqori darajadagi tanlov: mavjud bronlar yoki yangi zapis.
+  Widget _modeTabs(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: AppColors.surface2(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_full),
+        ),
+        child: Row(
+          children: [
+            _modeItem(context, 0, 'booking.mode_mine'.tr()),
+            _modeItem(context, 1, 'booking.mode_new'.tr()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _modeItem(BuildContext context, int index, String label) {
+    final active = _mode == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: active ? null : () => setState(() => _mode = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(
+            color: active ? AppColors.surface(context) : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppSpacing.r_full),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: AppTypography.soraSize(12.5,
+                    weight: active ? FontWeight.w700 : FontWeight.w500)
+                .copyWith(
+              color: active ? AppColors.text(context) : AppColors.text3(context),
+            ),
+          ),
         ),
       ),
     );
@@ -552,6 +609,59 @@ class _ActionBtn extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Yangi zapis: xizmat tanlash ──────────────────────────────────────────────
+// Butun katalog tekis ro'yxatda — mijoz bir bosishda zapis ekraniga o'tadi
+// (kategoriya → xizmat ikki bosqichi bu yerda ortiqcha).
+
+class _NewBookingPicker extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(serviceTypesProvider);
+    final locale = context.locale.languageCode;
+
+    return async.when(
+      data: (types) {
+        if (types.isEmpty) {
+          return Center(
+            child: Text('booking.no_services'.tr(),
+                style: AppTypography.body
+                    .copyWith(color: AppColors.text3(context))),
+          );
+        }
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.huge),
+          itemCount: types.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.85,
+          ),
+          itemBuilder: (context, i) {
+            final t = types[i];
+            return MServiceTile(
+              label: t.nameFor(locale),
+              iconName: t.icon,
+              active: false,
+              onTap: () => context.push('/owner/services/${t.slug}'),
+            );
+          },
+        );
+      },
+      loading: () => const Center(
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold)),
+      error: (_, _) => Center(
+        child: GestureDetector(
+          onTap: () => ref.invalidate(serviceTypesProvider),
+          child: Text('common.retry'.tr(),
+              style: AppTypography.labelMedium.copyWith(color: AppColors.gold)),
         ),
       ),
     );

@@ -186,7 +186,17 @@
     "no_vehicle": "Avval mashina qo'shing",
     "cta": "Yozilish",
     "cta_price": "Yozilish · {price} so'm",
-    "error": "Yozilib bo'lmadi. Qaytadan urinib ko'ring"
+    "error": "Yozilib bo'lmadi. Qaytadan urinib ko'ring",
+    "mode_mine": "Bronlarim",
+    "mode_new": "Yangi zapis",
+    "no_services": "Xizmatlar topilmadi",
+    "wd_0": "Du",
+    "wd_1": "Se",
+    "wd_2": "Ch",
+    "wd_3": "Pa",
+    "wd_4": "Ju",
+    "wd_5": "Sh",
+    "wd_6": "Ya"
   },
   "payment": {
     "title": "To'lov",

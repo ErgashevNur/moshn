@@ -14,6 +14,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes('--dry-run');
+/// Ilgari o'zbekcha matn bilan yaratilgan namuna paketlarni ruscha
+/// variantiga yangilaydi. Faqat AYNAN eski namuna nomlariga tegadi —
+/// servis egasi o'zi yozgan paketlar o'zgarmaydi.
+const UPDATE_TEXTS = process.argv.includes('--update-texts');
+const LEGACY_NAMES = ['Bazoviy', 'Standart', 'Premium'];
 
 // Kategoriya bo'yicha bazaviy narx (so'm) va davomiylik (daqiqa).
 // Uch pog'ona: [Bazoviy, Standart, Premium].
@@ -22,50 +27,50 @@ const TIERS = {
     prices: [320_000, 480_000, 890_000],
     durations: [40, 60, 90],
     desc: [
-      'Mannol 5W-40, moy filtri',
-      'Shell Helix 5W-40, filtr, 12 tugun tekshiruvi',
-      'Motul 5W-40, 4 filtr, to\'liq diagnostika',
+      'Mannol 5W-40, масляный фильтр',
+      'Shell Helix 5W-40, фильтр, проверка 12 узлов',
+      'Motul 5W-40, 4 фильтра, полная диагностика',
     ],
   },
   tires: {
     prices: [80_000, 150_000, 260_000],
     durations: [30, 45, 75],
     desc: [
-      'Balanslash, 4 g\'ildirak',
-      'Almashtirish + balanslash, klapan',
-      'Almashtirish, balanslash, ta\'mirlash, saqlash',
+      'Балансировка, 4 колеса',
+      'Замена + балансировка, вентиль',
+      'Замена, балансировка, ремонт, хранение',
     ],
   },
   service: {
     prices: [200_000, 420_000, 850_000],
     durations: [45, 90, 150],
     desc: [
-      'Diagnostika va sozlash',
-      'O\'rta ta\'mir, ehtiyot qismlar alohida',
-      'To\'liq ta\'mir, kafolat bilan',
+      'Диагностика и регулировка',
+      'Средний ремонт, запчасти отдельно',
+      'Полный ремонт с гарантией',
     ],
   },
   body: {
     prices: [450_000, 1_200_000, 2_400_000],
     durations: [60, 180, 300],
     desc: [
-      'Bitta element, mayda ish',
-      'Bo\'yash va tekislash, 2 element',
-      'To\'liq kuzov ishlari, sifat kafolati',
+      'Один элемент, мелкие работы',
+      'Покраска и рихтовка, 2 элемента',
+      'Полные кузовные работы, гарантия качества',
     ],
   },
   electrics: {
     prices: [150_000, 320_000, 640_000],
     durations: [30, 60, 120],
     desc: [
-      'Kompyuter diagnostikasi',
-      'Nosozlikni topish va bartaraf etish',
-      'To\'liq elektr tizimi, apparatura o\'rnatish',
+      'Компьютерная диагностика',
+      'Поиск и устранение неисправности',
+      'Вся электрика, установка оборудования',
     ],
   },
 };
 
-const TIER_NAMES = ['Bazoviy', 'Standart', 'Premium'];
+const TIER_NAMES = ['Базовый', 'Стандарт', 'Премиум'];
 
 /// Servislar orasida narx bir xil bo'lmasin — "Arzon" saralashi ma'noli
 /// bo'lishi uchun har servisga barqaror (id'ga bog'liq) koeffitsient.
@@ -79,6 +84,11 @@ const round5k = (n) => Math.round(n / 5000) * 5000;
 
 async function main() {
   if (DRY_RUN) console.log('*** DRY RUN — bazaga hech narsa yozilmaydi ***\n');
+
+  if (UPDATE_TEXTS) {
+    await updateLegacyTexts();
+    return;
+  }
 
   const shops = await prisma.shopProfile.findMany({
     where: { verificationStatus: { in: ['verified', 'pending'] } },
@@ -177,6 +187,36 @@ async function main() {
   console.log(
     `\nXULOSA: ${createdMasters} usta, ${createdPackages} paket, ` +
       `${createdPrices} narx yozuvi yaratildi; ${skipped} xizmat o'tkazib yuborildi (paketi bor).` +
+      (DRY_RUN ? '\n(DRY RUN — hech narsa yozilmadi)' : ''),
+  );
+}
+
+/// Eski namuna paketlarining nomi va tavsifini yangilaydi (narx tegilmaydi).
+async function updateLegacyTexts() {
+  const legacy = await prisma.shopServicePackage.findMany({
+    where: { name: { in: LEGACY_NAMES } },
+    include: { serviceType: { select: { category: true } } },
+  });
+  console.log(`eski namuna paketlari: ${legacy.length}`);
+
+  let n = 0;
+  for (const p of legacy) {
+    const i = LEGACY_NAMES.indexOf(p.name);
+    const tier = TIERS[p.serviceType.category] || TIERS.service;
+    const name = TIER_NAMES[i];
+    const description = tier.desc[i];
+    if (p.name === name && p.description === description) continue;
+
+    if (!DRY_RUN) {
+      await prisma.shopServicePackage.update({
+        where: { id: p.id },
+        data: { name, description },
+      });
+    }
+    n++;
+  }
+  console.log(
+    `XULOSA: ${n} paket matni yangilandi.` +
       (DRY_RUN ? '\n(DRY RUN — hech narsa yozilmadi)' : ''),
   );
 }
