@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppConfigService } from '../app-config/app-config.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -9,6 +9,8 @@ import { WsHub } from '../ws/ws.hub';
 const BOOKING_INCLUDE = {
   customer: true,
   package: true,
+  stages: { orderBy: { sortOrder: 'asc' } },
+  photos: { orderBy: { createdAt: 'asc' } },
   shop: { include: { user: true } },
   master: true,
   vehicle: true,
@@ -70,6 +72,9 @@ export class BookingsService {
     let packageId: string | null = null;
     let durationMin = 60;
     let totalPrice = data.totalPrice ?? 0;
+    // Bosqichlar paketdan bronga KO'CHIRILADI — paket keyin o'zgarsa ham
+    // bu bron o'z bosqichlarini saqlaydi.
+    let stageNames: string[] = [];
 
     if (data.packageId) {
       const pkg = await this.prisma.shopServicePackage.findFirst({
@@ -86,6 +91,13 @@ export class BookingsService {
       packageId = pkg.id;
       durationMin = pkg.durationMin;
       totalPrice = pkg.price;
+      stageNames = (
+        await this.prisma.packageStage.findMany({
+          where: { packageId: pkg.id },
+          orderBy: { sortOrder: 'asc' },
+          select: { name: true },
+        })
+      ).map((x) => x.name);
     }
 
     const booking = await this.prisma.booking.create({
@@ -101,6 +113,9 @@ export class BookingsService {
         notes: data.notes ?? '',
         totalPrice,
         status: 'pending',
+        stages: {
+          create: stageNames.map((name, i) => ({ name, sortOrder: i })),
+        },
       },
       include: BOOKING_INCLUDE,
     });
@@ -157,6 +172,88 @@ export class BookingsService {
 
     const free = masters.find((m) => !busy.has(m.id));
     return free ? this.prisma.master.findUnique({ where: { id: free.id } }) : null;
+  }
+
+  // ── Ish bosqichlari va fotohisobot ──────────────────────────────────────────
+
+  /// Bronni faqat shu servis egasi yoki tayinlangan usta boshqara oladi.
+  private async requireBookingActor(bookingId: string, userId: string) {
+    const b = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { shop: { select: { userId: true } }, master: { select: { userId: true } } },
+    });
+    if (!b) throw new NotFoundException('Bron topilmadi');
+    const allowed = b.shop.userId === userId || b.master?.userId === userId;
+    if (!allowed) throw new ForbiddenException('Bu bron sizga tegishli emas');
+    return b;
+  }
+
+  /// Bosqich holatini o'zgartiradi va mijozga xabar beradi.
+  /// `in_progress` qo'yilganda oldingi bosqich avtomatik yakunlanadi —
+  /// usta har birini alohida yopib o'tirmasin.
+  async setStageStatus(
+    bookingId: string,
+    stageId: string,
+    userId: string,
+    status: string,
+  ) {
+    if (!['pending', 'in_progress', 'done'].includes(status)) {
+      throw new BadRequestException("Noto'g'ri holat");
+    }
+    const booking = await this.requireBookingActor(bookingId, userId);
+
+    const stage = await this.prisma.bookingStage.findFirst({
+      where: { id: stageId, bookingId },
+    });
+    if (!stage) throw new NotFoundException('Bosqich topilmadi');
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      if (status === 'in_progress') {
+        await tx.bookingStage.updateMany({
+          where: { bookingId, sortOrder: { lt: stage.sortOrder }, status: { not: 'done' } },
+          data: { status: 'done', completedAt: now },
+        });
+      }
+      await tx.bookingStage.update({
+        where: { id: stageId },
+        data: {
+          status,
+          startedAt: status === 'in_progress' ? (stage.startedAt ?? now) : stage.startedAt,
+          completedAt: status === 'done' ? now : null,
+        },
+      });
+    });
+
+    const updated = await this.getById(bookingId);
+    this.wsHub.broadcastToUser(booking.customerId, 'booking_stage', updated);
+    this.notifSvc.sendToUser(
+      booking.customerId,
+      'Ish holati yangilandi',
+      `${stage.name}: ${status === 'done' ? 'bajarildi' : 'boshlandi'}`,
+      'booking_stage',
+      bookingId,
+    );
+    return updated;
+  }
+
+  /// Fotohisobotga rasm qo'shadi (usta yoki servis egasi).
+  async addPhoto(bookingId: string, userId: string, url: string, stageId?: string) {
+    const booking = await this.requireBookingActor(bookingId, userId);
+    await this.prisma.bookingPhoto.create({
+      data: { bookingId, url, stageId: stageId || null },
+    });
+
+    const updated = await this.getById(bookingId);
+    this.wsHub.broadcastToUser(booking.customerId, 'booking_photo', updated);
+    this.notifSvc.sendToUser(
+      booking.customerId,
+      'Fotohisobot',
+      'Usta yangi rasm qo\'shdi',
+      'booking_photo',
+      bookingId,
+    );
+    return updated;
   }
 
   async getCustomerBookings(customerId: string, status: string, limit: number, skip: number) {

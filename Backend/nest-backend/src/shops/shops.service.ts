@@ -280,7 +280,7 @@ export class ShopsService {
         isActive: true,
         ...(serviceTypeId ? { serviceTypeId } : {}),
       },
-      include: { serviceType: true },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
       orderBy: [{ sortOrder: 'asc' }, { price: 'asc' }],
     });
   }
@@ -290,7 +290,7 @@ export class ShopsService {
     const shop = await this.findByUserId(userId);
     return this.prisma.shopServicePackage.findMany({
       where: { shopId: shop.id, ...(serviceTypeId ? { serviceTypeId } : {}) },
-      include: { serviceType: true },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
       orderBy: [{ serviceTypeId: 'asc' }, { sortOrder: 'asc' }, { price: 'asc' }],
     });
   }
@@ -303,6 +303,8 @@ export class ShopsService {
     price?: number;
     currency?: string;
     sortOrder?: number;
+    /// Ish bosqichlari nomlari, tartib bo'yicha.
+    stages?: string[];
   }) {
     const shop = await this.findByUserId(userId);
     if (!data.serviceTypeId || !data.name?.trim()) {
@@ -318,9 +320,19 @@ export class ShopsService {
         price: Math.max(0, Math.floor(Number(data.price ?? 0)) || 0),
         currency: data.currency ?? 'UZS',
         sortOrder: Math.floor(Number(data.sortOrder ?? 0)) || 0,
+        stages: { create: this.stageRows(data.stages) },
       },
-      include: { serviceType: true },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
     });
+  }
+
+  /// Bosqich nomlarini tozalab, tartib raqami bilan qaytaradi.
+  private stageRows(names?: string[]) {
+    return (names ?? [])
+      .map((n) => (n ?? '').trim())
+      .filter((n) => n.length > 0)
+      .slice(0, 12)
+      .map((name, i) => ({ name, sortOrder: i }));
   }
 
   async updatePackage(userId: string, id: string, data: Record<string, any>) {
@@ -339,10 +351,22 @@ export class ShopsService {
     if (data.sortOrder !== undefined) update.sortOrder = Math.floor(Number(data.sortOrder)) || 0;
     if (data.isActive !== undefined) update.isActive = !!data.isActive;
 
+    // Bosqichlar berilsa — to'liq almashtiriladi (tartib muhim, qisman
+    // yangilash chalkash bo'lardi). Mavjud BRONLAR o'z nusxasini saqlaydi.
+    if (Array.isArray(data.stages)) {
+      await this.prisma.packageStage.deleteMany({ where: { packageId: id } });
+      const rows = this.stageRows(data.stages);
+      if (rows.length) {
+        await this.prisma.packageStage.createMany({
+          data: rows.map((r) => ({ ...r, packageId: id })),
+        });
+      }
+    }
+
     return this.prisma.shopServicePackage.update({
       where: { id },
       data: update,
-      include: { serviceType: true },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
     });
   }
 

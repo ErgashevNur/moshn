@@ -216,6 +216,7 @@ export class ShopsController {
         price: body.price,
         currency: body.currency,
         sortOrder: body.sort_order ?? body.sortOrder,
+        stages: body.stages,
       }),
     };
   }
@@ -238,6 +239,7 @@ export class ShopsController {
         currency: body.currency,
         sortOrder: body.sort_order ?? body.sortOrder,
         isActive: body.is_active ?? body.isActive,
+        stages: body.stages,
       }),
     };
   }

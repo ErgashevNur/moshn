@@ -224,12 +224,60 @@ model ShopServicePackage {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  shop        ShopProfile @relation("ShopPackages", fields: [shopId], references: [id], onDelete: Cascade)
-  serviceType ServiceType @relation("ServiceTypePackages", fields: [serviceTypeId], references: [id], onDelete: Cascade)
-  bookings    Booking[]   @relation("BookingPackage")
+  shop        ShopProfile    @relation("ShopPackages", fields: [shopId], references: [id], onDelete: Cascade)
+  serviceType ServiceType    @relation("ServiceTypePackages", fields: [serviceTypeId], references: [id], onDelete: Cascade)
+  bookings    Booking[]      @relation("BookingPackage")
+  stages      PackageStage[] @relation("PackageStages")
 
   @@index([shopId, serviceTypeId])
   @@map("shop_service_packages")
+}
+
+/// Paket ichidagi ish bosqichlari ("Qabul → Diagnostika → Moy almashtirish →
+/// Yuvish"). Servis egasi paket yaratganda belgilaydi.
+model PackageStage {
+  id        String @id @default(uuid()) @db.Uuid
+  packageId String @map("package_id") @db.Uuid
+  name      String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  package ShopServicePackage @relation("PackageStages", fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+  @@map("package_stages")
+}
+
+/// Aniq bronning bosqichlari — bron yaratilganda paketdan KO'CHIRILADI.
+/// Paket keyin o'zgarsa ham bu bron o'z bosqichlarini saqlaydi.
+model BookingStage {
+  id          String    @id @default(uuid()) @db.Uuid
+  bookingId   String    @map("booking_id") @db.Uuid
+  name        String
+  sortOrder   Int       @default(0) @map("sort_order")
+  /// pending | in_progress | done
+  status      String    @default("pending") @db.VarChar(20)
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  booking Booking @relation("BookingStages", fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_stages")
+}
+
+/// Usta yuklagan fotohisobot.
+model BookingPhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  url       String
+  /// Qaysi bosqichda olingani (bo'lsa) — hisobotni guruhlash uchun.
+  stageId   String?  @map("stage_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation("BookingPhotos", fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_photos")
 }
 
 model Booking {
@@ -251,6 +299,8 @@ model Booking {
   cancelReason         String    @default("") @map("cancel_reason")
   completedAt          DateTime? @map("completed_at")
   reviewReminderSentAt DateTime? @map("review_reminder_sent_at")
+  /// Mijozga ko'rsatiladigan qisqa buyurtma raqami ("ЗАКАЗ №1042").
+  orderNo              Int       @default(autoincrement()) @map("order_no")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
@@ -260,6 +310,8 @@ model Booking {
   vehicle     Vehicle             @relation("BookingVehicle", fields: [vehicleId], references: [id])
   serviceType ServiceType         @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
   package     ShopServicePackage? @relation("BookingPackage", fields: [packageId], references: [id])
+  stages      BookingStage[]      @relation("BookingStages")
+  photos      BookingPhoto[]      @relation("BookingPhotos")
   payment     Payment?            @relation("BookingPayment")
   tips        Tip[]               @relation("BookingTips")
   reviews     Review[]            @relation("BookingReviews")
