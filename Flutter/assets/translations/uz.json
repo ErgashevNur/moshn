@@ -429,5 +429,23 @@
     "empty": "Hech narsa topilmadi",
     "masters": "USTALAR",
     "shops": "SERVISLAR"
+  },
+  "packages": {
+    "title": "Paketlar",
+    "subtitle": "Har xizmat uchun taklif: nomi, tarkibi, muddati va narxi",
+    "add": "Qo'shish",
+    "empty_hint": "Bu xizmat uchun paket yo'q",
+    "no_service_types": "Avval profilda xizmat turlarini tanlang",
+    "new_title": "Yangi paket",
+    "edit_title": "Paketni tahrirlash",
+    "name_hint": "Nomi (Bazoviy, Standart...)",
+    "desc_hint": "Tarkibi: nima kiradi",
+    "duration_hint": "Muddat, daqiqa",
+    "price_hint": "Narx, so'm",
+    "name_required": "Paket nomini kiriting",
+    "save_error": "Saqlab bo'lmadi",
+    "delete": "Paketni o'chirish",
+    "delete_title": "Paket o'chirilsinmi?",
+    "delete_hint": "Paket ro'yxatdan yo'qoladi. Mavjud bronlar saqlanadi."
   }
 }

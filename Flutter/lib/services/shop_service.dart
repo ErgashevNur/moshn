@@ -145,6 +145,59 @@ class ShopService {
     return data.map((e) => DateTime.parse(e as String).toLocal()).toList();
   }
 
+  // ── Paketlar (servis egasi) ────────────────────────────────────────────────
+
+  /// Egasining barcha paketlari — nofaollari ham.
+  Future<List<ServicePackage>> getMyPackages({String? serviceTypeId}) async {
+    final resp = await _dio.get('/service/packages',
+        queryParameters: {'service_type_id': ?serviceTypeId});
+    final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
+    return data
+        .map((e) => ServicePackage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ServicePackage> createPackage({
+    required String serviceTypeId,
+    required String name,
+    String description = '',
+    int durationMin = 60,
+    int price = 0,
+    int sortOrder = 0,
+  }) async {
+    final resp = await _dio.post('/service/packages', data: {
+      'service_type_id': serviceTypeId,
+      'name': name,
+      'description': description,
+      'duration_min': durationMin,
+      'price': price,
+      'sort_order': sortOrder,
+    });
+    return ServicePackage.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<ServicePackage> updatePackage(
+    String id, {
+    String? name,
+    String? description,
+    int? durationMin,
+    int? price,
+    bool? isActive,
+  }) async {
+    final resp = await _dio.put('/service/packages/$id', data: {
+      'name': ?name,
+      'description': ?description,
+      'duration_min': ?durationMin,
+      'price': ?price,
+      'is_active': ?isActive,
+    });
+    return ServicePackage.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<void> deletePackage(String id) async {
+    await _dio.delete('/service/packages/$id');
+  }
+
   Future<List<Review>> getShopReviews(String shopId, {int page = 1, int limit = 10}) async {
     final resp = await _dio.get(
       '/shops/$shopId/reviews',
