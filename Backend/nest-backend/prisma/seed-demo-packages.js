@@ -72,6 +72,16 @@ const TIERS = {
 
 const TIER_NAMES = ['Базовый', 'Стандарт', 'Премиум'];
 
+/// Ish bosqichlari — mijozga "В работе" ekranida ko'rinadi.
+/// Servis egasi keyin o'z ilovasidan tahrirlaydi.
+const STAGES = {
+  oil: ['Приёмка автомобиля', 'Диагностика', 'Замена масла и фильтра', 'Мойка и выдача'],
+  tires: ['Приёмка автомобиля', 'Снятие колёс', 'Шиномонтаж и балансировка', 'Установка и выдача'],
+  service: ['Приёмка автомобиля', 'Диагностика', 'Ремонтные работы', 'Проверка и выдача'],
+  body: ['Приёмка и осмотр', 'Подготовка поверхности', 'Основные работы', 'Полировка и выдача'],
+  electrics: ['Приёмка автомобиля', 'Диагностика', 'Устранение неисправности', 'Проверка и выдача'],
+};
+
 /// Servislar orasida narx bir xil bo'lmasin — "Arzon" saralashi ma'noli
 /// bo'lishi uchun har servisga barqaror (id'ga bog'liq) koeffitsient.
 function shopFactor(shopId) {
@@ -157,6 +167,12 @@ async function main() {
               durationMin: tier.durations[i],
               price: prices[i],
               sortOrder: i,
+              stages: {
+                create: (STAGES[st.category] || STAGES.service).map((name, k) => ({
+                  name,
+                  sortOrder: k,
+                })),
+              },
             },
           });
         }
@@ -184,11 +200,34 @@ async function main() {
     }
   }
 
+  const addedStages = await fillMissingStages();
+
   console.log(
-    `\nXULOSA: ${createdMasters} usta, ${createdPackages} paket, ` +
+    `\nBosqichi yo'q paketlarga qo'shildi: ${addedStages}`,
+  );
+  console.log(
+    `XULOSA: ${createdMasters} usta, ${createdPackages} paket, ` +
       `${createdPrices} narx yozuvi yaratildi; ${skipped} xizmat o'tkazib yuborildi (paketi bor).` +
       (DRY_RUN ? '\n(DRY RUN — hech narsa yozilmadi)' : ''),
   );
+}
+
+/// Bosqichi yo'q paketlarga standart bosqichlarni qo'shadi.
+/// Servis egasi allaqachon o'z bosqichlarini yozgan bo'lsa tegilmaydi.
+async function fillMissingStages() {
+  const packages = await prisma.shopServicePackage.findMany({
+    where: { stages: { none: {} } },
+    select: { id: true, serviceType: { select: { category: true } } },
+  });
+  if (!DRY_RUN) {
+    for (const pkg of packages) {
+      const names = STAGES[pkg.serviceType.category] || STAGES.service;
+      await prisma.packageStage.createMany({
+        data: names.map((name, i) => ({ packageId: pkg.id, name, sortOrder: i })),
+      });
+    }
+  }
+  return packages.length;
 }
 
 /// Eski namuna paketlarining nomi va tavsifini yangilaydi (narx tegilmaydi).
