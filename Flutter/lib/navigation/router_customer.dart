@@ -18,7 +18,7 @@ import '../screens/owner/map_screen.dart';
 import '../screens/owner/owner_root.dart';
 import '../screens/owner/payment_screen.dart';
 import '../screens/owner/search_screen.dart';
-import '../screens/owner/service_category_screen.dart';
+import '../screens/owner/book_service_screen.dart';
 import '../screens/owner/service_group_screen.dart';
 import '../screens/owner/shop_detail_screen.dart';
 import '../screens/owner/sos_request_screen.dart';
@@ -114,7 +114,7 @@ final routerCustomerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'services/:slug',
-            builder: (ctx, st) => ServiceCategoryScreen(slug: st.pathParameters['slug']!),
+            builder: (ctx, st) => BookServiceScreen(serviceSlug: st.pathParameters['slug']!),
           ),
           GoRoute(path: 'vehicles/new', builder: (_, _) => const AddVehicleScreen()),
           GoRoute(

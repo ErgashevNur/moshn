@@ -29,7 +29,7 @@ export class BookingsService {
 
   async create(customerId: string, data: {
     shopId: string;
-    masterId: string;
+    masterId?: string;
     vehicleId: string;
     serviceTypeId: string;
     packageId?: string;
@@ -47,12 +47,22 @@ export class BookingsService {
     });
     if (!shop) throw new NotFoundException('Servis topilmadi');
 
-    // Mijoz aniq ustaga yoziladi — usta shu servisga tegishli va faol bo'lishi shart
-    if (!data.masterId) throw new BadRequestException('Usta tanlanmagan');
-    const master = await this.prisma.master.findFirst({
-      where: { id: data.masterId, shopId: data.shopId, isActive: true },
-    });
-    if (!master) throw new BadRequestException('Usta topilmadi yoki bu servisga tegishli emas');
+    // Mijoz aniq ustaga yoziladi. Zapis ekranida usta tanlash yo'q
+    // (maket bo'yicha) — u holda serverning o'zi shu vaqtda BO'SH ustani
+    // tanlaydi. Ilova tomonida "birinchi usta"ni tanlash noto'g'ri bo'lardi:
+    // u band bo'lsa ikkita bron ustma-ust tushardi.
+    const master = data.masterId
+      ? await this.prisma.master.findFirst({
+          where: { id: data.masterId, shopId: data.shopId, isActive: true },
+        })
+      : await this.pickFreeMaster(data.shopId, new Date(data.scheduledAt), data.packageId);
+    if (!master) {
+      throw new BadRequestException(
+        data.masterId
+          ? 'Usta topilmadi yoki bu servisga tegishli emas'
+          : "Bu vaqtda bo'sh usta yo'q",
+      );
+    }
 
     // Paket tanlangan bo'lsa — narx va davomiylik SERVERDA undan olinadi,
     // mijoz yuborgan narxga ishonilmaydi. Davomiylik bronga ko'chiriladi:
@@ -82,7 +92,7 @@ export class BookingsService {
       data: {
         customerId,
         shopId: data.shopId,
-        masterId: data.masterId,
+        masterId: master.id,
         vehicleId: data.vehicleId,
         serviceTypeId: data.serviceTypeId,
         packageId,
@@ -105,6 +115,48 @@ export class BookingsService {
     this.shopSvc.upsertCustomerCard(data.shopId, customerId).catch(() => null);
 
     return booking;
+  }
+
+  /// Berilgan vaqtda ishi bo'lmagan faol ustani qaytaradi (yo'q bo'lsa null).
+  private async pickFreeMaster(shopId: string, startAt: Date, packageId?: string) {
+    let durationMin = 60;
+    if (packageId) {
+      const pkg = await this.prisma.shopServicePackage.findUnique({
+        where: { id: packageId },
+        select: { durationMin: true },
+      });
+      if (pkg) durationMin = pkg.durationMin;
+    }
+    const endAt = new Date(startAt.getTime() + durationMin * 60_000);
+
+    const masters = await this.prisma.master.findMany({
+      where: { shopId, isActive: true },
+      select: { id: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!masters.length) return null;
+
+    // Shu oraliqqa tegib turgan bronlar (kesishish tekshiruvi bron
+    // davomiyligini hisobga oladi).
+    const overlapping = await this.prisma.booking.findMany({
+      where: {
+        shopId,
+        status: { in: ['pending', 'confirmed', 'in_progress'] },
+        scheduledAt: { lt: endAt, gte: new Date(startAt.getTime() - 8 * 60 * 60_000) },
+      },
+      select: { masterId: true, scheduledAt: true, durationMin: true },
+    });
+    const busy = new Set(
+      overlapping
+        .filter((b) => {
+          const bEnd = b.scheduledAt.getTime() + (b.durationMin || 60) * 60_000;
+          return b.scheduledAt.getTime() < endAt.getTime() && startAt.getTime() < bEnd;
+        })
+        .map((b) => b.masterId),
+    );
+
+    const free = masters.find((m) => !busy.has(m.id));
+    return free ? this.prisma.master.findUnique({ where: { id: free.id } }) : null;
   }
 
   async getCustomerBookings(customerId: string, status: string, limit: number, skip: number) {

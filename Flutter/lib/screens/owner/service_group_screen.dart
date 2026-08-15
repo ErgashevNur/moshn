@@ -11,7 +11,7 @@ import '../../theme/typography.dart';
 import '../../widgets/m_service_tile.dart';
 
 /// Bosh ekranda tanlangan kategoriya ichidagi xizmat turlari (2-bosqich).
-/// Tur bosilsa mavjud `/owner/services/:slug` (ServiceCategoryScreen) ochiladi.
+/// Tur bosilsa `/owner/services/:slug` (BookServiceScreen — zapis oqimi) ochiladi.
 ///
 /// `categoryId == 'all'` — maxsus rejim: bosh ekrandagi "Barcha xizmatlar"
 /// havolasi, kategoriyaga bo'lmasdan butun katalogni ko'rsatadi.

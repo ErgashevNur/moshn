@@ -8,7 +8,9 @@ class BookingService {
 
   Future<Booking> createBooking({
     required String shopId,
-    required String masterId,
+    /// Bo'sh qoldirilsa server o'zi shu vaqtda bo'sh ustani tayinlaydi.
+    String? masterId,
+    String? packageId,
     required String vehicleId,
     required String serviceTypeId,
     required DateTime scheduledAt,
@@ -17,7 +19,8 @@ class BookingService {
   }) async {
     final resp = await _dio.post('/bookings', data: {
       'shop_id': shopId,
-      'master_id': masterId,
+      'master_id': ?masterId,
+      'package_id': ?packageId,
       'vehicle_id': vehicleId,
       'service_type_id': serviceTypeId,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
