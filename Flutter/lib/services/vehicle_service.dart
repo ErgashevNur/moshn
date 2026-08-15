@@ -54,6 +54,16 @@ class VehicleService {
     return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
   }
 
+  /// Mashina rasmini yuklaydi va yangilangan `Vehicle`ni qaytaradi.
+  /// Server eski rasmni o'zi o'chiradi.
+  Future<Vehicle> uploadPhoto(String id, String filePath) async {
+    final form = FormData.fromMap({
+      'photo': await MultipartFile.fromFile(filePath),
+    });
+    final resp = await _dio.put('/vehicles/$id/photo', data: form);
+    return Vehicle.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
   Future<void> deleteVehicle(String id) async {
     await _dio.delete('/vehicles/$id');
   }

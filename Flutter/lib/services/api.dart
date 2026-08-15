@@ -69,6 +69,20 @@ class ApiClient {
     return '$_ngrokUrl/v1';
   }
 
+  /// Serverdagi fayl yo'lini (`/uploads/vehicles/xxx.jpg`) to'liq URL'ga
+  /// aylantiradi. Yuklamalar `/v1` siz beriladi (`useStaticAssets`, main.ts),
+  /// shuning uchun bazadan `/v1` qirqiladi.
+  /// Bo'sh yoki allaqachon to'liq URL bo'lsa — o'zgartirmaydi.
+  static String mediaUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    final origin = baseUrl.endsWith('/v1')
+        ? baseUrl.substring(0, baseUrl.length - 3)
+        : baseUrl;
+    final sep = path.startsWith('/') ? '' : '/';
+    return '$origin$sep$path';
+  }
+
   Future<String?> get accessToken async {
     if (_accessTokenLoaded) return _accessTokenCache;
     _accessTokenCache = await _storage.read(key: _accessKey);

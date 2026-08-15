@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { existsSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -65,6 +67,39 @@ export class VehiclesService {
       if (data[key] !== undefined) update[key] = this.normalizeKm(data[key]);
     }
     return this.prisma.vehicle.update({ where: { id }, data: update });
+  }
+
+  /// Rasm yuklangandan keyin chaqiriladi. Egalik shu yerda tekshiriladi —
+  /// begona mashinaga rasm biriktirib bo'lmaydi.
+  async updatePhoto(id: string, ownerId: string, photoUrl: string) {
+    const v = await this.prisma.vehicle.findFirst({ where: { id, ownerId } });
+    if (!v) {
+      // Fayl allaqachon diskka yozilgan — egasi bo'lmasa uni qoldirmaymiz.
+      this.removeUploadedFile(photoUrl);
+      throw new NotFoundException('Mashina topilmadi');
+    }
+
+    const updated = await this.prisma.vehicle.update({
+      where: { id },
+      data: { photoUrl },
+    });
+
+    // Eski rasm endi kerak emas — diskda to'planib qolmasin.
+    if (v.photoUrl && v.photoUrl !== photoUrl) this.removeUploadedFile(v.photoUrl);
+
+    return updated;
+  }
+
+  /// `/uploads/...` URL'ini diskdagi yo'lga aylantirib o'chiradi.
+  /// Xatolar yutiladi: rasm tozalanmasligi asosiy amalni buzmasligi kerak.
+  private removeUploadedFile(url: string) {
+    try {
+      if (!url.startsWith('/uploads/')) return;
+      const abs = join(process.cwd(), url.replace(/^\//, ''));
+      if (existsSync(abs)) unlinkSync(abs);
+    } catch {
+      // e'tiborsiz qoldiriladi
+    }
   }
 
   async remove(id: string, ownerId: string) {

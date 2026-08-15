@@ -3,15 +3,18 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/promo.dart';
 import '../../models/service_category.dart';
 import '../../models/service_type.dart';
 import '../../models/shop.dart';
 import '../../models/vehicle.dart';
+import '../../services/api.dart';
 import '../../services/notification_service.dart';
 import '../../services/promo_service.dart';
 import '../../services/shop_service.dart';
+import '../../services/vehicle_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -416,12 +419,14 @@ class _ServiceCategoryGrid extends StatelessWidget {
       ),
       itemBuilder: (context, i) {
         if (i == kServiceCategories.length) {
+          // AutoTouch — SOS emas, shuning uchun ogohlantirish belgisi emas,
+          // signal ikonkasi. Hozircha mavjud oqimga olib boradi; keyinchalik
+          // o'z detal sahifasi bo'ladi.
           return _ServiceCard(
             title: 'category.sos'.tr(),
             subtitle: 'category.sos_sub'.tr(),
-            iconName: 'wrench',
+            iconName: 'signal',
             accent: AppColors.danger,
-            isSos: true,
             onTap: onSosTap,
           );
         }
@@ -447,7 +452,6 @@ class _ServiceCard extends StatelessWidget {
   final String subtitle;
   final String iconName;
   final Color accent;
-  final bool isSos;
   final VoidCallback onTap;
 
   const _ServiceCard({
@@ -456,7 +460,6 @@ class _ServiceCard extends StatelessWidget {
     required this.iconName,
     required this.accent,
     required this.onTap,
-    this.isSos = false,
   });
 
   @override
@@ -481,28 +484,7 @@ class _ServiceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // SOS uchun ikonka o'rniga "SOS" belgisi — icon to'plamida
-              // mos belgi yo'q, `_SosFab` ham shu ko'rinishda.
-              if (isSos)
-                Container(
-                  height: iconSize,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: accent,
-                    borderRadius: BorderRadius.circular(AppSpacing.r_full),
-                  ),
-                  alignment: Alignment.center,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'SOS',
-                      style: AppTypography.soraSize(10, weight: FontWeight.w800)
-                          .copyWith(color: Colors.white, letterSpacing: -0.2),
-                    ),
-                  ),
-                )
-              else
-                PitGoIcon(name: iconName, size: iconSize, color: accent),
+              PitGoIcon(name: iconName, size: iconSize, color: accent),
               SizedBox(height: pad * 0.55),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,58 +596,185 @@ const _cardPanel = Color(0xFF1C1C20);
 const _cardBorder = Color(0xFF2A2A30);
 const _cardTextDim = Color(0xFF8A8A94);
 
-class _VehicleCard extends StatelessWidget {
+class _VehicleCard extends ConsumerStatefulWidget {
   final Vehicle vehicle;
   final _R r;
 
   const _VehicleCard({required this.vehicle, required this.r});
 
   @override
-  Widget build(BuildContext context) {
-    final v = vehicle;
-    final title = [v.make, v.model].where((s) => s.isNotEmpty).join(' ');
-    final photo = v.photoUrl;
-    final small = r.isSmall;
-    final thumb = small ? 56.0 : 66.0;
-    final kmLeft = v.kmToService;
+  ConsumerState<_VehicleCard> createState() => _VehicleCardState();
+}
 
-    return GestureDetector(
-      onTap: () => context.push('/owner/vehicles/edit', extra: v),
-      child: Container(
-        padding: EdgeInsets.all(small ? 12 : 14),
-        decoration: BoxDecoration(
-          color: _cardBg,
-          borderRadius: BorderRadius.circular(AppSpacing.r_lg),
-        ),
+class _VehicleCardState extends ConsumerState<_VehicleCard> {
+  bool _uploading = false;
+
+  /// Kamera yoki galereyadan rasm tanlab, serverga yuklaydi.
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.r_sm),
-                  child: SizedBox(
-                    width: thumb,
-                    height: thumb,
-                    child: photo != null && photo.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: photo,
-                            fit: BoxFit.cover,
-                            placeholder: (_, _) => const _VehiclePhotoFallback(),
-                            errorWidget: (_, _, _) => const _VehiclePhotoFallback(),
-                          )
-                        : const _VehiclePhotoFallback(),
-                  ),
-                ),
-                SizedBox(width: small ? 10 : 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(Icons.photo_camera_rounded,
+                  color: AppColors.text(ctx)),
+              title: Text('vehicle.photo_camera'.tr(),
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.text(ctx))),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading:
+                  Icon(Icons.photo_library_rounded, color: AppColors.text(ctx)),
+              title: Text('vehicle.photo_gallery'.tr(),
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.text(ctx))),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    try {
+      // Kartada baribir kesib ko'rsatiladi — juda katta faylni yubormaymiz
+      // (server chegarasi 8 MB).
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1920,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      setState(() => _uploading = true);
+      await VehicleService().uploadPhoto(widget.vehicle.id, picked.path);
+      ref.invalidate(vehiclesProvider);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('vehicle.photo_error'.tr()),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(AppSpacing.lg),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = widget.vehicle;
+    final r = widget.r;
+    final title = [v.make, v.model].where((s) => s.isNotEmpty).join(' ');
+    final photo = ApiClient.mediaUrl(v.photoUrl);
+    final small = r.isSmall;
+    final kmLeft = v.kmToService;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(AppSpacing.r_lg),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Rasm: butun kenglik, qat'iy balandlik ────────────────────
+          // `BoxFit.cover` — har qanday nisbatdagi rasm bo'sh joy
+          // qoldirmasdan va cho'zilmasdan joylashadi; barcha kartalar
+          // bir xil o'lchamda ko'rinadi.
+          GestureDetector(
+            onTap: _uploading ? null : _pickPhoto,
+            child: SizedBox(
+              height: _photoHeight(r),
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (photo.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: photo,
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) => const _VehiclePhotoFallback(),
+                      errorWidget: (_, _, _) => const _VehiclePhotoFallback(),
+                    )
+                  else
+                    const _VehiclePhotoFallback(),
+
+                  if (_uploading)
+                    ColoredBox(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.5, color: Colors.white),
+                        ),
+                      ),
+                    )
+                  else
+                    // Rasm qo'shish/almashtirish tugmasi
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.r_full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.photo_camera_rounded,
+                                size: 14, color: Colors.white),
+                            const SizedBox(width: 5),
+                            Text(
+                              (photo.isEmpty
+                                      ? 'vehicle.photo_add'
+                                      : 'vehicle.photo_change')
+                                  .tr(),
+                              style: AppTypography.soraSize(10.5,
+                                      weight: FontWeight.w600)
+                                  .copyWith(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Ma'lumot ─────────────────────────────────────────────────
+          GestureDetector(
+            onTap: () => context.push('/owner/vehicles/edit', extra: v),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.all(small ? 12 : 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      // Holat belgisi
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
@@ -681,58 +790,58 @@ class _VehicleCard extends StatelessWidget {
                               .copyWith(color: AppColors.success),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        title.isNotEmpty ? title : v.plate,
-                        style: AppTypography.soraSize(small ? 15 : 17,
-                                weight: FontWeight.w700)
-                            .copyWith(color: Colors.white, height: 1.1),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: MPlate(plate: v.plate),
-                      ),
+                      const Spacer(),
+                      Icon(Icons.chevron_right_rounded,
+                          size: 20, color: _cardTextDim),
                     ],
                   ),
-                ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 20, color: _cardTextDim),
-              ],
-            ),
-            // Probeg / keyingi TO — faqat mijoz kiritgan bo'lsa.
-            if (v.mileageKm > 0 || kmLeft != null) ...[
-              SizedBox(height: small ? 10 : 12),
-              Row(
-                children: [
-                  if (v.mileageKm > 0)
-                    Expanded(
-                      child: _VehicleStat(
-                        label: 'vehicle.mileage_short'.tr(),
-                        value: '${_fmtKm(v.mileageKm)} km',
-                        small: small,
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    title.isNotEmpty ? title : v.plate,
+                    style: AppTypography.soraSize(small ? 16 : 18,
+                            weight: FontWeight.w700)
+                        .copyWith(color: Colors.white, height: 1.1),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: MPlate(plate: v.plate),
+                  ),
+                  if (v.mileageKm > 0 || kmLeft != null) ...[
+                    SizedBox(height: small ? 10 : 12),
+                    Row(
+                      children: [
+                        if (v.mileageKm > 0)
+                          Expanded(
+                            child: _VehicleStat(
+                              label: 'vehicle.mileage_short'.tr(),
+                              value: '${_fmtKm(v.mileageKm)} km',
+                              small: small,
+                            ),
+                          ),
+                        if (v.mileageKm > 0 && kmLeft != null)
+                          SizedBox(width: small ? 8 : 10),
+                        if (kmLeft != null)
+                          Expanded(
+                            child: _VehicleStat(
+                              label: 'vehicle.next_service_short'.tr(),
+                              value: 'vehicle.in_km'
+                                  .tr(namedArgs: {'km': _fmtKm(kmLeft)}),
+                              valueColor: AppColors.gold,
+                              small: small,
+                            ),
+                          ),
+                      ],
                     ),
-                  if (v.mileageKm > 0 && kmLeft != null)
-                    SizedBox(width: small ? 8 : 10),
-                  if (kmLeft != null)
-                    Expanded(
-                      child: _VehicleStat(
-                        label: 'vehicle.next_service_short'.tr(),
-                        value: 'vehicle.in_km'
-                            .tr(namedArgs: {'km': _fmtKm(kmLeft)}),
-                        valueColor: AppColors.gold,
-                        small: small,
-                      ),
-                    ),
+                  ],
                 ],
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -741,10 +850,13 @@ class _VehicleCard extends StatelessWidget {
 String _fmtKm(int n) => n.toString().replaceAllMapped(
     RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ');
 
-/// Karusel (`PageView`) chegaralangan balandlik talab qiladi. Qiymat eng
-/// "to'la" holatga (probeg + TO paneli bilan) mo'ljallangan — ma'lumoti
-/// kamroq kartalar yuqoriga tekislanadi.
-double _cardHeight(_R r) => r.isSmall ? 158 : (r.isWide ? 196 : 178);
+/// Rasm balandligi — barcha kartalar uchun bir xil, ekran kengligiga qarab.
+double _photoHeight(_R r) => r.isSmall ? 122 : (r.isWide ? 190 : 152);
+
+/// Karusel (`PageView`) chegaralangan balandlik talab qiladi: rasm + pastdagi
+/// ma'lumot bloki. Qiymat eng "to'la" holatga (probeg + TO paneli bilan)
+/// mo'ljallangan — ma'lumoti kamroq kartalar yuqoriga tekislanadi.
+double _cardHeight(_R r) => _photoHeight(r) + (r.isSmall ? 150 : 168);
 
 class _VehicleStat extends StatelessWidget {
   final String label;

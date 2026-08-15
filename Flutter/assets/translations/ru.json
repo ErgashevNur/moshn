@@ -301,7 +301,12 @@
     "active": "Активен",
     "mileage_short": "Пробег",
     "next_service_short": "Следующее ТО",
-    "in_km": "через {km} км"
+    "in_km": "через {km} км",
+    "photo_add": "Добавить фото",
+    "photo_change": "Изменить фото",
+    "photo_camera": "Камера",
+    "photo_gallery": "Галерея",
+    "photo_error": "Не удалось загрузить фото. Попробуйте снова"
   },
   "dates": {
     "today": "Сегодня",

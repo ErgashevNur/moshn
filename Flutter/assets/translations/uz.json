@@ -301,7 +301,12 @@
     "active": "Faol",
     "mileage_short": "Probeg",
     "next_service_short": "Keyingi TO",
-    "in_km": "{km} km dan keyin"
+    "in_km": "{km} km dan keyin",
+    "photo_add": "Rasm qo'shish",
+    "photo_change": "Rasmni almashtirish",
+    "photo_camera": "Kamera",
+    "photo_gallery": "Galereya",
+    "photo_error": "Rasm yuklanmadi. Qaytadan urinib ko'ring"
   },
   "dates": {
     "today": "Bugun",
