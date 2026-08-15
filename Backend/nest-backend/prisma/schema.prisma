@@ -64,12 +64,13 @@ model ShopProfile {
   createdAt          DateTime                               @default(now()) @map("created_at")
   updatedAt          DateTime                               @updatedAt @map("updated_at")
 
-  user          User               @relation(fields: [userId], references: [id])
-  bookings      Booking[]          @relation("BookingShop")
-  customerCards CustomerCard[]     @relation("CustomerCardShop")
-  servicePrices ShopServicePrice[] @relation("ShopPrices")
-  masters       Master[]           @relation("ShopMasters")
-  sosDispatches SosDispatch[]      @relation("SosDispatchShop")
+  user          User                 @relation(fields: [userId], references: [id])
+  bookings      Booking[]            @relation("BookingShop")
+  customerCards CustomerCard[]       @relation("CustomerCardShop")
+  servicePrices ShopServicePrice[]   @relation("ShopPrices")
+  packages      ShopServicePackage[] @relation("ShopPackages")
+  masters       Master[]             @relation("ShopMasters")
+  sosDispatches SosDispatch[]        @relation("SosDispatchShop")
 
   @@map("shop_profiles")
 }
@@ -150,10 +151,11 @@ model ServiceType {
   priceMax Int     @default(0) @map("price_max")
   isActive Boolean @default(true) @map("is_active")
 
-  bookings    Booking[]           @relation("BookingServiceType")
-  shopPrices  ShopServicePrice[]  @relation("ServiceTypePrices")
-  masters     MasterServiceType[] @relation("ServiceTypeMasters")
-  sosRequests SosRequest[]        @relation("SosRequestServiceType")
+  bookings    Booking[]            @relation("BookingServiceType")
+  shopPrices  ShopServicePrice[]   @relation("ServiceTypePrices")
+  packages    ShopServicePackage[] @relation("ServiceTypePackages")
+  masters     MasterServiceType[]  @relation("ServiceTypeMasters")
+  sosRequests SosRequest[]         @relation("SosRequestServiceType")
 
   @@map("service_types")
 }
@@ -201,6 +203,35 @@ model ShopServicePrice {
   @@map("shop_service_prices")
 }
 
+/// Xizmat paketi ("Bazoviy / Standart / Premium" kabi). Har bir servis
+/// O'ZI belgilaydi — nomi, tarkibi, muddati va narxi servisdan servisga
+/// farq qiladi (CLAUDE.md §6 ruhida). `ShopServicePrice` umumiy diapazon
+/// bo'lsa, paket — aniq taklif: shu narxga aynan nima kiradi.
+model ShopServicePackage {
+  id            String   @id @default(uuid()) @db.Uuid
+  shopId        String   @map("shop_id") @db.Uuid
+  serviceTypeId String   @map("service_type_id") @db.Uuid
+  name          String
+  /// Tarkibi: "Motul 5W-40, filtr, 12 tugun tekshiruvi"
+  description   String   @default("")
+  /// Ishning taxminiy davomiyligi — bo'sh vaqtlarni hisoblashda ishlatiladi.
+  durationMin   Int      @default(60) @map("duration_min")
+  price         Int      @default(0)
+  currency      String   @default("UZS") @db.VarChar(10)
+  /// Ro'yxatdagi tartib (arzondan qimmatga emas — servis o'zi joylashtiradi).
+  sortOrder     Int      @default(0) @map("sort_order")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shop        ShopProfile @relation("ShopPackages", fields: [shopId], references: [id], onDelete: Cascade)
+  serviceType ServiceType @relation("ServiceTypePackages", fields: [serviceTypeId], references: [id], onDelete: Cascade)
+  bookings    Booking[]   @relation("BookingPackage")
+
+  @@index([shopId, serviceTypeId])
+  @@map("shop_service_packages")
+}
+
 model Booking {
   id                   String    @id @default(uuid()) @db.Uuid
   customerId           String    @map("customer_id") @db.Uuid
@@ -208,7 +239,12 @@ model Booking {
   masterId             String    @map("master_id") @db.Uuid
   vehicleId            String    @map("vehicle_id") @db.Uuid
   serviceTypeId        String    @map("service_type_id") @db.Uuid
+  /// Mijoz tanlagan paket (bo'lsa). Narx va davomiylik shundan olinadi.
+  packageId            String?   @map("package_id") @db.Uuid
   scheduledAt          DateTime  @map("scheduled_at")
+  /// Ishning davomiyligi — paketdan ko'chiriladi, keyin paket o'zgarsa ham
+  /// bu bron o'z vaqtini saqlaydi (bo'sh vaqtlarni hisoblash uchun).
+  durationMin          Int       @default(60) @map("duration_min")
   notes                String    @default("")
   status               String    @default("pending") @db.VarChar(30)
   totalPrice           Int       @default(0) @map("total_price")
@@ -218,14 +254,15 @@ model Booking {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  customer    User        @relation("BookingCustomer", fields: [customerId], references: [id])
-  shop        ShopProfile @relation("BookingShop", fields: [shopId], references: [id])
-  master      Master      @relation("BookingMaster", fields: [masterId], references: [id])
-  vehicle     Vehicle     @relation("BookingVehicle", fields: [vehicleId], references: [id])
-  serviceType ServiceType @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
-  payment     Payment?    @relation("BookingPayment")
-  tips        Tip[]       @relation("BookingTips")
-  reviews     Review[]    @relation("BookingReviews")
+  customer    User                @relation("BookingCustomer", fields: [customerId], references: [id])
+  shop        ShopProfile         @relation("BookingShop", fields: [shopId], references: [id])
+  master      Master              @relation("BookingMaster", fields: [masterId], references: [id])
+  vehicle     Vehicle             @relation("BookingVehicle", fields: [vehicleId], references: [id])
+  serviceType ServiceType         @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
+  package     ShopServicePackage? @relation("BookingPackage", fields: [packageId], references: [id])
+  payment     Payment?            @relation("BookingPayment")
+  tips        Tip[]               @relation("BookingTips")
+  reviews     Review[]            @relation("BookingReviews")
 
   @@index([masterId])
   @@map("bookings")

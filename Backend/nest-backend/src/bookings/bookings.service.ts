@@ -8,6 +8,7 @@ import { WsHub } from '../ws/ws.hub';
 
 const BOOKING_INCLUDE = {
   customer: true,
+  package: true,
   shop: { include: { user: true } },
   master: true,
   vehicle: true,
@@ -31,6 +32,7 @@ export class BookingsService {
     masterId: string;
     vehicleId: string;
     serviceTypeId: string;
+    packageId?: string;
     scheduledAt: string;
     notes?: string;
     totalPrice?: number;
@@ -52,6 +54,30 @@ export class BookingsService {
     });
     if (!master) throw new BadRequestException('Usta topilmadi yoki bu servisga tegishli emas');
 
+    // Paket tanlangan bo'lsa — narx va davomiylik SERVERDA undan olinadi,
+    // mijoz yuborgan narxga ishonilmaydi. Davomiylik bronga ko'chiriladi:
+    // keyin paket o'zgarsa ham bu bron o'z vaqtini saqlaydi.
+    let packageId: string | null = null;
+    let durationMin = 60;
+    let totalPrice = data.totalPrice ?? 0;
+
+    if (data.packageId) {
+      const pkg = await this.prisma.shopServicePackage.findFirst({
+        where: {
+          id: data.packageId,
+          shopId: data.shopId,
+          serviceTypeId: data.serviceTypeId,
+          isActive: true,
+        },
+      });
+      if (!pkg) {
+        throw new BadRequestException('Paket topilmadi yoki bu xizmatga tegishli emas');
+      }
+      packageId = pkg.id;
+      durationMin = pkg.durationMin;
+      totalPrice = pkg.price;
+    }
+
     const booking = await this.prisma.booking.create({
       data: {
         customerId,
@@ -59,9 +85,11 @@ export class BookingsService {
         masterId: data.masterId,
         vehicleId: data.vehicleId,
         serviceTypeId: data.serviceTypeId,
+        packageId,
+        durationMin,
         scheduledAt: new Date(data.scheduledAt),
         notes: data.notes ?? '',
-        totalPrice: data.totalPrice ?? 0,
+        totalPrice,
         status: 'pending',
       },
       include: BOOKING_INCLUDE,

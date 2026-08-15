@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../models/promo.dart';
 import '../../models/service_category.dart';
@@ -14,7 +13,6 @@ import '../../services/api.dart';
 import '../../services/notification_service.dart';
 import '../../services/promo_service.dart';
 import '../../services/shop_service.dart';
-import '../../services/vehicle_service.dart';
 import '../../store/auth_store.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
@@ -23,6 +21,7 @@ import '../../widgets/m_pitgo_icon.dart';
 import '../../widgets/m_plate.dart';
 import '../../widgets/m_tag.dart';
 import '../../widgets/m_workshop_card.dart';
+import '../../widgets/vehicle_photo_picker.dart';
 import 'my_vehicles_screen.dart' show vehiclesProvider;
 
 // ── Providers ──────────────────────────────────────────────────────────────────
@@ -154,7 +153,6 @@ class OwnerHomeScreen extends ConsumerWidget {
                   _ServiceCategoryGrid(
                     r: r,
                     onTap: (categoryId) => context.push('/owner/category/$categoryId'),
-                    onSosTap: () => context.push('/owner/sos'),
                   ),
                   SizedBox(height: r.isSmall ? 16 : 24),
 
@@ -392,12 +390,10 @@ class _SearchBar extends StatelessWidget {
 class _ServiceCategoryGrid extends StatelessWidget {
   final _R r;
   final void Function(String categoryId) onTap;
-  final VoidCallback onSosTap;
 
   const _ServiceCategoryGrid({
     required this.r,
     required this.onTap,
-    required this.onSosTap,
   });
 
   @override
@@ -419,15 +415,16 @@ class _ServiceCategoryGrid extends StatelessWidget {
       ),
       itemBuilder: (context, i) {
         if (i == kServiceCategories.length) {
-          // AutoTouch — SOS emas, shuning uchun ogohlantirish belgisi emas,
-          // signal ikonkasi. Hozircha mavjud oqimga olib boradi; keyinchalik
-          // o'z detal sahifasi bo'ladi.
+          // AutoTouch — SOS emas (shuning uchun signal ikonkasi).
+          // Hozircha ATAYLAB hech qayerga olib bormaydi: o'z detal sahifasi
+          // hali yo'q, SOS oqimiga tushirish esa noto'g'ri bo'lardi.
+          // Tugmaning o'zi ko'rinib turadi.
           return _ServiceCard(
             title: 'category.sos'.tr(),
             subtitle: 'category.sos_sub'.tr(),
             iconName: 'signal',
             accent: AppColors.danger,
-            onTap: onSosTap,
+            onTap: null,
           );
         }
         final c = kServiceCategories[i];
@@ -452,7 +449,9 @@ class _ServiceCard extends StatelessWidget {
   final String subtitle;
   final String iconName;
   final Color accent;
-  final VoidCallback onTap;
+  /// `null` — katak ko'rinadi, lekin hech qanday amal bajarmaydi
+  /// (AutoTouch: detal sahifasi hali yo'q).
+  final VoidCallback? onTap;
 
   const _ServiceCard({
     required this.title,
@@ -609,65 +608,15 @@ class _VehicleCard extends ConsumerStatefulWidget {
 class _VehicleCardState extends ConsumerState<_VehicleCard> {
   bool _uploading = false;
 
-  /// Kamera yoki galereyadan rasm tanlab, serverga yuklaydi.
-  Future<void> _pickPhoto() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: AppColors.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: Icon(Icons.photo_camera_rounded,
-                  color: AppColors.text(ctx)),
-              title: Text('vehicle.photo_camera'.tr(),
-                  style: AppTypography.labelMedium
-                      .copyWith(color: AppColors.text(ctx))),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading:
-                  Icon(Icons.photo_library_rounded, color: AppColors.text(ctx)),
-              title: Text('vehicle.photo_gallery'.tr(),
-                  style: AppTypography.labelMedium
-                      .copyWith(color: AppColors.text(ctx))),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-
+  /// Rasm hali qo'yilmagan bo'lsa — tanlash oynasini ochadi.
+  /// Rasm allaqachon bor bo'lsa bu yerdan almashtirilmaydi: almashtirish
+  /// mashinani tahrirlash ekranida (bosh ekran toza qolsin).
+  Future<void> _addPhoto() async {
+    setState(() => _uploading = true);
     try {
-      // Kartada baribir kesib ko'rsatiladi — juda katta faylni yubormaymiz
-      // (server chegarasi 8 MB).
-      final picked = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 1920,
-        imageQuality: 85,
-      );
-      if (picked == null) return;
-
-      setState(() => _uploading = true);
-      await VehicleService().uploadPhoto(widget.vehicle.id, picked.path);
-      ref.invalidate(vehiclesProvider);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('vehicle.photo_error'.tr()),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(AppSpacing.lg),
-        ),
-      );
+      final updated =
+          await pickAndUploadVehiclePhoto(context, widget.vehicle.id);
+      if (updated != null) ref.invalidate(vehiclesProvider);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -697,7 +646,13 @@ class _VehicleCardState extends ConsumerState<_VehicleCard> {
           // qoldirmasdan va cho'zilmasdan joylashadi; barcha kartalar
           // bir xil o'lchamda ko'rinadi.
           GestureDetector(
-            onTap: _uploading ? null : _pickPhoto,
+            // Rasm bo'lmasa — qo'yish oynasi ochiladi. Rasm bor bo'lsa
+            // kartaning qolgan qismi kabi tahrirlash ekraniga o'tadi.
+            onTap: _uploading
+                ? null
+                : (photo.isEmpty
+                    ? _addPhoto
+                    : () => context.push('/owner/vehicles/edit', extra: v)),
             child: SizedBox(
               height: _photoHeight(r),
               width: double.infinity,
@@ -726,8 +681,10 @@ class _VehicleCardState extends ConsumerState<_VehicleCard> {
                         ),
                       ),
                     )
-                  else
-                    // Rasm qo'shish/almashtirish tugmasi
+                  // Tugma FAQAT rasm hali qo'yilmaganda ko'rinadi. Rasm
+                  // qo'yilgach u rasmni to'sib turmasligi kerak —
+                  // almashtirish tahrirlash ekranida.
+                  else if (photo.isEmpty)
                     Positioned(
                       right: 10,
                       bottom: 10,
@@ -746,10 +703,7 @@ class _VehicleCardState extends ConsumerState<_VehicleCard> {
                                 size: 14, color: Colors.white),
                             const SizedBox(width: 5),
                             Text(
-                              (photo.isEmpty
-                                      ? 'vehicle.photo_add'
-                                      : 'vehicle.photo_change')
-                                  .tr(),
+                              'vehicle.photo_add'.tr(),
                               style: AppTypography.soraSize(10.5,
                                       weight: FontWeight.w600)
                                   .copyWith(color: Colors.white),

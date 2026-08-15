@@ -22,6 +22,7 @@ export class BookingsController {
       masterId: body.master_id,
       vehicleId: body.vehicle_id,
       serviceTypeId: body.service_type_id,
+      packageId: body.package_id,
       scheduledAt: body.scheduled_at,
       notes: body.notes,
       totalPrice: body.total_price,

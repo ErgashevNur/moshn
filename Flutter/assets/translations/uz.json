@@ -306,7 +306,8 @@
     "photo_change": "Rasmni almashtirish",
     "photo_camera": "Kamera",
     "photo_gallery": "Galereya",
-    "photo_error": "Rasm yuklanmadi. Qaytadan urinib ko'ring"
+    "photo_error": "Rasm yuklanmadi. Qaytadan urinib ko'ring",
+    "photo": "Rasm"
   },
   "dates": {
     "today": "Bugun",
