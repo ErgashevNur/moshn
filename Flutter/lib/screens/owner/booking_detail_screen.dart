@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +10,9 @@ import '../../models/booking.dart';
 import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../services/booking_service.dart';
+import '../../services/api.dart';
 import '../../services/review_service.dart';
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -28,12 +33,39 @@ final _bookingReviewProvider = FutureProvider.autoDispose
       (ref, bookingId) => ReviewService().getByBooking(bookingId),
     );
 
-class BookingDetailScreen extends ConsumerWidget {
+class BookingDetailScreen extends ConsumerStatefulWidget {
   final String bookingId;
   const BookingDetailScreen({super.key, required this.bookingId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BookingDetailScreen> createState() =>
+      _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
+  StreamSubscription<WsEvent>? _wsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Usta bosqichni belgilasa yoki rasm yuklasa — ekran darhol yangilansin
+    // (mijoz "ish qayerga yetdi" deb qayta-qayta ochib ko'rmasin).
+    _wsSub = WsService.instance.events.listen((e) {
+      if (e.type != 'booking_stage' && e.type != 'booking_photo') return;
+      if (e.data['id'] != widget.bookingId) return;
+      ref.invalidate(_bookingDetailProvider(widget.bookingId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookingId = widget.bookingId;
     final bookingAsync = ref.watch(_bookingDetailProvider(bookingId));
 
     return Scaffold(
@@ -121,8 +153,21 @@ class _Body extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StatusCard(booking: booking),
+          // Bosqichlar bo'lsa — jarayon sarlavhasi eski status kartasi
+          // o'rniga (u yerda ham holat, ham progress bor).
+          if (booking.stages.isNotEmpty)
+            _ProgressHeader(booking: booking)
+          else
+            _StatusCard(booking: booking),
           const SizedBox(height: AppSpacing.md),
+          if (booking.stages.isNotEmpty) ...[
+            _StagesSection(stages: booking.stages),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          if (booking.photos.isNotEmpty) ...[
+            _PhotoReport(photos: booking.photos),
+            const SizedBox(height: AppSpacing.md),
+          ],
           _InfoCard(booking: booking),
           const SizedBox(height: AppSpacing.xl),
           if (booking.isCompleted && reviewAsync != null) ...[
@@ -713,4 +758,301 @@ Future<void> _showLeaveReviewSheet(
     },
   );
   commentCtrl.dispose();
+}
+
+// ── Ish jarayoni ─────────────────────────────────────────────────────────────
+// Mijoz ish boshlanganidan yakuniga qadar xabardor bo'lib turadi:
+// nechanchi bosqich, qaysi bosqich hozir bajarilyapti, usta yuborgan rasmlar.
+
+class _ProgressHeader extends StatelessWidget {
+  final Booking booking;
+  const _ProgressHeader({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = booking;
+    final total = b.stages.length;
+    final step = b.doneStages + (b.activeStage != null ? 1 : 0);
+    final active = b.activeStage;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: AppColors.hairline(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'booking.order_no'.tr(namedArgs: {'no': '${b.orderNo}'}),
+                  style: AppTypography.eyebrow
+                      .copyWith(color: AppColors.text3(context)),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.goldDim,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'booking.step_of'
+                      .tr(namedArgs: {'step': '$step', 'total': '$total'}),
+                  style: AppTypography.labelSmall
+                      .copyWith(color: AppColors.gold, fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _statusTitle(),
+            style: AppTypography.soraSize(22, weight: FontWeight.w700)
+                .copyWith(color: AppColors.text(context)),
+          ),
+          if (active != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: b.progress,
+                minHeight: 6,
+                backgroundColor: AppColors.surface2(context),
+                valueColor: AlwaysStoppedAnimation(AppColors.gold),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    active.name,
+                    style: AppTypography.body.copyWith(
+                        color: AppColors.text2(context), fontSize: 12.5),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  '${(b.progress * 100).round()}%',
+                  style: AppTypography.soraSize(12, weight: FontWeight.w700)
+                      .copyWith(color: AppColors.gold),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _statusTitle() {
+    if (booking.isInProgress) return 'booking.status_in_progress'.tr();
+    if (booking.isCompleted) return 'booking.status_done'.tr();
+    if (booking.isConfirmed) return 'booking.status_confirmed'.tr();
+    if (booking.isCancelled) return 'booking.status_cancelled'.tr();
+    return 'booking.status_pending'.tr();
+  }
+}
+
+class _StagesSection extends StatelessWidget {
+  final List<BookingStage> stages;
+  const _StagesSection({required this.stages});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('booking.stages'.tr().toUpperCase(),
+            style: AppTypography.eyebrow
+                .copyWith(color: AppColors.text3(context))),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface(context),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            border: Border.all(color: AppColors.hairline(context)),
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < stages.length; i++) ...[
+                if (i > 0)
+                  Divider(height: 1, color: AppColors.hairline(context)),
+                _StageRow(stage: stages[i]),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StageRow extends StatelessWidget {
+  final BookingStage stage;
+  const _StageRow({required this.stage});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = stage;
+    final (icon, color, label) = switch (s.status) {
+      'done' => (
+          Icons.check_rounded,
+          AppColors.success,
+          'booking.stage_done'.tr()
+        ),
+      'in_progress' => (
+          Icons.autorenew_rounded,
+          AppColors.gold,
+          'booking.stage_active'.tr()
+        ),
+      _ => (
+          Icons.schedule_rounded,
+          AppColors.text3(context),
+          'booking.stage_waiting'.tr()
+        ),
+    };
+    final time = s.completedAt ?? s.startedAt;
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.14),
+            ),
+            child: Icon(icon, size: 15, color: color),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  s.name,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.text(context),
+                    fontWeight: s.isActive ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(label,
+                    style: AppTypography.body
+                        .copyWith(color: color, fontSize: 11.5)),
+              ],
+            ),
+          ),
+          if (time != null)
+            Text(
+              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+              style: AppTypography.mono.copyWith(
+                  color: AppColors.text3(context), fontSize: 12),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoReport extends StatelessWidget {
+  final List<BookingPhoto> photos;
+  const _PhotoReport({required this.photos});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('booking.photo_report'.tr().toUpperCase(),
+                  style: AppTypography.eyebrow
+                      .copyWith(color: AppColors.text3(context))),
+            ),
+            Text(
+              '${photos.length}',
+              style: AppTypography.labelSmall
+                  .copyWith(color: AppColors.text3(context)),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SizedBox(
+          height: 84,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: photos.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (_, i) => GestureDetector(
+              onTap: () => _openViewer(context, i),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                child: CachedNetworkImage(
+                  imageUrl: ApiClient.mediaUrl(photos[i].url),
+                  width: 110,
+                  height: 84,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => Container(
+                      width: 110, color: AppColors.surface2(context)),
+                  errorWidget: (_, _, _) => Container(
+                    width: 110,
+                    color: AppColors.surface2(context),
+                    child: Icon(Icons.broken_image_rounded,
+                        color: AppColors.text3(context)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// To'liq ekranda ko'rish — suvurat mayda ko'rinsa mijoz baholay olmaydi.
+  void _openViewer(BuildContext context, int index) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (ctx) => GestureDetector(
+        onTap: () => Navigator.pop(ctx),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: PageController(initialPage: index),
+              itemCount: photos.length,
+              itemBuilder: (_, i) => InteractiveViewer(
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: ApiClient.mediaUrl(photos[i].url),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Icon(Icons.close_rounded, color: Colors.white, size: 28),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

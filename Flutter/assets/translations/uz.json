@@ -147,7 +147,7 @@
     "status_pending": "Kutilmoqda",
     "status_confirmed": "Tasdiqlandi",
     "status_confirmed_short": "Kelgusi",
-    "status_in_progress": "Jarayonda",
+    "status_in_progress": "Ishda",
     "status_completed": "Bajarildi",
     "status_cancelled": "Bekor qilindi",
     "status_cancelled_short": "Bekor",
@@ -196,7 +196,15 @@
     "wd_3": "Pa",
     "wd_4": "Ju",
     "wd_5": "Sh",
-    "wd_6": "Ya"
+    "wd_6": "Ya",
+    "order_no": "BUYURTMA №{no}",
+    "step_of": "{step} / {total}",
+    "stages": "Ish bosqichlari",
+    "stage_done": "Bajarildi",
+    "stage_active": "Bajarilyapti",
+    "stage_waiting": "Kutilmoqda",
+    "photo_report": "Usta fotohisoboti",
+    "status_done": "Tayyor"
   },
   "payment": {
     "title": "To'lov",

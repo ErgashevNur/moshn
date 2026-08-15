@@ -147,7 +147,7 @@
     "status_pending": "Ожидает",
     "status_confirmed": "Подтверждено",
     "status_confirmed_short": "Предстоит",
-    "status_in_progress": "В процессе",
+    "status_in_progress": "В работе",
     "status_completed": "Выполнено",
     "status_cancelled": "Отменено",
     "status_cancelled_short": "Отменено",
@@ -196,7 +196,15 @@
     "wd_3": "Чт",
     "wd_4": "Пт",
     "wd_5": "Сб",
-    "wd_6": "Вс"
+    "wd_6": "Вс",
+    "order_no": "ЗАКАЗ №{no}",
+    "step_of": "{step} из {total}",
+    "stages": "Этапы работ",
+    "stage_done": "Готово",
+    "stage_active": "В работе",
+    "stage_waiting": "Ожидает",
+    "photo_report": "Фотоотчёт мастера",
+    "status_done": "Готово"
   },
   "payment": {
     "title": "Оплата",
