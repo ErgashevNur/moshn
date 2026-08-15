@@ -32,8 +32,9 @@ class AppColors {
   static const Color _lightInverseText = Color(0xFFF6F5F2);
 
   // --- Semantic / shared ---
-  static const Color gold = Color(0xFFD4A843);
-  static const Color goldDim = Color(0x29D4A843); // rgba(212,168,67,0.16)
+  /// Brend urg'u rangi (repo egasi belgilagan): #F5901F
+  static const Color gold = Color(0xFFF5901F);
+  static const Color goldDim = Color(0x29F5901F); // rgba(245,144,31,0.16)
   static const Color danger = Color(0xFFE5382B);
   static const Color dangerDim = Color(0x29E5382B); // rgba(229,56,43,0.16)
   static const Color success = Color(0xFF30D158);

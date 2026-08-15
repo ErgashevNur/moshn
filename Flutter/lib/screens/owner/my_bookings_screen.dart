@@ -332,13 +332,20 @@ class _BookingCard extends StatelessWidget {
                         Row(
                           children: [
                             if (serviceType != null) ...[
-                              Text(
-                                serviceType.nameFor(
-                                  context.locale.languageCode,
-                                ),
-                                style: AppTypography.body.copyWith(
-                                  color: AppColors.text3(context),
-                                  fontSize: 12.5,
+                              // Uzun nomlar ("Замена моторного масла") qatordan
+                              // chiqib ketmasin — davlat raqami plashkasiga
+                              // joy qoldirib qisqartiriladi.
+                              Flexible(
+                                child: Text(
+                                  serviceType.nameFor(
+                                    context.locale.languageCode,
+                                  ),
+                                  style: AppTypography.body.copyWith(
+                                    color: AppColors.text3(context),
+                                    fontSize: 12.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (vehicle?.plate != null &&
