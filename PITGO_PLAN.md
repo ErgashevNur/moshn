@@ -783,11 +783,233 @@ bilan aynan bir xil** chiqdi (Авто сервис · Замена масла �
 - ℹ️ Joylashuv matni hali «Узбекистан» — maketdagi «ТАШКЕНТ, ЮНУСАБАД»
       uchun haqiqiy geo-aniqlash kerak (alohida ish).
 
-- [ ] Ikkala APK qayta build + versiyani oshirish (minor, taxminan
-      `2.1.0`) + tekshirish.
+- [x] Ikkala APK qayta build + versiyani oshirish — 2026-08-19 da `2.2.0+6`
+      qilib bajarildi, §5.7 ga qarang.
 - ⚠️ Flutter UI brauzerda jonli sinalmadi — muhitning CanvasKit muammosi
       (§3.6'da batafsil yozilgan, SOS kodiga aloqasi yo'q edi, bu yerda ham
       xuddi shunday). Maketga moslik faqat kod darajasida tekshirildi.
+
+---
+
+### 5.6 Bron tafsilotlari — maketga moslash + qo'shimcha ish oqimi (2026-08-19)
+
+Repo egasi maket (skrinshot) berdi: "Записи" ro'yxatidagi har bir yozuv
+bosilganda ochiladigan ekran. Ekranning o'zi `b167042` da bor edi, lekin
+maketdan sakkiz joyi farq qilardi va ikkita element umuman yo'q edi.
+
+**⚠️ Bu bo'limdan oldingi ish (14–15 avgust) rejaga yozilmagan** — zapis
+oqimi, xizmat paketlari, ish bosqichlari va fotohisobot (`ade9bce`…`ee904be`,
+10 ta commit). Ular hujjatlashtirilishi kerak.
+
+- [x] **Sxema:** `BookingExtra` (`bookingId, stageId, name, price,
+      status: proposed|approved|rejected, respondedAt`);
+      `BookingStage.status` ga `awaiting_customer` qo'shildi. Migratsiya
+      `20260818181830_booking_extras`.
+      - ⚠️ **Yana o'sha GiST tuzog'i, bu safar yomonroq shaklda:**
+        `--create-only` bilan fayl yaratilib DROP'lar olib tashlangandan
+        keyin `migrate dev` qayta ishlatildi — u **ikkinchi migratsiya**
+        yaratib (`20260818181913`) uchala GiST indeksni haqiqatda
+        **o'chirib yubordi**. Aniqlandi, migratsiya o'chirildi,
+        `_prisma_migrations` tozalandi, indekslar qayta yaratildi.
+        **Qoida:** fayl `--create-only` bilan yaratilgach, faqat
+        `migrate deploy` ishlatilsin, `migrate dev` emas.
+- [x] **Backend:** `POST /v1/bookings/:id/extras` [usta/servis] va
+      `POST /v1/bookings/:id/extras/:extraId/respond` [mijoz]. Narx faqat
+      TASDIQLANGANDA `totalPrice` ga qo'shiladi.
+      - Kelishuv bosqichi paketdan kelmaydi: taklif paytida "Согласование
+        доп. работ" nomi bilan **bajarilayotgan bosqichdan oldin**
+        qo'yiladi (maketdagi tartib), keyingilarning `sortOrder` i suriladi.
+      - Ikkita himoya qo'shildi: usta kelishuv bosqichini o'zi yopa olmaydi,
+        va keyingi bosqichni boshlaganda "oldingilarni yopish" supurgisi
+        `awaiting_customer` ga tegmaydi. Ikkalasisiz ham tasdiqlanmagan ish
+        osilib qolib, hisob-kitob noto'g'ri chiqardi.
+- [x] **Mijoz ekrani maketga moslandi:** sarlavha ostida "paket · sana,
+      vaqt · servis" qatori; "Шаг N: nomi" + "N% выполнено"; bosqichlar
+      **vertikal ulash chizig'i** bilan; aktivda "сейчас", kutayotganda
+      "≈ HH:MM" prognoz; фотоотчёт sarlavhasida oxirgi rasm vaqti va
+      "+N фото" qoplamasi; **«К ОПЛАТЕ»** kartasi (paket qatori + tasdiqlangan
+      qo'shimcha ishlar + Итого); pastda **yopishgan to'lov paneli** —
+      brend rangida, ish davomida ham faol (repo egasi tanladi).
+      - `progress` formulasi `currentStep / jami` ga o'zgartirildi — avval
+        "3 из 5" va foiz bir-biriga mos kelmasdi (50% ko'rsatardi).
+      - To'lov tugmasi chapidagi dumaloq tugma **ataylab o'chiq** —
+        vazifasi hali belgilanmagan (repo egasi: "tursin lekin disabled").
+- [x] **Pastki navigatsiya** bron tafsilotlarida ham ko'rinadi (repo egasi
+      tanladi). Router `StatefulShellRoute` emas, shuning uchun to'liq
+      refaktor o'rniga `OwnerBottomBar` public qilinib shu ekranda
+      chizildi; markazdagi SOS tugmasi bu yerda yo'q — to'lov paneli bilan
+      ustma-ust tushardi (maketda ham yo'q).
+- [x] **TOPILMA — usta tomoni umuman yo'q edi.** `58b5738` da bosqich va
+      fotohisobot backendi yozilgan, `b167042` da mijoz ekrani, lekin
+      Flutter'da bu endpointlarni chaqiradigan **hech qanday kod yo'q edi**
+      — ya'ni bosqichlar hech qachon siljimasdi va mijoz ekrani jonsiz
+      turardi. Qo'shildi: `booking_work_section.dart` (bosqichni
+      boshlash/yakunlash, rasm yuklash, qo'shimcha ish taklif qilish),
+      Pro ekraniga ulandi. Usta uchun `/mechanic/bookings/:id` marshruti
+      ham yo'q edi — qo'shildi (`asMaster: true`, servis-only tugmalarsiz).
+- [x] **TOPILMA — mijoz ilovasi WebSocket'ga ulanmasdi.**
+      `WsService.connect()` servis/usta/evakuator ekranlarida bor, mijozda
+      esa faqat SOS oqimida chaqirilardi. `b167042` va'da qilgan "jonli
+      yangilanish" shu sababli hech qachon ishlamagan: tinglovchi bor,
+      soket yo'q. `owner_root.dart` ga `connect()` qo'shildi.
+- [x] **Haqiqiy HTTP orqali to'liq tekshirildi** (lokal backend, real JWT):
+      paketli bron → tasdiqlash → boshlash → bosqichlar → taklif →
+      kelishuv bosqichi to'g'ri joyga tushdi → usta uni yopa olmadi (400)
+      → keyingi bosqich boshlanganda chetlab o'tilmadi → begona odam javob
+      bera olmadi (404) → mijoz rozi bo'ldi (155 000 → 215 000) → ikkinchi
+      javob rad etildi (400) → rad etilgan taklif narxga qo'shilmadi.
+- [x] **Telefonda (Samsung A70, lokal backend) uchdan-uchga tekshirildi:**
+      ekran maketga mos chiqdi, "Согласен" bosilganda summa 215 000 →
+      395 000 bo'ldi, va ekranga tegilmagan holda WS orqali yangi taklif
+      o'zi paydo bo'ldi (push xabar ham keldi). Repo egasi keyin oxirgi
+      taklifni ham tasdiqlab (515 000) to'lovni amalga oshirdi
+      (`card_qr`, `status: paid`) — butun zanjir ishlaydi.
+- [x] **Pro ham shu ishlarga moslandi** (repo egasi so'radi). Takrorlangan
+      kod umumiy vidjetlarga chiqarildi: `widgets/booking_shared.dart` —
+      `BookingProgressHeader`, `BookingStagesTimeline`, `BookingPhotoReport`,
+      `BookingPaymentCard`. Ikkala ekran shulardan foydalanadi, ya'ni usta
+      mijoz ko'rayotgan jarayonni AYNAN shu ko'rinishda ko'radi va ikki
+      ekran vaqt o'tib bir-biridan uzoqlashmaydi.
+      - Timeline'ga `below` nuqtasi qo'shildi: mijozda u yerga "Согласен /
+        Отказаться" tugmalari, Pro'da "Boshlash / Bajarildi" tushadi.
+        Kelishuv bosqichida Pro'da tugma o'rniga "Mijoz kutilmoqda".
+      - Pro ekrani qayta tartiblandi: jarayon sarlavhasi → mijoz kartasi →
+        ish boshqaruvi (bosqichlar, fotohisobot, qo'shimcha ish) →
+        «К оплате» → tafsilotlar → amal tugmalari. Narx endi faqat
+        «К оплате»da (tafsilotlar kartasidan olib tashlandi).
+      - Pro ekraniga ham WS tinglovchisi qo'shildi — mijoz taklifga javob
+        berganda usta eskirgan hisobni ko'rib turmasin.
+- [ ] ⚠️ **Pro ilova qurilmada sinalmagan** — `flutter analyze` toza va
+      `app-pro-debug.apk` qurildi, lekin telefon USB'dan uzilib qolgani
+      uchun o'rnatib ko'rilmadi.
+- [ ] Backend **prod'ga chiqarilmagan** — `booking_extras` migratsiyasi va
+      yangi endpointlar faqat lokalda. Ilova prod'ga ulanganda bu ekran
+      ishlamaydi.
+- Tekshirildi: `flutter analyze` — 0 yangi xato (loyihada oldindan bor
+      5 ta `info` bundan mustasno); backend `nest build` ✓; migratsiya
+      qo'llangandan keyin uchala GiST indeks joyida.
+
+---
+
+### 5.7 «Добавьте автомобиль» — maket bo'yicha yangi birinchi qadam (2026-08-19)
+
+Repo egasi maket berdi: mashina qo'shishda texpasportni suratga olib,
+davlat raqami, marka va yilni avtomatik tanish.
+
+**Qaror (repo egasi):** hozircha **faqat ekran, OCR'siz** — tanish keyinroq
+ulanadi.
+
+- [x] Yangi ekran `screens/owner/add_vehicle_scan_screen.dart`:
+      hero ikonka, sarlavha, burchakli skaner ramkasi (`CustomPainter`),
+      texpasport surati, natija bloki (raqam + marka/model + yil),
+      brend rangidagi «Добавить автомобиль», «Ввести данные вручную»
+      havolasi, maxfiylik izohi, pastki navigatsiya.
+- [x] Marshrutlar: `/owner/vehicles/new` → yangi ekran (bosh sahifa,
+      «Гараж» va «Добавить авто» shu yerga tushadi),
+      `/owner/vehicles/manual` → eski to'liq forma (rang, probeg, TO).
+- [x] **Maketdagi ikkita matn ATAYLAB o'zgartirildi**, chunki OCR yo'q:
+      - izoh «мы распознаем госномер, марку и год» EMAS, balki
+        «сфотографируйте техпаспорт и внесите данные»;
+      - natija qatorida «Распознано с техпаспорта» EMAS, balki
+        «Заполните данные с техпаспорта» / «Данные заполнены».
+      Hech narsa tanilmagan holda "tanildi" deb yozish foydalanuvchini
+      aldash bo'lardi. OCR ulangach almashadigan joylar faylda
+      `TODO(ocr)` bilan belgilangan, tarjima kalitlari tayyor.
+- [x] Texpasport surati **serverga yuborilmaydi** — faqat ekranda turadi
+      (qog'ozni qo'lda ushlab turmasdan ko'chirib yozish uchun). Maketdagi
+      «хранятся только на устройстве» va'dasi shu bilan bajarilgan.
+- [x] **Sinov paytida haqiqiy xato topildi va tuzatildi:** uzun davlat
+      raqami kiritilganda natija qatori **166 piksel toshib ketardi** va
+      holat matni bir harfdan vertikal siqilib qolardi (`MPlate` butun
+      qatorni egallardi). Tuzatildi: `ConstrainedBox(maxWidth: 150)` +
+      `FittedBox`. Qo'shimcha: raqam maydoniga 10 belgi va faqat
+      harf/raqam, yil maydoniga 4 raqam chegarasi qo'yildi.
+- [ ] ⚠️ **Toshish tuzatilgani qurilmada qayta tekshirilmagan** — repo
+      egasi ayni paytda telefonda ishlayotgan edi, sinovni davom ettirish
+      uning seansiga xalaqit berardi. Kod darajasida tuzatilgan.
+- [x] **Maket «Авто» bo'limining O'ZI bo'ldi.** Avval u faqat bo'sh
+      holatga qo'yilgan edi (savol noto'g'ri tushunilgan) — repo egasi
+      "avto bo'limini shu rasm kabi qil" deb aniqlashtirdi. Endi mashina
+      bor-yo'qligidan qat'i nazar bo'lim boshida maket turadi.
+      - **Mashinalar ro'yxati butunlay olib tashlandi** (repo egasining
+        keyingi ko'rsatmasi: "faqat maket qolsin"). Avval u maketdan keyin
+        pastda qoldirilgan edi. Mashinaga kirish yo'qolmadi — u bosh
+        ekrandagi mashina kartasidan ochiladi
+        (`home_screen.dart` → `/owner/vehicles/edit`).
+      - Shu bilan `_CarCard`, `_FeatureGrid` («Штрафы» va «Шиномонтаж»
+        kataklari) ham olib tashlandi. `my_vehicles_screen.dart` dan
+        faqat `vehiclesProvider` qoldi (bosh ekran undan foydalanadi).
+      - `AddVehicleScanScreen` ga `embedded` bayrog'i qo'shildi: bo'lim
+        ichida o'z Scaffold'i, orqaga tugmasi va navigatsiyasi
+        chizilmaydi, saqlagandan keyin `pop()` qilinmaydi. Ichma-ich
+        scroll bo'lmasligi uchun mazmun `_column()` ga ajratildi —
+        scroll'ni ota-vidjet o'zi beradi.
+      - Eski `_EmptyState` va `_AddVehicleButton` vidjetlari olib
+        tashlandi (endi keraksiz).
+- [x] **Bo'lim nomi «Гараж» → «Авто»** (maketdagidek), ikkala tilda:
+      `tabs.garage` va `owner.my_garage` («Мои авто» / «Mening avtolarim»).
+- [x] Qurilmada tasdiqlandi: «Авто» bo'limi ochilishi bilan maket
+      chiqadi, pastida «МОИ АВТО 1» va mashina kartasi. APK qurib
+      o'rnatildi — hot reload seansiga bog'liq emas.
+
+**⚠️ Muhim eslatma (bugun ikki marta chalkashlikka sabab bo'ldi):**
+`flutter run` orqali qilingan hot reload/restart o'zgarishlari **faqat shu
+seans davomida** telefonda bo'ladi. USB kabel uzilsa seans o'ladi va ilova
+**o'rnatilgan APK**'ga qaytadi — ya'ni yangi ekranlar yo'qoladi va "hech
+narsa o'zgarmadi" degan taassurot paydo bo'ladi. Repo egasiga ko'rsatish
+uchun har doim `flutter build apk` + `adb install -r` qilinsin.
+- [ ] **OCR keyingi ish.** Muhokama qilingan variantlar: qurilma ichida
+      ML Kit (maxfiylik va'dasiga mos, APK ~15-20 MB kattalashadi, o'zbek
+      texpasporti formatini qo'lda moslash kerak) yoki bulutli OCR
+      (aniqroq, lekin va'da buziladi + pullik).
+- Tekshirildi: `flutter analyze` — 0 yangi xato; ekran qurilmada ochilib,
+      maketga mosligi skrinshot bilan tasdiqlandi.
+
+---
+
+### 5.7 Prod deploy — backend + APK 2.2.0 (2026-08-19)
+
+- [x] **Backend prod'ga chiqarildi.** `src/` va `prisma/` serverga
+      ko'chirildi, `docker compose build backend` + `up -d`. Migratsiyalar
+      konteyner ishga tushganda AVTOMATIK qo'llanadi (`DEPLOY.md` §3.1
+      "avtomatik bajarilmaydi" deydi — bu **eskirgan**, Dockerfile CMD
+      hozir `migrate deploy` ni ham bajaradi). Qo'llangani:
+      `20260815205012_booking_stages_photos` va
+      `20260818181830_booking_extras`.
+      - ⚠️ **Rsync xatosi:** `prisma/migrations/` `prisma/` ichiga
+        ko'chirildi va 14 ta migratsiya papkasi noto'g'ri joyga tushdi.
+        Aniqlanib, `/root/pitgo-stray/` ga surildi (o'chirilmadi), so'ng
+        to'g'ri joyga qayta ko'chirildi. Bazaga ta'sir qilmadi.
+      - Migratsiyadan keyin tekshirildi: uchala GiST indeks joyida,
+        ma'lumot butun (4 bron, 4 servis, 13 foydalanuvchi, 33 xizmat).
+      - ℹ️ `service_types = 33` — demak §5.5 dagi "prod'da ishga
+        tushirilmagan" deb belgilangan `seed-service-groups.js`
+        allaqachon qo'llanilgan. O'sha band yopiq deb hisoblansin.
+- [x] **APK 2.2.0+6** (mijoz + Pro), `--dart-define=API_BASE_URL=
+      https://api.pitgo.uz/v1`. Ikkalasi tekshirildi: `debuggable` emas,
+      AOT (`libapp.so`), ichida prod URL bor, eski ngrok tunneli yo'q.
+      - **Imzo:** hali ham debug keystore (release keystore yaratilmagan).
+        Deploy oldidan serverdagi `pitgo-2.1.0.apk` imzosi
+        `apksigner` bilan tekshirildi — SHA-256 shu mashinaning debug
+        kaliti bilan **bir xil** (`d3706387...`), shuning uchun 2.2.0
+        eskisi ustiga muammosiz o'rnatiladi.
+- [x] **Media va Landing yangilandi.** `pitgo-2.2.0.apk` va
+      `pitgo-pro-2.2.0.apk` `media.pitgo.uz` ga yuklandi; SHA-256
+      lokal fayllar bilan taqqoslab tasdiqlandi (birinchi `scp`
+      urinishi tarmoq uzilishida yarim qolgan edi, `rsync --partial`
+      bilan qayta yuklandi).
+      - ⚠️ Havolalar `Landing/src/...tsx` da emas, **`docker-compose.yml`
+        build-argumentlarida** qotirilgan edi (`NEXT_PUBLIC_APK_URL`) —
+        faqat manbani yangilash yetmadi, compose fayli ham yangilandi.
+      - ℹ️ Ilgari `pitgo-pro-2.1.0.apk` serverda umuman yo'q edi —
+        Landing'dagi Pro havolasi 404 berardi. Endi ikkalasi ham bor.
+- [ ] ⚠️ **Eskiz SMS hali TEST rejimida.** Prod logida: "Для теста можно
+      использовать только один из этих текстов…". Ya'ni haqiqiy
+      foydalanuvchi OTP SMS ololmaydi va ilovaga kira olmaydi.
+      Eskiz kabinetida shablonni tasdiqlatib, hisobni prod rejimiga
+      o'tkazish kerak — **sizning tomoningizda**.
+- [ ] ⚠️ Bu ishlar hali **commit qilinmagan** — server ishchi katalogdan
+      olingan nusxa bilan ishlayapti.
 
 ---
 

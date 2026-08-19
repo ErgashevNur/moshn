@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/booking.dart';
 import '../../services/booking_service.dart';
@@ -8,8 +9,9 @@ import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_plate.dart';
 
-final _masterBookingsProvider =
-    FutureProvider.autoDispose<List<Booking>>((ref) {
+final _masterBookingsProvider = FutureProvider.autoDispose<List<Booking>>((
+  ref,
+) {
   return BookingService().getMasterBookings();
 });
 
@@ -43,7 +45,8 @@ class MechanicBookingsScreen extends ConsumerWidget {
             Expanded(
               child: async.when(
                 data: (bookings) => RefreshIndicator(
-                  onRefresh: () async => ref.refresh(_masterBookingsProvider.future),
+                  onRefresh: () async =>
+                      ref.refresh(_masterBookingsProvider.future),
                   child: bookings.isEmpty
                       ? ListView(
                           children: [
@@ -73,8 +76,9 @@ class MechanicBookingsScreen extends ConsumerWidget {
                               _BookingCard(booking: bookings[i]),
                         ),
                 ),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
                 error: (_, _) => Center(
                   child: Text(
                     'Ошибка загрузки',
@@ -103,75 +107,84 @@ class _BookingCard extends StatelessWidget {
     final title = b.serviceType?.nameFor('ru') ?? 'Услуга';
     final customer = b.customer?.name ?? 'Клиент';
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(AppSpacing.r_md),
-        border: Border.all(color: AppColors.hairline(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.text(context),
-                    fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: () => context.push('/mechanic/bookings/${b.id}'),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(AppSpacing.r_md),
+          border: Border.all(color: AppColors.hairline(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.text(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _StatusChip(status: b.status),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Icon(Icons.person_rounded,
-                  size: 14, color: AppColors.text3(context)),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  customer,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.text2(context),
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (b.vehicle != null) ...[
                 const SizedBox(width: AppSpacing.sm),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: MPlate(plate: b.vehicle!.plate),
+                _StatusChip(status: b.status),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_rounded,
+                  size: 14,
+                  color: AppColors.text3(context),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    customer,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.text2(context),
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (b.vehicle != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: MPlate(plate: b.vehicle!.plate),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 14,
+                  color: AppColors.text3(context),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _fmtDateTime(b.scheduledAt),
+                  style: AppTypography.mono.copyWith(
+                    color: AppColors.text3(context),
+                    fontSize: 12,
+                  ),
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(Icons.schedule_rounded,
-                  size: 14, color: AppColors.text3(context)),
-              const SizedBox(width: 4),
-              Text(
-                _fmtDateTime(b.scheduledAt),
-                style: AppTypography.mono.copyWith(
-                  color: AppColors.text3(context),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

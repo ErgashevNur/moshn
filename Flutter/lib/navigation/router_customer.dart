@@ -11,6 +11,7 @@ import '../screens/auth/phone_screen.dart';
 import '../screens/auth/profile_setup_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/welcome_screen.dart';
+import '../screens/owner/add_vehicle_scan_screen.dart';
 import '../screens/owner/add_vehicle_screen.dart';
 import '../screens/owner/booking_detail_screen.dart';
 import '../screens/owner/create_booking_screen.dart';
@@ -116,7 +117,11 @@ final routerCustomerProvider = Provider<GoRouter>((ref) {
             path: 'services/:slug',
             builder: (ctx, st) => BookServiceScreen(serviceSlug: st.pathParameters['slug']!),
           ),
-          GoRoute(path: 'vehicles/new', builder: (_, _) => const AddVehicleScreen()),
+          // Maket bo'yicha birinchi qadam — texpasport surati + asosiy
+          // maydonlar. To'liq forma (rang, probeg, TO) "qo'lda kiritish"
+          // havolasi ortida qoladi.
+          GoRoute(path: 'vehicles/new', builder: (_, _) => const AddVehicleScanScreen()),
+          GoRoute(path: 'vehicles/manual', builder: (_, _) => const AddVehicleScreen()),
           GoRoute(
             path: 'vehicles/edit',
             builder: (_, st) => AddVehicleScreen(vehicle: st.extra as Vehicle),

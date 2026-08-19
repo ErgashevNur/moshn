@@ -150,6 +150,34 @@ export class BookingsController {
     return { data: await this.svc.setStageStatus(id, stageId, userId, status) };
   }
 
+  // ── Qo'shimcha ish ─────────────────────────────────────────────────────────
+
+  @Post('bookings/:id/extras')
+  @HttpCode(201)
+  @ApiOperation({ summary: "Qo'shimcha ish taklif qilish [master/service]" })
+  async proposeExtra(
+    @Param('id') id: string,
+    @User('user_id') userId: string,
+    @Body() body: any,
+  ) {
+    return {
+      data: await this.svc.proposeExtra(id, userId, body.name, Number(body.price)),
+    };
+  }
+
+  @Post('bookings/:id/extras/:extraId/respond')
+  @ApiOperation({ summary: "Qo'shimcha ish taklifiga javob [owner]" })
+  async respondExtra(
+    @Param('id') id: string,
+    @Param('extraId') extraId: string,
+    @User('user_id') userId: string,
+    @Body('approve') approve: boolean,
+  ) {
+    return {
+      data: await this.svc.respondToExtra(id, extraId, userId, approve === true),
+    };
+  }
+
   @Post('bookings/:id/photos')
   @HttpCode(201)
   @ApiConsumes('multipart/form-data')

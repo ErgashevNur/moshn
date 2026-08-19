@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
@@ -6,24 +8,67 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/booking.dart';
 import '../../services/booking_service.dart';
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_plate.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/booking_shared.dart';
 import '../../widgets/section_card.dart';
+import 'booking_work_section.dart';
 
 final _serviceBookingProvider =
     FutureProvider.autoDispose.family<Booking, String>(
   (ref, id) => BookingService().getBooking(id),
 );
 
-class ServiceBookingDetailScreen extends ConsumerWidget {
+class ServiceBookingDetailScreen extends ConsumerStatefulWidget {
   final String bookingId;
-  const ServiceBookingDetailScreen({super.key, required this.bookingId});
+
+  /// Usta o'z kabinetidan ochganda `true`. Tasdiqlash/boshlash/yakunlash
+  /// tugmalari ko'rsatilmaydi — u endpointlar `ServiceRoleGuard` ostida,
+  /// usta ularni chaqirsa 403 oladi. Ish bosqichlari va qo'shimcha ish
+  /// esa ustaga ochiq (server `requireBookingActor` bilan tekshiradi).
+  final bool asMaster;
+
+  const ServiceBookingDetailScreen({
+    super.key,
+    required this.bookingId,
+    this.asMaster = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ServiceBookingDetailScreen> createState() =>
+      _ServiceBookingDetailScreenState();
+}
+
+class _ServiceBookingDetailScreenState
+    extends ConsumerState<ServiceBookingDetailScreen> {
+  StreamSubscription<WsEvent>? _wsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mijoz qo'shimcha ishga javob berganda usta buni darhol ko'rsin
+    // (aks holda ish davom etarkan eskirgan hisobni ko'rib turadi).
+    const live = {'booking_extra', 'booking_stage', 'booking_photo'};
+    _wsSub = WsService.instance.events.listen((e) {
+      if (!live.contains(e.type)) return;
+      if (e.data['id'] != widget.bookingId) return;
+      ref.invalidate(_serviceBookingProvider(widget.bookingId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookingId = widget.bookingId;
     final bookingAsync = ref.watch(_serviceBookingProvider(bookingId));
 
     return Scaffold(
@@ -63,6 +108,7 @@ class ServiceBookingDetailScreen extends ConsumerWidget {
             child: bookingAsync.when(
               data: (booking) => _Body(
                 booking: booking,
+                asMaster: widget.asMaster,
                 onRefresh: () => ref.invalidate(_serviceBookingProvider),
               ),
               loading: () => const Center(
@@ -82,22 +128,44 @@ class ServiceBookingDetailScreen extends ConsumerWidget {
 
 class _Body extends ConsumerWidget {
   final Booking booking;
+  final bool asMaster;
   final VoidCallback onRefresh;
 
-  const _Body({required this.booking, required this.onRefresh});
+  const _Body({
+    required this.booking,
+    required this.asMaster,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ish boshlangan bo'lsa — usta mijoz ko'rayotgan jarayonni aynan
+    // shu ko'rinishda ko'radi (umumiy vidjetlar), ustiga o'z boshqaruvi
+    // qo'shiladi. Tasdiqlanmagan bronda hali boshqariladigan narsa yo'q.
+    final showWork = !booking.isPending && !booking.isCancelled;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (showWork && booking.stages.isNotEmpty) ...[
+            BookingProgressHeader(booking: booking),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           _CustomerCard(booking: booking),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
+          if (showWork) ...[
+            BookingWorkSection(booking: booking, onChanged: onRefresh),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          if (booking.totalPrice > 0) ...[
+            BookingPaymentCard(booking: booking),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           _DetailsCard(booking: booking),
-          const SizedBox(height: AppSpacing.xl),
-          _ActionButtons(booking: booking, onRefresh: onRefresh),
+          const SizedBox(height: AppSpacing.lg),
+          if (!asMaster) _ActionButtons(booking: booking, onRefresh: onRefresh),
           const SizedBox(height: AppSpacing.huge),
         ],
       ),
@@ -264,13 +332,6 @@ class _DetailsCard extends StatelessWidget {
             label: 'booking.scheduled_at'.tr(),
             value: _fmt(booking.scheduledAt),
           ),
-          if (booking.totalPrice > 0) ...[
-            _sep(context),
-            _Row(
-              label: 'booking.price'.tr(),
-              value: '${_price(booking.totalPrice)} ${'common.sum'.tr()}',
-            ),
-          ],
           if (booking.notes.isNotEmpty) ...[
             _sep(context),
             _Row(label: 'booking.notes'.tr(), value: booking.notes),
@@ -288,16 +349,6 @@ class _DetailsCard extends StatelessWidget {
   String _fmt(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} '
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-
-  String _price(int p) {
-    final s = p.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
 }
 
 class _Row extends StatelessWidget {

@@ -10,6 +10,7 @@ const BOOKING_INCLUDE = {
   customer: true,
   package: true,
   stages: { orderBy: { sortOrder: 'asc' } },
+  extras: { orderBy: { createdAt: 'asc' } },
   photos: { orderBy: { createdAt: 'asc' } },
   shop: { include: { user: true } },
   master: true,
@@ -206,12 +207,24 @@ export class BookingsService {
       where: { id: stageId, bookingId },
     });
     if (!stage) throw new NotFoundException('Bosqich topilmadi');
+    // Kelishuv bosqichini usta yopa olmaydi — u faqat mijoz javob berganda
+    // yopiladi (`respondToExtra`). Aks holda tasdiqlanmagan qo'shimcha ish
+    // "osilib" qolardi va hisob-kitob noto'g'ri chiqardi.
+    if (stage.status === 'awaiting_customer') {
+      throw new BadRequestException('Mijozning javobi kutilmoqda');
+    }
 
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       if (status === 'in_progress') {
         await tx.bookingStage.updateMany({
-          where: { bookingId, sortOrder: { lt: stage.sortOrder }, status: { not: 'done' } },
+          where: {
+            bookingId,
+            sortOrder: { lt: stage.sortOrder },
+            // `awaiting_customer` ham chetlab o'tilmasin — mijoz javob
+            // bermaguncha u ochiq turishi kerak.
+            status: { notIn: ['done', 'awaiting_customer'] },
+          },
           data: { status: 'done', completedAt: now },
         });
       }
@@ -253,6 +266,131 @@ export class BookingsService {
       'booking_photo',
       bookingId,
     );
+    return updated;
+  }
+
+  // ─── Qo'shimcha ish: usta taklif qiladi, mijoz tasdiqlaydi ─────────────────
+  //
+  // Mijoz ko'rmagan ish hisobga tushmasin — shuning uchun narx faqat
+  // TASDIQLANGANDAN keyin `totalPrice` ga qo'shiladi.
+
+  /// Kelishuv bosqichining nomi. Paketdan kelmaydi — taklif paytida
+  /// bosqichlar ro'yxatiga qo'yiladi (maketdagi "Согласование доп. работ").
+  private static readonly APPROVAL_STAGE = 'Согласование доп. работ';
+
+  /// Usta ish davomida qo'shimcha ish taklif qiladi.
+  async proposeExtra(bookingId: string, userId: string, name: string, price: number) {
+    const clean = (name ?? '').trim();
+    if (!clean) throw new BadRequestException('Ish nomi kiritilmadi');
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new BadRequestException("Narx noto'g'ri");
+    }
+
+    const booking = await this.requireBookingActor(bookingId, userId);
+    if (['completed', 'cancelled'].includes(booking.status)) {
+      throw new BadRequestException("Tugagan bronga qo'shimcha ish qo'shib bo'lmaydi");
+    }
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      const stages = await tx.bookingStage.findMany({
+        where: { bookingId },
+        orderBy: { sortOrder: 'asc' },
+      });
+
+      // Javob kutayotgan kelishuv bosqichi bo'lsa — yangisini qo'shmaymiz,
+      // taklif o'shanga ilinadi (ikkita taklif = ikkita bosqich bo'lmasin).
+      let stage = stages.find((s) => s.status === 'awaiting_customer') ?? null;
+
+      if (!stage) {
+        // Maketdagi tartib: kelishuv tugagan ishlardan keyin, hozir
+        // bajarilayotgan ishdan OLDIN turadi.
+        const active = stages.find((s) => s.status === 'in_progress');
+        const at = active ? active.sortOrder : stages.length;
+        await tx.bookingStage.updateMany({
+          where: { bookingId, sortOrder: { gte: at } },
+          data: { sortOrder: { increment: 1 } },
+        });
+        stage = await tx.bookingStage.create({
+          data: {
+            bookingId,
+            name: BookingsService.APPROVAL_STAGE,
+            sortOrder: at,
+            status: 'awaiting_customer',
+            startedAt: now,
+          },
+        });
+      }
+
+      await tx.bookingExtra.create({
+        data: { bookingId, stageId: stage.id, name: clean, price: Math.round(price) },
+      });
+    });
+
+    const updated = await this.getById(bookingId);
+    this.wsHub.broadcastToUser(booking.customerId, 'booking_extra', updated);
+    this.notifSvc.sendToUser(
+      booking.customerId,
+      'Qo\'shimcha ish taklifi',
+      `${clean} — ${Math.round(price).toLocaleString('ru-RU')} so'm. Roziligingiz kutilmoqda`,
+      'booking_extra',
+      bookingId,
+    );
+    return updated;
+  }
+
+  /// Mijoz taklifga javob beradi. `approve = true` bo'lsa narx hisobga
+  /// qo'shiladi.
+  async respondToExtra(bookingId: string, extraId: string, customerId: string, approve: boolean) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { id: bookingId, customerId },
+      include: { shop: { select: { userId: true } }, master: { select: { userId: true } } },
+    });
+    if (!booking) throw new NotFoundException('Bron topilmadi');
+
+    const extra = await this.prisma.bookingExtra.findFirst({
+      where: { id: extraId, bookingId },
+    });
+    if (!extra) throw new NotFoundException("Qo'shimcha ish topilmadi");
+    if (extra.status !== 'proposed') {
+      throw new BadRequestException('Bu taklifga allaqachon javob berilgan');
+    }
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.bookingExtra.update({
+        where: { id: extraId },
+        data: { status: approve ? 'approved' : 'rejected', respondedAt: now },
+      });
+
+      if (approve) {
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { totalPrice: { increment: extra.price } },
+        });
+      }
+
+      // Shu bosqichdagi barcha takliflarga javob berilgan bo'lsa —
+      // kelishuv tugadi.
+      if (extra.stageId) {
+        const stillOpen = await tx.bookingExtra.count({
+          where: { stageId: extra.stageId, status: 'proposed' },
+        });
+        if (stillOpen === 0) {
+          await tx.bookingStage.update({
+            where: { id: extra.stageId },
+            data: { status: 'done', completedAt: now },
+          });
+        }
+      }
+    });
+
+    const updated = await this.getById(bookingId);
+    const title = approve ? 'Mijoz rozi bo\'ldi' : 'Mijoz rad etdi';
+    for (const uid of new Set([booking.shop.userId, booking.master?.userId].filter(Boolean) as string[])) {
+      this.wsHub.broadcastToUser(uid, 'booking_extra', updated);
+      this.notifSvc.sendToUser(uid, title, extra.name, 'booking_extra', bookingId);
+    }
     return updated;
   }
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,15 +9,17 @@ import '../../models/booking.dart';
 import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../services/booking_service.dart';
-import '../../services/api.dart';
 import '../../services/review_service.dart';
 import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../utils/formatters.dart';
 import '../../widgets/m_stars.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/booking_shared.dart';
 import '../../widgets/section_card.dart';
+import 'owner_root.dart';
 
 final _bookingDetailProvider = FutureProvider.autoDispose
     .family<Booking, String>((ref, id) => BookingService().getBooking(id));
@@ -48,10 +49,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Usta bosqichni belgilasa yoki rasm yuklasa — ekran darhol yangilansin
-    // (mijoz "ish qayerga yetdi" deb qayta-qayta ochib ko'rmasin).
+    // Usta bosqichni belgilasa, rasm yuklasa yoki qo'shimcha ish taklif
+    // qilsa — ekran darhol yangilansin (mijoz "ish qayerga yetdi" deb
+    // qayta-qayta ochib ko'rmasin).
+    const live = {'booking_stage', 'booking_photo', 'booking_extra'};
     _wsSub = WsService.instance.events.listen((e) {
-      if (e.type != 'booking_stage' && e.type != 'booking_photo') return;
+      if (!live.contains(e.type)) return;
       if (e.data['id'] != widget.bookingId) return;
       ref.invalidate(_bookingDetailProvider(widget.bookingId));
     });
@@ -70,6 +73,15 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
+      // Maketda bron tafsilotlarida ham pastki navigatsiya turadi. Bu ekran
+      // shell ichida emas (router oddiy GoRoute daraxti), shuning uchun
+      // bar shu yerda chiziladi va bosilganda `/owner` ning kerakli
+      // tabiga o'tadi. Faol tab — "Записи", bron o'sha bo'limga tegishli.
+      bottomNavigationBar: OwnerBottomBar(
+        index: 1,
+        showSosSlot: false,
+        onTap: (i) => context.go('/owner', extra: i),
+      ),
       body: Column(
         children: [
           SafeArea(
@@ -81,34 +93,26 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 AppSpacing.lg,
                 AppSpacing.md,
               ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface(context),
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusMd,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: AppColors.text(context),
-                        size: 17,
-                      ),
+              // Maketda alohida sarlavha yo'q — karta darhol boshlanadi.
+              // Orqaga tugmasi qoladi: bo'lmasa ekrandan chiqib bo'lmaydi.
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(context),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.text(context),
+                      size: 16,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      'booking.title'.tr(),
-                      style: AppTypography.titleLarge,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -148,70 +152,72 @@ class _Body extends ConsumerWidget {
         ? ref.watch(_bookingReviewProvider(booking.id))
         : null;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Bosqichlar bo'lsa — jarayon sarlavhasi eski status kartasi
-          // o'rniga (u yerda ham holat, ham progress bor).
-          if (booking.stages.isNotEmpty)
-            _ProgressHeader(booking: booking)
-          else
-            _StatusCard(booking: booking),
-          const SizedBox(height: AppSpacing.md),
-          if (booking.stages.isNotEmpty) ...[
-            _StagesSection(stages: booking.stages),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          if (booking.photos.isNotEmpty) ...[
-            _PhotoReport(photos: booking.photos),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          _InfoCard(booking: booking),
-          const SizedBox(height: AppSpacing.xl),
-          if (booking.isCompleted && reviewAsync != null) ...[
-            _ReviewSection(booking: booking, reviewAsync: reviewAsync),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          if (booking.isCompleted && !isPaid) ...[
-            PrimaryButton(
-              label: 'booking.pay_now'.tr(),
-              onPressed: () => context.push(
-                '/owner/bookings/${booking.id}/pay?amount=${booking.totalPrice}',
-              ),
+    // To'lov paneli maketdagidek pastda YOPISHIB turadi — ish davomida ham
+    // ko'rinadi (mijoz tugashini kutmasdan to'lay oladi).
+    final showPayBar = !isPaid &&
+        booking.totalPrice > 0 &&
+        !booking.isCancelled;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bosqichlar bo'lsa — jarayon sarlavhasi eski status kartasi
+                // o'rniga (u yerda ham holat, ham progress bor).
+                if (booking.stages.isNotEmpty)
+                  BookingProgressHeader(booking: booking)
+                else
+                  _StatusCard(booking: booking),
+                const SizedBox(height: AppSpacing.lg),
+                if (booking.stages.isNotEmpty) ...[
+                  BookingStagesTimeline(
+                    booking: booking,
+                    // Kelishuv bosqichi ostida "Согласен / Отказаться".
+                    below: (_, stage) => stage.isAwaiting
+                        ? _StageApproval(booking: booking, stage: stage)
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (booking.photos.isNotEmpty) ...[
+                  BookingPhotoReport(photos: booking.photos),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (booking.totalPrice > 0) ...[
+                  BookingPaymentCard(booking: booking, isPaid: isPaid),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                _InfoCard(booking: booking),
+                const SizedBox(height: AppSpacing.lg),
+                if (booking.isCompleted && reviewAsync != null) ...[
+                  _ReviewSection(booking: booking, reviewAsync: reviewAsync),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                if (booking.isCompleted && isPaid)
+                  TextButton(
+                    onPressed: () => _showTipDialog(context, ref),
+                    child: Text('booking.add_tip'.tr()),
+                  ),
+                if (booking.canCancel)
+                  TextButton(
+                    onPressed: () => _confirmCancel(context, ref),
+                    child: Text(
+                      'booking.cancel'.tr(),
+                      style:
+                          AppTypography.body.copyWith(color: AppColors.danger),
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            TextButton(
-              onPressed: () => _showTipDialog(context, ref),
-              child: Text('booking.add_tip'.tr()),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          if (booking.isCompleted && isPaid) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              alignment: Alignment.center,
-              child: Text(
-                'booking.paid'.tr(),
-                style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.success,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          if (booking.canCancel)
-            TextButton(
-              onPressed: () => _confirmCancel(context, ref),
-              child: Text(
-                'booking.cancel'.tr(),
-                style: AppTypography.body.copyWith(color: AppColors.danger),
-              ),
-            ),
-          const SizedBox(height: AppSpacing.huge),
-        ],
-      ),
+          ),
+        ),
+        if (showPayBar) _PayBar(booking: booking),
+      ],
     );
   }
 
@@ -395,24 +401,19 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Sana sarlavha kartasida, narx "К оплате"da — bu yerda
+          // takrorlanmaydi. Qoladigani: mashina, usta va izoh.
           _InfoRow(
             label: 'booking.vehicle'.tr(),
             value: booking.vehicle?.displayName ?? '—',
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(height: 0.5, color: AppColors.hairline(context)),
-          const SizedBox(height: AppSpacing.sm),
-          _InfoRow(
-            label: 'booking.scheduled_at'.tr(),
-            value: _formatDate(booking.scheduledAt),
-          ),
-          if (booking.totalPrice > 0) ...[
+          if ((booking.master?.fullName ?? '').isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             Container(height: 0.5, color: AppColors.hairline(context)),
             const SizedBox(height: AppSpacing.sm),
             _InfoRow(
-              label: 'booking.price'.tr(),
-              value: '${_formatPrice(booking.totalPrice)} ${'common.sum'.tr()}',
+              label: 'booking.master'.tr(),
+              value: booking.master!.fullName,
             ),
           ],
           if (booking.notes.isNotEmpty) ...[
@@ -426,19 +427,6 @@ class _InfoCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dt) =>
-      '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} '
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -764,23 +752,41 @@ Future<void> _showLeaveReviewSheet(
 // Mijoz ish boshlanganidan yakuniga qadar xabardor bo'lib turadi:
 // nechanchi bosqich, qaysi bosqich hozir bajarilyapti, usta yuborgan rasmlar.
 
-class _ProgressHeader extends StatelessWidget {
+/// Kelishuv bosqichi ostida chiqadigan taklif kartochkasi — mijoz shu
+/// yerda javob beradi. Timeline'ning o'zi umumiy vidjetda
+/// (`booking_shared.dart`), bu esa faqat mijozga xos qism.
+class _StageApproval extends ConsumerStatefulWidget {
   final Booking booking;
-  const _ProgressHeader({required this.booking});
+  final BookingStage stage;
+
+  const _StageApproval({required this.booking, required this.stage});
+
+  @override
+  ConsumerState<_StageApproval> createState() => _StageApprovalState();
+}
+
+class _StageApprovalState extends ConsumerState<_StageApproval> {
+  bool _busy = false;
 
   @override
   Widget build(BuildContext context) {
-    final b = booking;
-    final total = b.stages.length;
-    final step = b.doneStages + (b.activeStage != null ? 1 : 0);
-    final active = b.activeStage;
+    final proposals = widget.booking.proposedExtras
+        .where((e) => e.stageId == widget.stage.id)
+        .toList();
+    if (proposals.isEmpty) return const SizedBox.shrink();
 
+    return Column(
+      children: [for (final e in proposals) _proposal(context, e)],
+    );
+  }
+
+  Widget _proposal(BuildContext context, BookingExtra e) {
     return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.hairline(context)),
+        color: AppColors.surface2(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,268 +795,153 @@ class _ProgressHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'booking.order_no'.tr(namedArgs: {'no': '${b.orderNo}'}),
-                  style: AppTypography.eyebrow
-                      .copyWith(color: AppColors.text3(context)),
+                  e.name,
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.text(context)),
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.goldDim,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'booking.step_of'
-                      .tr(namedArgs: {'step': '$step', 'total': '$total'}),
-                  style: AppTypography.labelSmall
-                      .copyWith(color: AppColors.gold, fontSize: 11),
-                ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                '${formatAmount(e.price)} ${'common.sum'.tr()}',
+                style: AppTypography.soraSize(13, weight: FontWeight.w700)
+                    .copyWith(color: AppColors.text(context)),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            _statusTitle(),
-            style: AppTypography.soraSize(22, weight: FontWeight.w700)
-                .copyWith(color: AppColors.text(context)),
-          ),
-          if (active != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: b.progress,
-                minHeight: 6,
-                backgroundColor: AppColors.surface2(context),
-                valueColor: AlwaysStoppedAnimation(AppColors.gold),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    active.name,
-                    style: AppTypography.body.copyWith(
-                        color: AppColors.text2(context), fontSize: 12.5),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  '${(b.progress * 100).round()}%',
-                  style: AppTypography.soraSize(12, weight: FontWeight.w700)
-                      .copyWith(color: AppColors.gold),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _statusTitle() {
-    if (booking.isInProgress) return 'booking.status_in_progress'.tr();
-    if (booking.isCompleted) return 'booking.status_done'.tr();
-    if (booking.isConfirmed) return 'booking.status_confirmed'.tr();
-    if (booking.isCancelled) return 'booking.status_cancelled'.tr();
-    return 'booking.status_pending'.tr();
-  }
-}
-
-class _StagesSection extends StatelessWidget {
-  final List<BookingStage> stages;
-  const _StagesSection({required this.stages});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('booking.stages'.tr().toUpperCase(),
-            style: AppTypography.eyebrow
-                .copyWith(color: AppColors.text3(context))),
-        const SizedBox(height: AppSpacing.sm),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface(context),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: AppColors.hairline(context)),
-          ),
-          child: Column(
+          const SizedBox(height: AppSpacing.sm),
+          Row(
             children: [
-              for (var i = 0; i < stages.length; i++) ...[
-                if (i > 0)
-                  Divider(height: 1, color: AppColors.hairline(context)),
-                _StageRow(stage: stages[i]),
-              ],
+              Expanded(
+                child: _answerBtn(
+                  label: 'booking.extra_approve'.tr(),
+                  color: AppColors.success,
+                  filled: true,
+                  onTap: () => _respond(e, true),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _answerBtn(
+                  label: 'booking.extra_reject'.tr(),
+                  color: AppColors.danger,
+                  filled: false,
+                  onTap: () => _respond(e, false),
+                ),
+              ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StageRow extends StatelessWidget {
-  final BookingStage stage;
-  const _StageRow({required this.stage});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = stage;
-    final (icon, color, label) = switch (s.status) {
-      'done' => (
-          Icons.check_rounded,
-          AppColors.success,
-          'booking.stage_done'.tr()
-        ),
-      'in_progress' => (
-          Icons.autorenew_rounded,
-          AppColors.gold,
-          'booking.stage_active'.tr()
-        ),
-      _ => (
-          Icons.schedule_rounded,
-          AppColors.text3(context),
-          'booking.stage_waiting'.tr()
-        ),
-    };
-    final time = s.completedAt ?? s.startedAt;
-
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.14),
-            ),
-            child: Icon(icon, size: 15, color: color),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  s.name,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.text(context),
-                    fontWeight: s.isActive ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(label,
-                    style: AppTypography.body
-                        .copyWith(color: color, fontSize: 11.5)),
-              ],
-            ),
-          ),
-          if (time != null)
-            Text(
-              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-              style: AppTypography.mono.copyWith(
-                  color: AppColors.text3(context), fontSize: 12),
-            ),
         ],
       ),
     );
   }
-}
 
-class _PhotoReport extends StatelessWidget {
-  final List<BookingPhoto> photos;
-  const _PhotoReport({required this.photos});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('booking.photo_report'.tr().toUpperCase(),
-                  style: AppTypography.eyebrow
-                      .copyWith(color: AppColors.text3(context))),
-            ),
-            Text(
-              '${photos.length}',
-              style: AppTypography.labelSmall
-                  .copyWith(color: AppColors.text3(context)),
-            ),
-          ],
+  Widget _answerBtn({
+    required String label,
+    required Color color,
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: _busy ? null : onTap,
+      child: Container(
+        height: AppSpacing.buttonHeightSm,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: filled ? color : Colors.transparent,
+          border:
+              filled ? null : Border.all(color: color.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(AppSpacing.r_sm),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: 84,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: photos.length,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (_, i) => GestureDetector(
-              onTap: () => _openViewer(context, i),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                child: CachedNetworkImage(
-                  imageUrl: ApiClient.mediaUrl(photos[i].url),
-                  width: 110,
-                  height: 84,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
-                      width: 110, color: AppColors.surface2(context)),
-                  errorWidget: (_, _, _) => Container(
-                    width: 110,
-                    color: AppColors.surface2(context),
-                    child: Icon(Icons.broken_image_rounded,
-                        color: AppColors.text3(context)),
-                  ),
-                ),
-              ),
-            ),
+        child: Opacity(
+          opacity: _busy ? 0.5 : 1,
+          child: Text(
+            label,
+            style: AppTypography.labelMedium
+                .copyWith(color: filled ? Colors.white : color),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  /// To'liq ekranda ko'rish — suvurat mayda ko'rinsa mijoz baholay olmaydi.
-  void _openViewer(BuildContext context, int index) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.92),
-      builder: (ctx) => GestureDetector(
-        onTap: () => Navigator.pop(ctx),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: PageController(initialPage: index),
-              itemCount: photos.length,
-              itemBuilder: (_, i) => InteractiveViewer(
-                child: Center(
-                  child: CachedNetworkImage(
-                    imageUrl: ApiClient.mediaUrl(photos[i].url),
-                    fit: BoxFit.contain,
+  Future<void> _respond(BookingExtra e, bool approve) async {
+    setState(() => _busy = true);
+    try {
+      await BookingService()
+          .respondToExtra(widget.booking.id, e.id, approve: approve);
+      ref.invalidate(_bookingDetailProvider(widget.booking.id));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('common.error'.tr()),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+// ── Pastda yopishgan to'lov paneli ───────────────────────────────────────────
+
+class _PayBar extends StatelessWidget {
+  final Booking booking;
+  const _PayBar({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bg(context),
+        border: Border(top: BorderSide(color: AppColors.hairline(context))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              // Maketdagi kichik dumaloq tugma. Vazifasi hali
+              // belgilanmagan — ko'rinadi, lekin bosilmaydi.
+              Opacity(
+                opacity: 0.4,
+                child: Container(
+                  width: AppSpacing.buttonHeight,
+                  height: AppSpacing.buttonHeight,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.hairline2(context)),
+                  ),
+                  child: Icon(
+                    Icons.ios_share_rounded,
+                    size: 19,
+                    color: AppColors.text2(context),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: Icon(Icons.close_rounded, color: Colors.white, size: 28),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  brand: true,
+                  radius: AppSpacing.r_lg,
+                  label: 'booking.pay_amount'.tr(
+                    namedArgs: {'amount': formatAmount(booking.totalPrice)},
+                  ),
+                  onPressed: () => context.push(
+                    '/owner/bookings/${booking.id}/pay'
+                    '?amount=${booking.totalPrice}',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

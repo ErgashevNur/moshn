@@ -89,6 +89,63 @@ class BookingService {
     await _dio.put('/service/bookings/$id/cancel', data: {'reason': reason});
   }
 
+  // --- Ish bosqichlari, fotohisobot, qo'shimcha ish ---
+
+  /// Bosqich holatini belgilaydi (usta yoki servis egasi).
+  /// `status`: pending | in_progress | done
+  Future<Booking> setStageStatus(
+    String bookingId,
+    String stageId,
+    String status,
+  ) async {
+    final resp = await _dio.put(
+      '/bookings/$bookingId/stages/$stageId',
+      data: {'status': status},
+    );
+    return Booking.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  /// Fotohisobotga rasm qo'shadi.
+  Future<Booking> addBookingPhoto(
+    String bookingId,
+    String filePath, {
+    String? stageId,
+  }) async {
+    final form = FormData.fromMap({
+      'photo': await MultipartFile.fromFile(filePath),
+      'stage_id': ?stageId,
+    });
+    final resp = await _dio.post('/bookings/$bookingId/photos', data: form);
+    return Booking.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  /// Usta qo'shimcha ish taklif qiladi. Narx mijoz tasdiqlagunga qadar
+  /// hisobga qo'shilmaydi.
+  Future<Booking> proposeExtra(
+    String bookingId, {
+    required String name,
+    required int price,
+  }) async {
+    final resp = await _dio.post(
+      '/bookings/$bookingId/extras',
+      data: {'name': name, 'price': price},
+    );
+    return Booking.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  /// Mijoz taklifga javob beradi.
+  Future<Booking> respondToExtra(
+    String bookingId,
+    String extraId, {
+    required bool approve,
+  }) async {
+    final resp = await _dio.post(
+      '/bookings/$bookingId/extras/$extraId/respond',
+      data: {'approve': approve},
+    );
+    return Booking.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
   // --- Оплата ---
 
   Future<Payment> generateQR(String bookingId) async {

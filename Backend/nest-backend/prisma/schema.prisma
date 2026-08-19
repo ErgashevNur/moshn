@@ -254,15 +254,42 @@ model BookingStage {
   bookingId   String    @map("booking_id") @db.Uuid
   name        String
   sortOrder   Int       @default(0) @map("sort_order")
-  /// pending | in_progress | done
+  /// pending | in_progress | awaiting_customer | done
+  /// `awaiting_customer` — usta qo'shimcha ish taklif qildi, mijozning
+  /// javobi kutilmoqda. Bu bosqich paketdan kelmaydi: taklif paytida
+  /// qo'shiladi (`proposeExtra`), javobdan keyin `done` bo'ladi.
   status      String    @default("pending") @db.VarChar(20)
   startedAt   DateTime? @map("started_at")
   completedAt DateTime? @map("completed_at")
 
-  booking Booking @relation("BookingStages", fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking        @relation("BookingStages", fields: [bookingId], references: [id], onDelete: Cascade)
+  extras  BookingExtra[] @relation("StageExtras")
 
   @@index([bookingId])
   @@map("booking_stages")
+}
+
+/// Ish davomida usta taklif qilgan qo'shimcha ish ("Промывка системы").
+/// Mijoz rozi bo'lsagina `Booking.totalPrice` ga qo'shiladi — ya'ni mijoz
+/// ko'rmagan ish hisobga tushmaydi.
+model BookingExtra {
+  id          String    @id @default(uuid()) @db.Uuid
+  bookingId   String    @map("booking_id") @db.Uuid
+  /// Qaysi "kelishuv" bosqichida taklif qilingani.
+  stageId     String?   @map("stage_id") @db.Uuid
+  name        String
+  price       Int       @default(0)
+  /// proposed | approved | rejected
+  status      String    @default("proposed") @db.VarChar(20)
+  respondedAt DateTime? @map("responded_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  booking Booking       @relation("BookingExtras", fields: [bookingId], references: [id], onDelete: Cascade)
+  stage   BookingStage? @relation("StageExtras", fields: [stageId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([stageId])
+  @@map("booking_extras")
 }
 
 /// Usta yuklagan fotohisobot.
@@ -311,6 +338,7 @@ model Booking {
   serviceType ServiceType         @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
   package     ShopServicePackage? @relation("BookingPackage", fields: [packageId], references: [id])
   stages      BookingStage[]      @relation("BookingStages")
+  extras      BookingExtra[]      @relation("BookingExtras")
   photos      BookingPhoto[]      @relation("BookingPhotos")
   payment     Payment?            @relation("BookingPayment")
   tips        Tip[]               @relation("BookingTips")

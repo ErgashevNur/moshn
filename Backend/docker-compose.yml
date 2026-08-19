@@ -55,8 +55,8 @@ services:
     build:
       context: ../Landing
       args:
-        NEXT_PUBLIC_APK_URL: ${NEXT_PUBLIC_APK_URL:-https://media.pitgo.uz/pitgo-2.1.0.apk}
-        NEXT_PUBLIC_APK_PRO_URL: ${NEXT_PUBLIC_APK_PRO_URL:-https://media.pitgo.uz/pitgo-pro-2.1.0.apk}
+        NEXT_PUBLIC_APK_URL: ${NEXT_PUBLIC_APK_URL:-https://media.pitgo.uz/pitgo-2.2.0.apk}
+        NEXT_PUBLIC_APK_PRO_URL: ${NEXT_PUBLIC_APK_PRO_URL:-https://media.pitgo.uz/pitgo-pro-2.2.0.apk}
     restart: unless-stopped
 
   nginx:

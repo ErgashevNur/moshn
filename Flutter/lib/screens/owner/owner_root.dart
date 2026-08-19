@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
 import '../../widgets/m_pitgo_icon.dart';
@@ -21,6 +22,16 @@ class OwnerRoot extends ConsumerStatefulWidget {
 
 class _OwnerRootState extends ConsumerState<OwnerRoot> {
   late int _index = widget.initialTab;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mijoz ilovasi WS'ga ulanmasdi — servis/usta/evakuator ekranlarida
+    // `connect()` bor edi, mijozda esa faqat SOS oqimida. Shu sababli
+    // bron tafsilotlaridagi jonli yangilanish (bosqich, fotohisobot,
+    // qo'shimcha ish) hech qachon ishlamagan: tinglovchi bor, soket yo'q.
+    WsService.instance.connect();
+  }
 
   static const _pages = <Widget>[
     OwnerHomeScreen(),
@@ -42,7 +53,7 @@ class _OwnerRootState extends ConsumerState<OwnerRoot> {
       // SOS — pastki bar markazida, yarmi bardan yuqorida turadi (centerDocked).
       floatingActionButton: _SosFab(onTap: () => context.push('/owner/sos')),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _BottomBar(
+      bottomNavigationBar: OwnerBottomBar(
         index: _index,
         onTap: _onTabTap,
       ),
@@ -85,10 +96,23 @@ class _SosFab extends StatelessWidget {
   }
 }
 
-class _BottomBar extends StatelessWidget {
+/// Mijoz ilovasining pastki navigatsiyasi.
+///
+/// `OwnerRoot`dan tashqarida ham ishlatiladi (masalan bron tafsilotlari
+/// ekranida — maketda u yerda ham nav ko'rinadi). U yerda markazdagi SOS
+/// tugmasi bo'lmaydi: yopishgan to'lov paneli bilan ustma-ust tushardi,
+/// shuning uchun `showSosSlot` bilan bo'shliq olib tashlanadi.
+class OwnerBottomBar extends StatelessWidget {
   final int index;
   final ValueChanged<int> onTap;
-  const _BottomBar({required this.index, required this.onTap});
+  final bool showSosSlot;
+
+  const OwnerBottomBar({
+    super.key,
+    required this.index,
+    required this.onTap,
+    this.showSosSlot = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +132,7 @@ class _BottomBar extends StatelessWidget {
               _NavItem(icon: 'home',     label: 'tabs.home'.tr(),     active: index == 0, onTap: () => onTap(0)),
               _NavItem(icon: 'calendar', label: 'tabs.bookings'.tr(), active: index == 1, onTap: () => onTap(1)),
               // Markazdagi SOS tugmasi uchun joy
-              const SizedBox(width: 70),
+              if (showSosSlot) const SizedBox(width: 70),
               _NavItem(icon: 'car',      label: 'tabs.garage'.tr(),   active: index == 2, onTap: () => onTap(2)),
               _NavItem(icon: 'user',     label: 'tabs.profile'.tr(),  active: index == 3, onTap: () => onTap(3)),
             ],

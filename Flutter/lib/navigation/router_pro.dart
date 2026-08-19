@@ -128,6 +128,16 @@ final routerProProvider = Provider<GoRouter>((ref) {
             path: 'sos/:id',
             builder: (ctx, st) => MechanicSosDetailScreen(sosId: st.pathParameters['id']!),
           ),
+          // Usta ham bronni ochib, bosqichlarni siljitadi va qo'shimcha
+          // ish taklif qiladi. Ekran servis egasinikiga o'xshash, faqat
+          // tasdiqlash/yakunlash tugmalarisiz (`asMaster`).
+          GoRoute(
+            path: 'bookings/:id',
+            builder: (ctx, st) => ServiceBookingDetailScreen(
+              bookingId: st.pathParameters['id']!,
+              asMaster: true,
+            ),
+          ),
         ],
       ),
 

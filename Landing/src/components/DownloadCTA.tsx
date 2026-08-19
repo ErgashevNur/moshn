@@ -4,8 +4,8 @@ import { motion } from 'framer-motion'
 import Icon from './Icon'
 import { useI18n } from '@/lib/i18n'
 
-const APK_URL = process.env.NEXT_PUBLIC_APK_URL || 'https://media.pitgo.uz/pitgo-2.1.0.apk'
-const APK_PRO_URL = process.env.NEXT_PUBLIC_APK_PRO_URL || 'https://media.pitgo.uz/pitgo-pro-2.1.0.apk'
+const APK_URL = process.env.NEXT_PUBLIC_APK_URL || 'https://media.pitgo.uz/pitgo-2.2.0.apk'
+const APK_PRO_URL = process.env.NEXT_PUBLIC_APK_PRO_URL || 'https://media.pitgo.uz/pitgo-pro-2.2.0.apk'
 
 export default function DownloadCTA() {
   const { t } = useI18n()
