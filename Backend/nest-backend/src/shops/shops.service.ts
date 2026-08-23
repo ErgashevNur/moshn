@@ -1,5 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  BusyInterval,
+  freeSlotsForDay,
+  localDateStr,
+  localDayStartUtc,
+} from './availability';
 
 @Injectable()
 export class ShopsService {
@@ -44,6 +50,11 @@ export class ShopsService {
     lng?: number;
     limit: number;
     skip: number;
+    /// Zapis ekranidagi tablar: 'rating' | 'price' | 'distance'
+    sort?: string;
+    /// Berilsa, ro'yxatga shu xizmat bo'yicha eng arzon paket narxi va
+    /// eng yaqin bo'sh vaqt qo'shiladi (zapis ekrani uchun).
+    serviceTypeId?: string;
   }) {
     const where: any = { verificationStatus: { in: ['verified', 'pending'] } };
     if (filter.serviceType) {
@@ -60,7 +71,7 @@ export class ShopsService {
       this.prisma.shopProfile.count({ where }),
     ]);
 
-    const result = shops.map((s) => ({
+    const withDistance = shops.map((s) => ({
       ...s,
       distance_km:
         filter.lat && filter.lng
@@ -68,7 +79,62 @@ export class ShopsService {
           : 0,
     }));
 
+    const result = filter.serviceTypeId
+      ? await this.enrichForBooking(withDistance, filter.serviceTypeId)
+      : withDistance.map((s) => ({ ...s, min_price: null, nearest_slot: null }));
+
+    this.sortShops(result, filter.sort);
     return { shops: result, total };
+  }
+
+  /// Zapis ekrani uchun qo'shimcha maydonlar: eng arzon paket narxi
+  /// ("от 320 000 сум") va eng yaqin bo'sh vaqt.
+  private async enrichForBooking(shops: any[], serviceTypeId: string) {
+    const ids = shops.map((s) => s.id);
+    if (!ids.length) return shops;
+
+    const packages = await this.prisma.shopServicePackage.findMany({
+      where: { shopId: { in: ids }, serviceTypeId, isActive: true },
+      select: { shopId: true, price: true, durationMin: true },
+    });
+
+    const minPrice = new Map<string, number>();
+    const minDuration = new Map<string, number>();
+    for (const p of packages) {
+      if (p.price > 0 && (!minPrice.has(p.shopId) || p.price < minPrice.get(p.shopId)!)) {
+        minPrice.set(p.shopId, p.price);
+      }
+      if (!minDuration.has(p.shopId) || p.durationMin < minDuration.get(p.shopId)!) {
+        minDuration.set(p.shopId, p.durationMin);
+      }
+    }
+
+    // Eng yaqin vaqt eng qisqa paket bo'yicha hisoblanadi — mijoz ko'radigan
+    // "eng erta bo'sh vaqt" shu bo'ladi. Paket yo'q bo'lsa 60 daqiqa.
+    const nearest = await this.nearestSlots(ids, 60);
+
+    return shops.map((s) => ({
+      ...s,
+      min_price: minPrice.get(s.id) ?? null,
+      nearest_slot: nearest.get(s.id) ?? null,
+    }));
+  }
+
+  private sortShops(shops: any[], sort?: string) {
+    switch (sort) {
+      case 'price':
+        // Narxi yo'qlar oxirida — bo'sh ma'lumot ro'yxat boshini egallamasin.
+        shops.sort((a, b) => (a.min_price ?? Infinity) - (b.min_price ?? Infinity));
+        break;
+      case 'distance':
+        shops.sort((a, b) => (a.distance_km || Infinity) - (b.distance_km || Infinity));
+        break;
+      case 'rating':
+      default:
+        shops.sort(
+          (a, b) => b.ratingAvg - a.ratingAvg || b.ratingCount - a.ratingCount,
+        );
+    }
   }
 
   async findById(id: string) {
@@ -200,6 +266,233 @@ export class ShopsService {
       }),
     );
     return Promise.all(ops);
+  }
+
+
+  // ── Xizmat paketlari ────────────────────────────────────────────────────────
+  // Har bir servis o'z paketlarini belgilaydi (nom, tarkib, muddat, narx).
+
+  /// Mijoz uchun: shu servisning tanlangan xizmat bo'yicha paketlari.
+  async getPackages(shopId: string, serviceTypeId?: string) {
+    return this.prisma.shopServicePackage.findMany({
+      where: {
+        shopId,
+        isActive: true,
+        ...(serviceTypeId ? { serviceTypeId } : {}),
+      },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
+      orderBy: [{ sortOrder: 'asc' }, { price: 'asc' }],
+    });
+  }
+
+  /// Servis egasi uchun — nofaollari ham ko'rinadi.
+  async listMyPackages(userId: string, serviceTypeId?: string) {
+    const shop = await this.findByUserId(userId);
+    return this.prisma.shopServicePackage.findMany({
+      where: { shopId: shop.id, ...(serviceTypeId ? { serviceTypeId } : {}) },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
+      orderBy: [{ serviceTypeId: 'asc' }, { sortOrder: 'asc' }, { price: 'asc' }],
+    });
+  }
+
+  async createPackage(userId: string, data: {
+    serviceTypeId: string;
+    name: string;
+    description?: string;
+    durationMin?: number;
+    price?: number;
+    currency?: string;
+    sortOrder?: number;
+    /// Ish bosqichlari nomlari, tartib bo'yicha.
+    stages?: string[];
+  }) {
+    const shop = await this.findByUserId(userId);
+    if (!data.serviceTypeId || !data.name?.trim()) {
+      throw new BadRequestException('Xizmat turi va paket nomi majburiy');
+    }
+    return this.prisma.shopServicePackage.create({
+      data: {
+        shopId: shop.id,
+        serviceTypeId: data.serviceTypeId,
+        name: data.name.trim(),
+        description: data.description ?? '',
+        durationMin: this.normalizeDuration(data.durationMin),
+        price: Math.max(0, Math.floor(Number(data.price ?? 0)) || 0),
+        currency: data.currency ?? 'UZS',
+        sortOrder: Math.floor(Number(data.sortOrder ?? 0)) || 0,
+        stages: { create: this.stageRows(data.stages) },
+      },
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
+    });
+  }
+
+  /// Bosqich nomlarini tozalab, tartib raqami bilan qaytaradi.
+  private stageRows(names?: string[]) {
+    return (names ?? [])
+      .map((n) => (n ?? '').trim())
+      .filter((n) => n.length > 0)
+      .slice(0, 12)
+      .map((name, i) => ({ name, sortOrder: i }));
+  }
+
+  async updatePackage(userId: string, id: string, data: Record<string, any>) {
+    const shop = await this.findByUserId(userId);
+    const pkg = await this.prisma.shopServicePackage.findFirst({
+      where: { id, shopId: shop.id },
+    });
+    if (!pkg) throw new NotFoundException('Paket topilmadi');
+
+    const update: Record<string, any> = {};
+    if (data.name !== undefined) update.name = String(data.name).trim();
+    if (data.description !== undefined) update.description = data.description;
+    if (data.durationMin !== undefined) update.durationMin = this.normalizeDuration(data.durationMin);
+    if (data.price !== undefined) update.price = Math.max(0, Math.floor(Number(data.price)) || 0);
+    if (data.currency !== undefined) update.currency = data.currency;
+    if (data.sortOrder !== undefined) update.sortOrder = Math.floor(Number(data.sortOrder)) || 0;
+    if (data.isActive !== undefined) update.isActive = !!data.isActive;
+
+    // Bosqichlar berilsa — to'liq almashtiriladi (tartib muhim, qisman
+    // yangilash chalkash bo'lardi). Mavjud BRONLAR o'z nusxasini saqlaydi.
+    if (Array.isArray(data.stages)) {
+      await this.prisma.packageStage.deleteMany({ where: { packageId: id } });
+      const rows = this.stageRows(data.stages);
+      if (rows.length) {
+        await this.prisma.packageStage.createMany({
+          data: rows.map((r) => ({ ...r, packageId: id })),
+        });
+      }
+    }
+
+    return this.prisma.shopServicePackage.update({
+      where: { id },
+      data: update,
+      include: { serviceType: true, stages: { orderBy: { sortOrder: 'asc' } } },
+    });
+  }
+
+  async deletePackage(userId: string, id: string) {
+    const shop = await this.findByUserId(userId);
+    const pkg = await this.prisma.shopServicePackage.findFirst({
+      where: { id, shopId: shop.id },
+    });
+    if (!pkg) throw new NotFoundException('Paket topilmadi');
+    // Bronlar bu paketga bog'langan bo'lishi mumkin — o'chirmaymiz, nofaol qilamiz.
+    await this.prisma.shopServicePackage.update({
+      where: { id },
+      data: { isActive: false },
+    });
+    return { message: "Paket o'chirildi" };
+  }
+
+  private normalizeDuration(v?: number): number {
+    const n = Math.floor(Number(v ?? 60));
+    if (!Number.isFinite(n) || n <= 0) return 60;
+    // 15 daqiqadan 8 soatgacha — bundan tashqarisi xato kiritish.
+    return Math.min(Math.max(n, 15), 8 * 60);
+  }
+
+
+  // ── Bo'sh vaqtlar ───────────────────────────────────────────────────────────
+
+  /// Bitta kun uchun bo'sh vaqtlar (zapis ekranidagi "ВРЕМЯ" bo'limi).
+  async getAvailability(shopId: string, dateStr: string, durationMin: number) {
+    const shop = await this.prisma.shopProfile.findUnique({
+      where: { id: shopId },
+      select: { workingHours: true },
+    });
+    if (!shop) throw new NotFoundException('Servis topilmadi');
+
+    const masters = await this.prisma.master.count({
+      where: { shopId, isActive: true },
+    });
+    const busy = await this.busyIntervals([shopId], dateStr, 1);
+
+    return freeSlotsForDay({
+      dateStr,
+      workingHours: shop.workingHours,
+      durationMin,
+      busy: busy.get(shopId) ?? [],
+      masters,
+    }).map((d) => d.toISOString());
+  }
+
+  /// Ro'yxat uchun: har bir servisning eng yaqin bo'sh vaqti
+  /// ("Ближайшая запись: сегодня 11:30"). Bir nechta servis bo'yicha
+  /// bitta so'rovda hisoblanadi — har biriga alohida so'rov yubormaslik uchun.
+  async nearestSlots(
+    shopIds: string[],
+    durationMin: number,
+    daysAhead = 14,
+  ): Promise<Map<string, string | null>> {
+    const result = new Map<string, string | null>();
+    if (!shopIds.length) return result;
+
+    const [shops, masterRows] = await Promise.all([
+      this.prisma.shopProfile.findMany({
+        where: { id: { in: shopIds } },
+        select: { id: true, workingHours: true },
+      }),
+      this.prisma.master.groupBy({
+        by: ['shopId'],
+        where: { shopId: { in: shopIds }, isActive: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const hoursById = new Map(shops.map((s) => [s.id, s.workingHours]));
+    const mastersById = new Map(masterRows.map((r) => [r.shopId, r._count._all]));
+
+    const today = localDateStr(new Date());
+    const busyByShop = await this.busyIntervals(shopIds, today, daysAhead);
+
+    for (const id of shopIds) {
+      const masters = mastersById.get(id) ?? 0;
+      const busy = busyByShop.get(id) ?? [];
+      let found: string | null = null;
+
+      for (let i = 0; i < daysAhead && !found; i++) {
+        const d = new Date(localDayStartUtc(today).getTime() + i * 86_400_000);
+        const slots = freeSlotsForDay({
+          dateStr: localDateStr(d),
+          workingHours: hoursById.get(id),
+          durationMin,
+          busy,
+          masters,
+        });
+        if (slots.length) found = slots[0].toISOString();
+      }
+      result.set(id, found);
+    }
+    return result;
+  }
+
+  /// Berilgan kundan boshlab `days` kun ichidagi faol bronlarni servis
+  /// bo'yicha guruhlab qaytaradi.
+  private async busyIntervals(
+    shopIds: string[],
+    fromDateStr: string,
+    days: number,
+  ): Promise<Map<string, BusyInterval[]>> {
+    const from = localDayStartUtc(fromDateStr);
+    const to = new Date(from.getTime() + days * 86_400_000);
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        shopId: { in: shopIds },
+        status: { in: ['pending', 'confirmed', 'in_progress'] },
+        scheduledAt: { gte: from, lt: to },
+      },
+      select: { shopId: true, scheduledAt: true, durationMin: true },
+    });
+
+    const map = new Map<string, BusyInterval[]>();
+    for (const b of bookings) {
+      const startMs = b.scheduledAt.getTime();
+      const list = map.get(b.shopId) ?? [];
+      list.push({ startMs, endMs: startMs + (b.durationMin || 60) * 60_000 });
+      map.set(b.shopId, list);
+    }
+    return map;
   }
 
   async getBookedSlots(shopId: string, dateFrom: string, dateTo: string) {

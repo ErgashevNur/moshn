@@ -42,14 +42,14 @@ _SlugMeta _slugMeta(String slug) {
   return switch (slug) {
     'podkachka' || 'pumping'   => (iconName: 'gauge',  accent: const Color(0xFF4CA8D9)),
     'perezobuvka' || 'tire_change' || 'tire_storage' =>
-                                  (iconName: 'disc',   accent: const Color(0xFFD4A843)),
+                                  (iconName: 'disc',   accent: const Color(0xFFF5901F)),
     'balancing'                => (iconName: 'disc',   accent: const Color(0xFF30D158)),
     'vulkanizatsiya' || 'patch' || 'remont_prokola' =>
                                   (iconName: 'wrench', accent: const Color(0xFFE87D3E)),
     'disk_repair' || 'rim_repair' =>
                                   (iconName: 'disc',   accent: const Color(0xFF9B72CF)),
     'storage' || 'hranenie'    => (iconName: 'layers', accent: const Color(0xFF2EC6C6)),
-    _                          => (iconName: 'wrench', accent: const Color(0xFFD4A843)),
+    _                          => (iconName: 'wrench', accent: const Color(0xFFF5901F)),
   };
 }
 

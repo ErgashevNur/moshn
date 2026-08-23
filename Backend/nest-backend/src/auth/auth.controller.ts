@@ -39,8 +39,10 @@ export class AuthController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Telefon raqamiga OTP yuborish' })
   async sendOtp(@Body('phone') phone: string) {
-    const devCode = await this.svc.sendOtpByPhone(phone);
-    return { data: { message: 'Kod yuborildi', dev_code: devCode } };
+    const { code, smsSent } = await this.svc.sendOtpByPhone(phone);
+    // Real SMS yuborilgan bo'lsa kodni javobda oshkor qilmaymiz — faqat
+    // SMS sozlanmagan (lokal dev) holatda ko'rish uchun qaytariladi.
+    return { data: { message: 'Kod yuborildi', dev_code: smsSent ? undefined : code } };
   }
 
   @Post('verify-otp')

@@ -8,7 +8,12 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool loading;
   final bool destructive;
+
+  /// Brend rangidagi (to'q sariq) variant. Standart tugma qora/oq —
+  /// bu esa maketdagi "Оплатить ..." kabi asosiy harakat uchun.
+  final bool brand;
   final IconData? icon;
+  final double? radius;
 
   const PrimaryButton({
     super.key,
@@ -16,20 +21,28 @@ class PrimaryButton extends StatelessWidget {
     this.onPressed,
     this.loading = false,
     this.destructive = false,
+    this.brand = false,
     this.icon,
+    this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = destructive ? AppColors.danger : AppColors.inverseBg(context);
-    final fg = destructive ? CupertinoColors.white : AppColors.inverseText(context);
+    final bg = destructive
+        ? AppColors.danger
+        : brand
+            ? AppColors.gold
+            : AppColors.inverseBg(context);
+    final fg = destructive || brand
+        ? CupertinoColors.white
+        : AppColors.inverseText(context);
     return SizedBox(
       width: double.infinity,
       height: AppSpacing.buttonHeight,
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         color: bg,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        borderRadius: BorderRadius.circular(radius ?? AppSpacing.radiusMd),
         onPressed: loading ? null : onPressed,
         child: loading
             ? CupertinoActivityIndicator(color: fg)

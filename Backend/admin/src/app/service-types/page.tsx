@@ -17,14 +17,16 @@ interface ServiceType {
 
 // ── Kategoriyalar — Flutter (home_screen.dart) bilan bir xil lug'at ──────────
 const CATEGORIES: { id: string; label: string }[] = [
-  { id: 'tires',        label: 'Шины' },
-  { id: 'engine',       label: 'Двигатель' },
-  { id: 'brakes',       label: 'Тормоза' },
-  { id: 'transmission', label: 'Трансмиссия' },
-  { id: 'electrics',    label: 'Электрика' },
-  { id: 'body',         label: 'Кузов' },
-  { id: 'other',        label: 'Прочее' },
+  { id: 'service',   label: 'Авто сервис' },
+  { id: 'oil',       label: 'Замена масла' },
+  { id: 'tires',     label: 'Шино монтаж' },
+  { id: 'body',      label: 'Кузовщик' },
+  { id: 'electrics', label: 'Электрик' },
 ]
+
+/// Ro'yxatdan chiqarilgan (eski) kategoriyali yozuvlar shu guruhda ko'rsatiladi.
+/// Formadagi tanlovda chiqmaydi — yangi yozuv bu kategoriyaga qo'yilmaydi.
+const ARCHIVE_CATEGORY = { id: '__archive__', label: 'Архив (старые категории)' }
 
 // â”€â”€ SVG icon library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ICON_LIST: { id: string; label: string; svg: React.ReactNode }[] = [
@@ -245,8 +247,14 @@ export default function ServiceTypesPage() {
           <div className="card p-10 text-center text-text3">Нет типов услуг</div>
         ) : (
           <div className="space-y-6">
-            {CATEGORIES.map(cat => {
-              const items = types.filter(t => (t.category || 'other') === cat.id)
+            {/* Amaldagi kategoriyalar + oxirida "arxiv": kategoriyasi ro'yxatdan
+                chiqarilgan eski yozuvlar (masalan engine/brakes/transmission)
+                ham ko'rinib tursin — aks holda ularni admin panelidan topib
+                tahrirlab bo'lmaydi. */}
+            {[...CATEGORIES, ARCHIVE_CATEGORY].map(cat => {
+              const items = cat.id === ARCHIVE_CATEGORY.id
+                ? types.filter(t => !CATEGORIES.some(c => c.id === (t.category || '')))
+                : types.filter(t => (t.category || '') === cat.id)
               if (items.length === 0) return null
               return (
                 <div key={cat.id}>
@@ -374,6 +382,12 @@ export default function ServiceTypesPage() {
                 </label>
                 <select value={form.category} className="inp"
                   onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}>
+                  {/* Eski (ro'yxatdan chiqarilgan) kategoriya bo'lsa — uni ham
+                      variant sifatida ko'rsatamiz, aks holda select bo'sh
+                      ko'rinadi va qiymat qaysiligi bilinmaydi. */}
+                  {form.category && !CATEGORIES.some(c => c.id === form.category) && (
+                    <option value={form.category}>{form.category} (старая)</option>
+                  )}
                   {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
               </div>

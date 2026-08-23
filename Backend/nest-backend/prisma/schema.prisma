@@ -64,12 +64,13 @@ model ShopProfile {
   createdAt          DateTime                               @default(now()) @map("created_at")
   updatedAt          DateTime                               @updatedAt @map("updated_at")
 
-  user          User               @relation(fields: [userId], references: [id])
-  bookings      Booking[]          @relation("BookingShop")
-  customerCards CustomerCard[]     @relation("CustomerCardShop")
-  servicePrices ShopServicePrice[] @relation("ShopPrices")
-  masters       Master[]           @relation("ShopMasters")
-  sosDispatches SosDispatch[]      @relation("SosDispatchShop")
+  user          User                 @relation(fields: [userId], references: [id])
+  bookings      Booking[]            @relation("BookingShop")
+  customerCards CustomerCard[]       @relation("CustomerCardShop")
+  servicePrices ShopServicePrice[]   @relation("ShopPrices")
+  packages      ShopServicePackage[] @relation("ShopPackages")
+  masters       Master[]             @relation("ShopMasters")
+  sosDispatches SosDispatch[]        @relation("SosDispatchShop")
 
   @@map("shop_profiles")
 }
@@ -110,16 +111,21 @@ model MasterServiceType {
 }
 
 model Vehicle {
-  id        String   @id @default(uuid()) @db.Uuid
-  plate     String   @unique
-  ownerId   String   @map("owner_id") @db.Uuid
-  make      String   @default("")
-  model     String   @default("")
-  year      Int      @default(0)
-  color     String   @default("")
-  photoUrl  String   @default("") @map("photo_url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  plate         String   @unique
+  ownerId       String   @map("owner_id") @db.Uuid
+  make          String   @default("")
+  model         String   @default("")
+  year          Int      @default(0)
+  color         String   @default("")
+  photoUrl      String   @default("") @map("photo_url")
+  /// Joriy probeg, km. 0 — mijoz hali kiritmagan.
+  mileageKm     Int      @default(0) @map("mileage_km")
+  /// Keyingi TO qaysi probegda kerak, km. 0 — belgilanmagan.
+  /// "Через X km" = nextServiceKm - mileageKm (ilova tomonida hisoblanadi).
+  nextServiceKm Int      @default(0) @map("next_service_km")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   owner       User         @relation("VehicleOwner", fields: [ownerId], references: [id])
   bookings    Booking[]    @relation("BookingVehicle")
@@ -145,10 +151,11 @@ model ServiceType {
   priceMax Int     @default(0) @map("price_max")
   isActive Boolean @default(true) @map("is_active")
 
-  bookings    Booking[]           @relation("BookingServiceType")
-  shopPrices  ShopServicePrice[]  @relation("ServiceTypePrices")
-  masters     MasterServiceType[] @relation("ServiceTypeMasters")
-  sosRequests SosRequest[]        @relation("SosRequestServiceType")
+  bookings    Booking[]            @relation("BookingServiceType")
+  shopPrices  ShopServicePrice[]   @relation("ServiceTypePrices")
+  packages    ShopServicePackage[] @relation("ServiceTypePackages")
+  masters     MasterServiceType[]  @relation("ServiceTypeMasters")
+  sosRequests SosRequest[]         @relation("SosRequestServiceType")
 
   @@map("service_types")
 }
@@ -196,6 +203,110 @@ model ShopServicePrice {
   @@map("shop_service_prices")
 }
 
+/// Xizmat paketi ("Bazoviy / Standart / Premium" kabi). Har bir servis
+/// O'ZI belgilaydi — nomi, tarkibi, muddati va narxi servisdan servisga
+/// farq qiladi (CLAUDE.md §6 ruhida). `ShopServicePrice` umumiy diapazon
+/// bo'lsa, paket — aniq taklif: shu narxga aynan nima kiradi.
+model ShopServicePackage {
+  id            String   @id @default(uuid()) @db.Uuid
+  shopId        String   @map("shop_id") @db.Uuid
+  serviceTypeId String   @map("service_type_id") @db.Uuid
+  name          String
+  /// Tarkibi: "Motul 5W-40, filtr, 12 tugun tekshiruvi"
+  description   String   @default("")
+  /// Ishning taxminiy davomiyligi — bo'sh vaqtlarni hisoblashda ishlatiladi.
+  durationMin   Int      @default(60) @map("duration_min")
+  price         Int      @default(0)
+  currency      String   @default("UZS") @db.VarChar(10)
+  /// Ro'yxatdagi tartib (arzondan qimmatga emas — servis o'zi joylashtiradi).
+  sortOrder     Int      @default(0) @map("sort_order")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shop        ShopProfile    @relation("ShopPackages", fields: [shopId], references: [id], onDelete: Cascade)
+  serviceType ServiceType    @relation("ServiceTypePackages", fields: [serviceTypeId], references: [id], onDelete: Cascade)
+  bookings    Booking[]      @relation("BookingPackage")
+  stages      PackageStage[] @relation("PackageStages")
+
+  @@index([shopId, serviceTypeId])
+  @@map("shop_service_packages")
+}
+
+/// Paket ichidagi ish bosqichlari ("Qabul → Diagnostika → Moy almashtirish →
+/// Yuvish"). Servis egasi paket yaratganda belgilaydi.
+model PackageStage {
+  id        String @id @default(uuid()) @db.Uuid
+  packageId String @map("package_id") @db.Uuid
+  name      String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  package ShopServicePackage @relation("PackageStages", fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+  @@map("package_stages")
+}
+
+/// Aniq bronning bosqichlari — bron yaratilganda paketdan KO'CHIRILADI.
+/// Paket keyin o'zgarsa ham bu bron o'z bosqichlarini saqlaydi.
+model BookingStage {
+  id          String    @id @default(uuid()) @db.Uuid
+  bookingId   String    @map("booking_id") @db.Uuid
+  name        String
+  sortOrder   Int       @default(0) @map("sort_order")
+  /// pending | in_progress | awaiting_customer | done
+  /// `awaiting_customer` — usta qo'shimcha ish taklif qildi, mijozning
+  /// javobi kutilmoqda. Bu bosqich paketdan kelmaydi: taklif paytida
+  /// qo'shiladi (`proposeExtra`), javobdan keyin `done` bo'ladi.
+  status      String    @default("pending") @db.VarChar(20)
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  booking Booking        @relation("BookingStages", fields: [bookingId], references: [id], onDelete: Cascade)
+  extras  BookingExtra[] @relation("StageExtras")
+
+  @@index([bookingId])
+  @@map("booking_stages")
+}
+
+/// Ish davomida usta taklif qilgan qo'shimcha ish ("Промывка системы").
+/// Mijoz rozi bo'lsagina `Booking.totalPrice` ga qo'shiladi — ya'ni mijoz
+/// ko'rmagan ish hisobga tushmaydi.
+model BookingExtra {
+  id          String    @id @default(uuid()) @db.Uuid
+  bookingId   String    @map("booking_id") @db.Uuid
+  /// Qaysi "kelishuv" bosqichida taklif qilingani.
+  stageId     String?   @map("stage_id") @db.Uuid
+  name        String
+  price       Int       @default(0)
+  /// proposed | approved | rejected
+  status      String    @default("proposed") @db.VarChar(20)
+  respondedAt DateTime? @map("responded_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  booking Booking       @relation("BookingExtras", fields: [bookingId], references: [id], onDelete: Cascade)
+  stage   BookingStage? @relation("StageExtras", fields: [stageId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([stageId])
+  @@map("booking_extras")
+}
+
+/// Usta yuklagan fotohisobot.
+model BookingPhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  url       String
+  /// Qaysi bosqichda olingani (bo'lsa) — hisobotni guruhlash uchun.
+  stageId   String?  @map("stage_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation("BookingPhotos", fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_photos")
+}
+
 model Booking {
   id                   String    @id @default(uuid()) @db.Uuid
   customerId           String    @map("customer_id") @db.Uuid
@@ -203,24 +314,35 @@ model Booking {
   masterId             String    @map("master_id") @db.Uuid
   vehicleId            String    @map("vehicle_id") @db.Uuid
   serviceTypeId        String    @map("service_type_id") @db.Uuid
+  /// Mijoz tanlagan paket (bo'lsa). Narx va davomiylik shundan olinadi.
+  packageId            String?   @map("package_id") @db.Uuid
   scheduledAt          DateTime  @map("scheduled_at")
+  /// Ishning davomiyligi — paketdan ko'chiriladi, keyin paket o'zgarsa ham
+  /// bu bron o'z vaqtini saqlaydi (bo'sh vaqtlarni hisoblash uchun).
+  durationMin          Int       @default(60) @map("duration_min")
   notes                String    @default("")
   status               String    @default("pending") @db.VarChar(30)
   totalPrice           Int       @default(0) @map("total_price")
   cancelReason         String    @default("") @map("cancel_reason")
   completedAt          DateTime? @map("completed_at")
   reviewReminderSentAt DateTime? @map("review_reminder_sent_at")
+  /// Mijozga ko'rsatiladigan qisqa buyurtma raqami ("ЗАКАЗ №1042").
+  orderNo              Int       @default(autoincrement()) @map("order_no")
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  customer    User        @relation("BookingCustomer", fields: [customerId], references: [id])
-  shop        ShopProfile @relation("BookingShop", fields: [shopId], references: [id])
-  master      Master      @relation("BookingMaster", fields: [masterId], references: [id])
-  vehicle     Vehicle     @relation("BookingVehicle", fields: [vehicleId], references: [id])
-  serviceType ServiceType @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
-  payment     Payment?    @relation("BookingPayment")
-  tips        Tip[]       @relation("BookingTips")
-  reviews     Review[]    @relation("BookingReviews")
+  customer    User                @relation("BookingCustomer", fields: [customerId], references: [id])
+  shop        ShopProfile         @relation("BookingShop", fields: [shopId], references: [id])
+  master      Master              @relation("BookingMaster", fields: [masterId], references: [id])
+  vehicle     Vehicle             @relation("BookingVehicle", fields: [vehicleId], references: [id])
+  serviceType ServiceType         @relation("BookingServiceType", fields: [serviceTypeId], references: [id])
+  package     ShopServicePackage? @relation("BookingPackage", fields: [packageId], references: [id])
+  stages      BookingStage[]      @relation("BookingStages")
+  extras      BookingExtra[]      @relation("BookingExtras")
+  photos      BookingPhoto[]      @relation("BookingPhotos")
+  payment     Payment?            @relation("BookingPayment")
+  tips        Tip[]               @relation("BookingTips")
+  reviews     Review[]            @relation("BookingReviews")
 
   @@index([masterId])
   @@map("bookings")

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,12 +10,16 @@ import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../services/booking_service.dart';
 import '../../services/review_service.dart';
+import '../../services/ws_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../utils/formatters.dart';
 import '../../widgets/m_stars.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/booking_shared.dart';
 import '../../widgets/section_card.dart';
+import 'owner_root.dart';
 
 final _bookingDetailProvider = FutureProvider.autoDispose
     .family<Booking, String>((ref, id) => BookingService().getBooking(id));
@@ -28,16 +34,54 @@ final _bookingReviewProvider = FutureProvider.autoDispose
       (ref, bookingId) => ReviewService().getByBooking(bookingId),
     );
 
-class BookingDetailScreen extends ConsumerWidget {
+class BookingDetailScreen extends ConsumerStatefulWidget {
   final String bookingId;
   const BookingDetailScreen({super.key, required this.bookingId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BookingDetailScreen> createState() =>
+      _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
+  StreamSubscription<WsEvent>? _wsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Usta bosqichni belgilasa, rasm yuklasa yoki qo'shimcha ish taklif
+    // qilsa — ekran darhol yangilansin (mijoz "ish qayerga yetdi" deb
+    // qayta-qayta ochib ko'rmasin).
+    const live = {'booking_stage', 'booking_photo', 'booking_extra'};
+    _wsSub = WsService.instance.events.listen((e) {
+      if (!live.contains(e.type)) return;
+      if (e.data['id'] != widget.bookingId) return;
+      ref.invalidate(_bookingDetailProvider(widget.bookingId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookingId = widget.bookingId;
     final bookingAsync = ref.watch(_bookingDetailProvider(bookingId));
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
+      // Maketda bron tafsilotlarida ham pastki navigatsiya turadi. Bu ekran
+      // shell ichida emas (router oddiy GoRoute daraxti), shuning uchun
+      // bar shu yerda chiziladi va bosilganda `/owner` ning kerakli
+      // tabiga o'tadi. Faol tab — "Записи", bron o'sha bo'limga tegishli.
+      bottomNavigationBar: OwnerBottomBar(
+        index: 1,
+        showSosSlot: false,
+        onTap: (i) => context.go('/owner', extra: i),
+      ),
       body: Column(
         children: [
           SafeArea(
@@ -49,34 +93,26 @@ class BookingDetailScreen extends ConsumerWidget {
                 AppSpacing.lg,
                 AppSpacing.md,
               ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface(context),
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusMd,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: AppColors.text(context),
-                        size: 17,
-                      ),
+              // Maketda alohida sarlavha yo'q — karta darhol boshlanadi.
+              // Orqaga tugmasi qoladi: bo'lmasa ekrandan chiqib bo'lmaydi.
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(context),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.text(context),
+                      size: 16,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      'booking.title'.tr(),
-                      style: AppTypography.titleLarge,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -116,57 +152,72 @@ class _Body extends ConsumerWidget {
         ? ref.watch(_bookingReviewProvider(booking.id))
         : null;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _StatusCard(booking: booking),
-          const SizedBox(height: AppSpacing.md),
-          _InfoCard(booking: booking),
-          const SizedBox(height: AppSpacing.xl),
-          if (booking.isCompleted && reviewAsync != null) ...[
-            _ReviewSection(booking: booking, reviewAsync: reviewAsync),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          if (booking.isCompleted && !isPaid) ...[
-            PrimaryButton(
-              label: 'booking.pay_now'.tr(),
-              onPressed: () => context.push(
-                '/owner/bookings/${booking.id}/pay?amount=${booking.totalPrice}',
-              ),
+    // To'lov paneli maketdagidek pastda YOPISHIB turadi — ish davomida ham
+    // ko'rinadi (mijoz tugashini kutmasdan to'lay oladi).
+    final showPayBar = !isPaid &&
+        booking.totalPrice > 0 &&
+        !booking.isCancelled;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bosqichlar bo'lsa — jarayon sarlavhasi eski status kartasi
+                // o'rniga (u yerda ham holat, ham progress bor).
+                if (booking.stages.isNotEmpty)
+                  BookingProgressHeader(booking: booking)
+                else
+                  _StatusCard(booking: booking),
+                const SizedBox(height: AppSpacing.lg),
+                if (booking.stages.isNotEmpty) ...[
+                  BookingStagesTimeline(
+                    booking: booking,
+                    // Kelishuv bosqichi ostida "Согласен / Отказаться".
+                    below: (_, stage) => stage.isAwaiting
+                        ? _StageApproval(booking: booking, stage: stage)
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (booking.photos.isNotEmpty) ...[
+                  BookingPhotoReport(photos: booking.photos),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (booking.totalPrice > 0) ...[
+                  BookingPaymentCard(booking: booking, isPaid: isPaid),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                _InfoCard(booking: booking),
+                const SizedBox(height: AppSpacing.lg),
+                if (booking.isCompleted && reviewAsync != null) ...[
+                  _ReviewSection(booking: booking, reviewAsync: reviewAsync),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                if (booking.isCompleted && isPaid)
+                  TextButton(
+                    onPressed: () => _showTipDialog(context, ref),
+                    child: Text('booking.add_tip'.tr()),
+                  ),
+                if (booking.canCancel)
+                  TextButton(
+                    onPressed: () => _confirmCancel(context, ref),
+                    child: Text(
+                      'booking.cancel'.tr(),
+                      style:
+                          AppTypography.body.copyWith(color: AppColors.danger),
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            TextButton(
-              onPressed: () => _showTipDialog(context, ref),
-              child: Text('booking.add_tip'.tr()),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          if (booking.isCompleted && isPaid) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              alignment: Alignment.center,
-              child: Text(
-                'booking.paid'.tr(),
-                style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.success,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          if (booking.canCancel)
-            TextButton(
-              onPressed: () => _confirmCancel(context, ref),
-              child: Text(
-                'booking.cancel'.tr(),
-                style: AppTypography.body.copyWith(color: AppColors.danger),
-              ),
-            ),
-          const SizedBox(height: AppSpacing.huge),
-        ],
-      ),
+          ),
+        ),
+        if (showPayBar) _PayBar(booking: booking),
+      ],
     );
   }
 
@@ -350,24 +401,19 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Sana sarlavha kartasida, narx "К оплате"da — bu yerda
+          // takrorlanmaydi. Qoladigani: mashina, usta va izoh.
           _InfoRow(
             label: 'booking.vehicle'.tr(),
             value: booking.vehicle?.displayName ?? '—',
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(height: 0.5, color: AppColors.hairline(context)),
-          const SizedBox(height: AppSpacing.sm),
-          _InfoRow(
-            label: 'booking.scheduled_at'.tr(),
-            value: _formatDate(booking.scheduledAt),
-          ),
-          if (booking.totalPrice > 0) ...[
+          if ((booking.master?.fullName ?? '').isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             Container(height: 0.5, color: AppColors.hairline(context)),
             const SizedBox(height: AppSpacing.sm),
             _InfoRow(
-              label: 'booking.price'.tr(),
-              value: '${_formatPrice(booking.totalPrice)} ${'common.sum'.tr()}',
+              label: 'booking.master'.tr(),
+              value: booking.master!.fullName,
             ),
           ],
           if (booking.notes.isNotEmpty) ...[
@@ -381,19 +427,6 @@ class _InfoCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dt) =>
-      '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} '
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -713,4 +746,204 @@ Future<void> _showLeaveReviewSheet(
     },
   );
   commentCtrl.dispose();
+}
+
+// ── Ish jarayoni ─────────────────────────────────────────────────────────────
+// Mijoz ish boshlanganidan yakuniga qadar xabardor bo'lib turadi:
+// nechanchi bosqich, qaysi bosqich hozir bajarilyapti, usta yuborgan rasmlar.
+
+/// Kelishuv bosqichi ostida chiqadigan taklif kartochkasi — mijoz shu
+/// yerda javob beradi. Timeline'ning o'zi umumiy vidjetda
+/// (`booking_shared.dart`), bu esa faqat mijozga xos qism.
+class _StageApproval extends ConsumerStatefulWidget {
+  final Booking booking;
+  final BookingStage stage;
+
+  const _StageApproval({required this.booking, required this.stage});
+
+  @override
+  ConsumerState<_StageApproval> createState() => _StageApprovalState();
+}
+
+class _StageApprovalState extends ConsumerState<_StageApproval> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final proposals = widget.booking.proposedExtras
+        .where((e) => e.stageId == widget.stage.id)
+        .toList();
+    if (proposals.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: [for (final e in proposals) _proposal(context, e)],
+    );
+  }
+
+  Widget _proposal(BuildContext context, BookingExtra e) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface2(context),
+        borderRadius: BorderRadius.circular(AppSpacing.r_sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  e.name,
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.text(context)),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                '${formatAmount(e.price)} ${'common.sum'.tr()}',
+                style: AppTypography.soraSize(13, weight: FontWeight.w700)
+                    .copyWith(color: AppColors.text(context)),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _answerBtn(
+                  label: 'booking.extra_approve'.tr(),
+                  color: AppColors.success,
+                  filled: true,
+                  onTap: () => _respond(e, true),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _answerBtn(
+                  label: 'booking.extra_reject'.tr(),
+                  color: AppColors.danger,
+                  filled: false,
+                  onTap: () => _respond(e, false),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _answerBtn({
+    required String label,
+    required Color color,
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: _busy ? null : onTap,
+      child: Container(
+        height: AppSpacing.buttonHeightSm,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: filled ? color : Colors.transparent,
+          border:
+              filled ? null : Border.all(color: color.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(AppSpacing.r_sm),
+        ),
+        child: Opacity(
+          opacity: _busy ? 0.5 : 1,
+          child: Text(
+            label,
+            style: AppTypography.labelMedium
+                .copyWith(color: filled ? Colors.white : color),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _respond(BookingExtra e, bool approve) async {
+    setState(() => _busy = true);
+    try {
+      await BookingService()
+          .respondToExtra(widget.booking.id, e.id, approve: approve);
+      ref.invalidate(_bookingDetailProvider(widget.booking.id));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('common.error'.tr()),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+// ── Pastda yopishgan to'lov paneli ───────────────────────────────────────────
+
+class _PayBar extends StatelessWidget {
+  final Booking booking;
+  const _PayBar({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bg(context),
+        border: Border(top: BorderSide(color: AppColors.hairline(context))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              // Maketdagi kichik dumaloq tugma. Vazifasi hali
+              // belgilanmagan — ko'rinadi, lekin bosilmaydi.
+              Opacity(
+                opacity: 0.4,
+                child: Container(
+                  width: AppSpacing.buttonHeight,
+                  height: AppSpacing.buttonHeight,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.hairline2(context)),
+                  ),
+                  child: Icon(
+                    Icons.ios_share_rounded,
+                    size: 19,
+                    color: AppColors.text2(context),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  brand: true,
+                  radius: AppSpacing.r_lg,
+                  label: 'booking.pay_amount'.tr(
+                    namedArgs: {'amount': formatAmount(booking.totalPrice)},
+                  ),
+                  onPressed: () => context.push(
+                    '/owner/bookings/${booking.id}/pay'
+                    '?amount=${booking.totalPrice}',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

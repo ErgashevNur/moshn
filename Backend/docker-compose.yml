@@ -32,6 +32,8 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM=${SMTP_FROM}
+      - ESKIZ_EMAIL=${ESKIZ_EMAIL}
+      - ESKIZ_PASSWORD=${ESKIZ_PASSWORD}
       - PORT=8080
       - NODE_ENV=production
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
@@ -49,12 +51,21 @@ services:
     depends_on:
       - backend
 
+  landing:
+    build:
+      context: ../Landing
+      args:
+        NEXT_PUBLIC_APK_URL: ${NEXT_PUBLIC_APK_URL:-https://media.pitgo.uz/pitgo-2.2.0.apk}
+        NEXT_PUBLIC_APK_PRO_URL: ${NEXT_PUBLIC_APK_PRO_URL:-https://media.pitgo.uz/pitgo-pro-2.2.0.apk}
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
     depends_on:
       - backend
       - admin
+      - landing
     ports:
       - "80:80"
       - "443:443"

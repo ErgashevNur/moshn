@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../models/master.dart';
 import '../models/review.dart';
+import '../models/service_package.dart';
 import '../models/shop.dart';
 import '../models/service_type.dart';
 import 'api.dart';
@@ -37,9 +38,19 @@ class ShopService {
     );
   }
 
-  Future<List<Shop>> getShops({String? serviceType, double? lat, double? lng}) async {
+  Future<List<Shop>> getShops({
+    String? serviceType,
+    double? lat,
+    double? lng,
+    /// Berilsa, javobga eng arzon paket narxi va eng yaqin bo'sh vaqt qo'shiladi.
+    String? serviceTypeId,
+    /// 'rating' | 'price' | 'distance'
+    String? sort,
+  }) async {
     final params = <String, dynamic>{'limit': 50};
     if (serviceType != null) params['service_type'] = serviceType;
+    if (serviceTypeId != null) params['service_type_id'] = serviceTypeId;
+    if (sort != null) params['sort'] = sort;
     if (lat != null) params['lat'] = lat;
     if (lng != null) params['lng'] = lng;
 
@@ -107,6 +118,84 @@ class ShopService {
     });
     final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
     return data.map((e) => DateTime.parse(e as String).toLocal()).toList();
+  }
+
+  /// Servisning tanlangan xizmat bo'yicha paketlari.
+  Future<List<ServicePackage>> getPackages(String shopId, String serviceTypeId) async {
+    final resp = await _dio.get('/shops/$shopId/packages',
+        queryParameters: {'service_type_id': serviceTypeId});
+    final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
+    return data
+        .map((e) => ServicePackage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Berilgan kundagi bo'sh vaqtlar. Server ish vaqti, ustalar soni va
+  /// mavjud bronlarni hisobga oladi.
+  Future<List<DateTime>> getAvailability(
+    String shopId,
+    DateTime date,
+    int durationMin,
+  ) async {
+    final d =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final resp = await _dio.get('/shops/$shopId/availability',
+        queryParameters: {'date': d, 'duration': durationMin});
+    final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
+    return data.map((e) => DateTime.parse(e as String).toLocal()).toList();
+  }
+
+  // ── Paketlar (servis egasi) ────────────────────────────────────────────────
+
+  /// Egasining barcha paketlari — nofaollari ham.
+  Future<List<ServicePackage>> getMyPackages({String? serviceTypeId}) async {
+    final resp = await _dio.get('/service/packages',
+        queryParameters: {'service_type_id': ?serviceTypeId});
+    final data = (resp.data['data'] ?? resp.data) as List<dynamic>;
+    return data
+        .map((e) => ServicePackage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ServicePackage> createPackage({
+    required String serviceTypeId,
+    required String name,
+    String description = '',
+    int durationMin = 60,
+    int price = 0,
+    int sortOrder = 0,
+  }) async {
+    final resp = await _dio.post('/service/packages', data: {
+      'service_type_id': serviceTypeId,
+      'name': name,
+      'description': description,
+      'duration_min': durationMin,
+      'price': price,
+      'sort_order': sortOrder,
+    });
+    return ServicePackage.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<ServicePackage> updatePackage(
+    String id, {
+    String? name,
+    String? description,
+    int? durationMin,
+    int? price,
+    bool? isActive,
+  }) async {
+    final resp = await _dio.put('/service/packages/$id', data: {
+      'name': ?name,
+      'description': ?description,
+      'duration_min': ?durationMin,
+      'price': ?price,
+      'is_active': ?isActive,
+    });
+    return ServicePackage.fromJson((resp.data['data'] ?? resp.data) as Map<String, dynamic>);
+  }
+
+  Future<void> deletePackage(String id) async {
+    await _dio.delete('/service/packages/$id');
   }
 
   Future<List<Review>> getShopReviews(String shopId, {int page = 1, int limit = 10}) async {

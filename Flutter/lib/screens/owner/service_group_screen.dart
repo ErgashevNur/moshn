@@ -11,14 +11,20 @@ import '../../theme/typography.dart';
 import '../../widgets/m_service_tile.dart';
 
 /// Bosh ekranda tanlangan kategoriya ichidagi xizmat turlari (2-bosqich).
-/// Tur bosilsa mavjud `/owner/services/:slug` (ServiceCategoryScreen) ochiladi.
+/// Tur bosilsa `/owner/services/:slug` (BookServiceScreen — zapis oqimi) ochiladi.
+///
+/// `categoryId == 'all'` — maxsus rejim: bosh ekrandagi "Barcha xizmatlar"
+/// havolasi, kategoriyaga bo'lmasdan butun katalogni ko'rsatadi.
 class ServiceGroupScreen extends ConsumerWidget {
   final String categoryId;
   const ServiceGroupScreen({super.key, required this.categoryId});
 
+  static const _allId = 'all';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final typesAsync = ref.watch(serviceTypesProvider);
+    final isAll = categoryId == _allId;
     final meta = serviceCategoryMeta(categoryId);
     final locale = context.locale.languageCode;
 
@@ -47,7 +53,7 @@ class ServiceGroupScreen extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
-                      meta.labelKey.tr(),
+                      isAll ? 'category.all_services'.tr() : meta.labelKey.tr(),
                       style: AppTypography.appbarTitle.copyWith(color: AppColors.text(context)),
                     ),
                   ),
@@ -57,7 +63,9 @@ class ServiceGroupScreen extends ConsumerWidget {
             Expanded(
               child: typesAsync.when(
                 data: (types) {
-                  final items = types.where((t) => t.categoryOrOther == categoryId).toList();
+                  final items = isAll
+                      ? types.toList()
+                      : types.where((t) => t.categoryOrOther == categoryId).toList();
                   if (items.isEmpty) {
                     return Center(
                       child: Text('category.empty'.tr(), style: AppTypography.body.copyWith(color: AppColors.text3(context))),

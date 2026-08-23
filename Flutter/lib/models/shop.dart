@@ -67,6 +67,11 @@ class Shop {
   final double? distanceKm;
   final List<ShopServicePrice> servicePrices;
 
+  /// Zapis ekrani uchun (server `service_type_id` berilganda qaytaradi):
+  /// shu xizmat bo'yicha eng arzon paket narxi va eng yaqin bo'sh vaqt.
+  final int? minPrice;
+  final DateTime? nearestSlot;
+
   Shop({
     required this.id,
     required this.shopName,
@@ -82,6 +87,8 @@ class Shop {
     required this.totalBookings,
     this.distanceKm,
     this.servicePrices = const [],
+    this.minPrice,
+    this.nearestSlot,
   });
 
   factory Shop.fromJson(Map<String, dynamic> json) => Shop(
@@ -108,5 +115,12 @@ class Shop {
                 ?.map((e) => ShopServicePrice.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
+        minPrice: (json['min_price'] ?? json['minPrice']) != null
+            ? ((json['min_price'] ?? json['minPrice']) as num).toInt()
+            : null,
+        nearestSlot: (json['nearest_slot'] ?? json['nearestSlot']) != null
+            ? DateTime.tryParse((json['nearest_slot'] ?? json['nearestSlot']) as String)
+                ?.toLocal()
+            : null,
       );
 }

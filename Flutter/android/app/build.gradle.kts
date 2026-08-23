@@ -42,6 +42,36 @@ android {
         versionName = flutter.versionName
     }
 
+    // PitGo (mijoz) va PitGo Pro (servis/usta/evakuator) — ikkita alohida ilova,
+    // bitta kod bazasidan. Har biri o'z applicationId + nomi + ikonkasi bilan.
+    flavorDimensions += "app"
+    productFlavors {
+        create("customer") {
+            dimension = "app"
+            applicationId = "uz.pitgo.pitgo"
+            resValue("string", "app_name", "PitGo")
+        }
+        create("pro") {
+            dimension = "app"
+            applicationId = "uz.pitgo.pitgo.pro"
+            resValue("string", "app_name", "PitGo Pro")
+        }
+    }
+
+    // APK fayl nomida versiya bo'lsin: `app-customer-release.apk` o'rniga
+    // `pitgo-2.1.0.apk` / `pitgo-pro-2.1.0.apk`. Shunda qaysi build qaysi
+    // versiya ekani fayl nomidan ko'rinadi va serverga yuklaganda qayta
+    // nomlash kerak bo'lmaydi.
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val prefix = if (variant.flavorName == "pro") "pitgo-pro" else "pitgo"
+            val suffix = if (variant.buildType.name == "release") "" else "-${variant.buildType.name}"
+            output.outputFileName = "$prefix-${variant.versionName}$suffix.apk"
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {

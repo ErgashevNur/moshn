@@ -85,9 +85,17 @@ class _PhoneScreenState extends State<PhoneScreen> {
     });
     final phone = '+998$_digits';
     try {
-      await AuthService().sendOtp(phone);
+      final devCode = await AuthService().sendOtp(phone);
       if (mounted) {
-        context.go('/otp?phone=${Uri.encodeComponent(phone)}');
+        // SnackBar emas — darhol keyingi ekranga o'tilgani uchun SnackBar
+        // ko'rinishga ulgurmasdan yo'qolib qolardi. Kod endi OTP ekraniga
+        // parametr sifatida uzatilib, u yerda doimiy banner sifatida
+        // ko'rsatiladi (SMS ishlamasa foydalanuvchi bloklanib qolmasin).
+        final extra = Uri.encodeComponent(phone);
+        final devCodeParam = (devCode != null && devCode.isNotEmpty)
+            ? '&dev_code=${Uri.encodeComponent(devCode)}'
+            : '';
+        context.go('/otp?phone=$extra$devCodeParam');
       }
     } catch (e) {
       setState(() {

@@ -65,6 +65,13 @@ class PitGoIcon extends StatelessWidget {
     'chevL': '''
       <path d="M15 5l-7 7 7 7" stroke="C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     ''',
+    // AutoTouch (avtosignal) uchun — markazdan ikki tomonga tarqaladigan
+    // to'lqinlar. SOS emas, shuning uchun ogohlantirish belgisi emas.
+    'signal': '''
+      <circle cx="12" cy="12" r="2" fill="C" stroke="none"/>
+      <path d="M8 8.4a5.5 5.5 0 000 7.2M16 8.4a5.5 5.5 0 010 7.2" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M4.9 5.4a10 10 0 000 13.2M19.1 5.4a10 10 0 010 13.2" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    ''',
     'bell': '''
       <path d="M18 9a6 6 0 10-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9z" stroke="C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       <path d="M10.5 20a2 2 0 003 0" stroke="C" stroke-width="1.8" stroke-linecap="round" fill="none"/>

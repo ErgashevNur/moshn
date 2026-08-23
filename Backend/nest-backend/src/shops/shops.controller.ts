@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from '../common/decorators/user.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -32,6 +32,8 @@ export class ShopsController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('service_type') serviceType?: string,
+    @Query('service_type_id') serviceTypeId?: string,
+    @Query('sort') sort?: string,
     @Query('page') page = '1',
     @Query('limit') limit = '20',
   ) {
@@ -39,6 +41,8 @@ export class ShopsController {
     const l = Math.min(100, Math.max(1, Number(limit)));
     const result = await this.svc.findMany({
       serviceType,
+      serviceTypeId,
+      sort,
       lat: lat ? Number(lat) : undefined,
       lng: lng ? Number(lng) : undefined,
       limit: l,
@@ -138,6 +142,26 @@ export class ShopsController {
 
   // ── Xizmat narxlari ────────────────────────────────────────────────────────
 
+  @Get('shops/:id/packages')
+  @ApiOperation({ summary: 'Servisning xizmat paketlari (ommaviy)' })
+  async getShopPackages(
+    @Param('id') id: string,
+    @Query('service_type_id') serviceTypeId?: string,
+  ) {
+    return { data: await this.svc.getPackages(id, serviceTypeId) };
+  }
+
+  @Get('shops/:id/availability')
+  @ApiOperation({ summary: "Berilgan kundagi bo'sh vaqtlar (zapis uchun)" })
+  async getAvailability(
+    @Param('id') id: string,
+    @Query('date') date: string,
+    @Query('duration') duration = '60',
+  ) {
+    const d = Math.min(480, Math.max(15, Number(duration) || 60));
+    return { data: await this.svc.getAvailability(id, date, d) };
+  }
+
   @Get('shops/:id/prices')
   @ApiOperation({ summary: 'Servis narxlari (ommaviy)' })
   async getShopPrices(@Param('id') id: string) {
@@ -163,5 +187,68 @@ export class ShopsController {
   ) {
     const shop = await this.svc.findByUserId(userId);
     return { data: await this.svc.upsertServicePrices(shop.id, body.prices) };
+  }
+
+  // ── Paketlar (servis egasi) ────────────────────────────────────────────────
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Get('service/packages')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Mening paketlarim [service]' })
+  async getMyPackages(
+    @User('user_id') userId: string,
+    @Query('service_type_id') serviceTypeId?: string,
+  ) {
+    return { data: await this.svc.listMyPackages(userId, serviceTypeId) };
+  }
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Post('service/packages')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: "Paket qo'shish [service]" })
+  async createMyPackage(@User('user_id') userId: string, @Body() body: any) {
+    return {
+      data: await this.svc.createPackage(userId, {
+        serviceTypeId: body.service_type_id ?? body.serviceTypeId,
+        name: body.name,
+        description: body.description,
+        durationMin: body.duration_min ?? body.durationMin,
+        price: body.price,
+        currency: body.currency,
+        sortOrder: body.sort_order ?? body.sortOrder,
+        stages: body.stages,
+      }),
+    };
+  }
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Put('service/packages/:id')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Paketni yangilash [service]' })
+  async updateMyPackage(
+    @User('user_id') userId: string,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return {
+      data: await this.svc.updatePackage(userId, id, {
+        name: body.name,
+        description: body.description,
+        durationMin: body.duration_min ?? body.durationMin,
+        price: body.price,
+        currency: body.currency,
+        sortOrder: body.sort_order ?? body.sortOrder,
+        isActive: body.is_active ?? body.isActive,
+        stages: body.stages,
+      }),
+    };
+  }
+
+  @UseGuards(JwtGuard, ServiceRoleGuard)
+  @Delete('service/packages/:id')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: "Paketni o'chirish (nofaol qilish) [service]" })
+  async deleteMyPackage(@User('user_id') userId: string, @Param('id') id: string) {
+    return { data: await this.svc.deletePackage(userId, id) };
   }
 }

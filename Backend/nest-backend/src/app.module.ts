@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ShopsModule } from './shops/shops.module';
+import { SmsModule } from './sms/sms.module';
 import { SosModule } from './sos/sos.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { WsModule } from './ws/ws.module';
@@ -24,6 +25,7 @@ import { PromosModule } from './promos/promos.module';
     ScheduleModule.forRoot(),
     PrismaModule,
     EmailModule,
+    SmsModule,
     WsModule,
     AuthModule,
     ProfileModule,

@@ -1,17 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
-import 'navigation/router.dart';
+import 'app.dart';
+import 'config/app_flavor.dart';
+import 'navigation/router_customer.dart';
 import 'services/push_service.dart';
-import 'store/auth_store.dart';
-import 'store/theme_store.dart';
-import 'theme/app_theme.dart';
 
+/// PitGo (mijoz) ilovasining entry point'i.
+/// PitGo Pro uchun: `lib/main_pro.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppFlavorConfig.current = AppFlavor.customer;
   await EasyLocalization.ensureInitialized();
   await initLocalNotifications();
   AndroidYandexMap.useAndroidViewSurface = true;
@@ -22,68 +23,9 @@ Future<void> main() async {
       path: 'assets/translations',
       fallbackLocale: const Locale('ru'),
       startLocale: const Locale('ru'),
-      child: const ProviderScope(child: PitGoApp()),
+      child: ProviderScope(
+        child: PitGoApp(routerProvider: routerCustomerProvider),
+      ),
     ),
   );
-}
-
-class PitGoApp extends ConsumerStatefulWidget {
-  const PitGoApp({super.key});
-
-  @override
-  ConsumerState<PitGoApp> createState() => _PitGoAppState();
-}
-
-class _PitGoAppState extends ConsumerState<PitGoApp> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(authProvider.notifier).initialize();
-      if (ref.read(authProvider).status == AuthStatus.authenticated) {
-        PushService.instance.initialize();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final router = ref.watch(routerProvider);
-    final themeMode = ref.watch(themeProvider);
-
-    final materialThemeMode = switch (themeMode) {
-      AppThemeMode.light => ThemeMode.light,
-      AppThemeMode.dark => ThemeMode.dark,
-      AppThemeMode.system => ThemeMode.system,
-    };
-
-    return MaterialApp.router(
-      title: 'PitGo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: materialThemeMode,
-      routerConfig: router,
-      localizationsDelegates: [
-        ...context.localizationDelegates,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      builder: (context, child) {
-        final mq = MediaQuery.of(context);
-        return MediaQuery(
-          data: mq.copyWith(
-            textScaler: mq.textScaler.clamp(
-              minScaleFactor: 0.9,
-              maxScaleFactor: 1.25,
-            ),
-          ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-    );
-  }
 }

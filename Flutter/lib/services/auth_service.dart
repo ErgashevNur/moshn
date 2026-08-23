@@ -50,8 +50,13 @@ class AuthService {
     return _parseAuth(payload);
   }
 
-  Future<void> sendOtp(String phone) async {
-    await _dio.post('/auth/send-otp', data: {'phone': phone});
+  /// SMS yuborilgan bo'lsa null qaytaradi. SMS xizmati vaqtincha ishlamasa
+  /// (yoki hali sozlanmagan bo'lsa) backend kodni javobda qaytaradi —
+  /// shuni ko'rsatib, foydalanuvchi bloklanib qolmasin.
+  Future<String?> sendOtp(String phone) async {
+    final resp = await _dio.post('/auth/send-otp', data: {'phone': phone});
+    final payload = (resp.data['data'] ?? resp.data) as Map<String, dynamic>?;
+    return payload?['dev_code'] as String?;
   }
 
   Future<({User user, String access, String refresh})> verifyOtp({
